@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ticket Rush"
+  short_description: "Repo-specific patterns and workflows for ticket-rush"
+  default_prompt: "Use the ticket-rush repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true

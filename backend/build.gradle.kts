@@ -55,4 +55,6 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // 테스트 JVM 힙 상한 — 컨테이너(MySQL·Redis)와 함께 돌 때 메모리 폭주 방지
+    maxHeapSize = "768m"
 }

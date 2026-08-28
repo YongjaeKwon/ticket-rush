@@ -1,7 +1,7 @@
 package com.ticketing.reservation.adapter.out.persistence;
 
 import com.ticketing.reservation.application.port.out.EventPublisher;
-import com.ticketing.reservation.domain.ReservationHeld;
+import com.ticketing.reservation.domain.DomainEvent;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
@@ -27,27 +27,22 @@ class OutboxEventPublisherAdapter implements EventPublisher {
     }
 
     @Override
-    public void publish(ReservationHeld event) {
+    public void publish(DomainEvent event) {
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("eventId", UUID.randomUUID().toString());
-        envelope.put("eventType", "ReservationHeld");
+        envelope.put("eventType", event.eventType());
         envelope.put("version", 1);
         envelope.put("occurredAt", event.occurredAt().toString());
-        envelope.put("aggregateId", String.valueOf(event.reservationId()));
-        envelope.put("payload", Map.of(
-                "reservationId", event.reservationId(),
-                "scheduleId", event.scheduleId(),
-                "seatId", event.seatId(),
-                "userId", event.userId(),
-                "expiresAt", event.expiresAt().toString()));
+        envelope.put("aggregateId", String.valueOf(event.aggregateId()));
+        envelope.put("payload", event.payload());
 
         jdbc.sql("""
                         INSERT INTO outbox (aggregate_type, aggregate_id, event_type, payload, created_at)
                         VALUES (:aggregateType, :aggregateId, :eventType, :payload, :createdAt)
                         """)
                 .param("aggregateType", "RESERVATION")
-                .param("aggregateId", String.valueOf(event.reservationId()))
-                .param("eventType", "ReservationHeld")
+                .param("aggregateId", String.valueOf(event.aggregateId()))
+                .param("eventType", event.eventType())
                 .param("payload", json.writeValueAsString(envelope))
                 .param("createdAt", event.occurredAt())
                 .update();

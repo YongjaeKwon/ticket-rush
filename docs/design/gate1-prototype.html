@@ -159,9 +159,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .sechead h2{font-size:17px; font-weight:700; letter-spacing:-.02em}
 .sechead .more{font-size:13px; font-weight:500; color:var(--p-accent)}
 
-/* 다크 카드 (카운트다운·포스터·월렛 헤더 공용) — 플랫 */
-.widget-dark{position:relative; overflow:hidden; color:#fff; border-radius:22px; background:#14161B}
-.widget-dark.urgent .cdnum b{color:#FF7A70}
+/* 아트 카드 (배너·카운트다운·포스터·월렛 헤더 공용)
+   — 딥 인디고 + 좌석 도트 패턴. 좌석맵이 곧 브랜드 그래픽이다 */
+.widget-dark{position:relative; overflow:hidden; color:#fff; border-radius:22px;
+  background-color:#1D2B6B;
+  background-image:radial-gradient(rgba(255,255,255,.12) 1.3px, transparent 1.7px);
+  background-size:16px 16px; background-position:-5px -7px}
+.widget-dark.urgent .cdnum b{color:#FF9A8B}
+/* 좌석 모티프: 도트 한 줄 중 몇 개가 켜져 있다 */
+.seatsig{display:flex; gap:5px}
+.seatsig i{width:8px; height:8px; border-radius:2.5px; background:rgba(255,255,255,.22)}
+.seatsig i.on{background:#fff}
 
 /* 탭바 (프로스티드) */
 .tabbar{flex:none; display:flex; background:var(--p-glass);
@@ -192,7 +200,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .openlist .item+.item{border-top:1px solid var(--p-line)}
 .openlist .thumb{width:46px; height:60px; border-radius:12px; flex:none; color:#fff;
   display:flex; align-items:flex-end; padding:6px; font-size:10px; font-weight:700;
-  background:#1A1D24}
+  background-color:#1D2B6B;
+  background-image:radial-gradient(rgba(255,255,255,.12) 1px, transparent 1.4px);
+  background-size:10px 10px; background-position:-3px -4px}
 .openlist .info{flex:1; min-width:0}
 .openlist .name{font-size:14px; font-weight:600; letter-spacing:-.01em}
 .openlist .sub2{font-size:12px; color:var(--p-sub); margin-top:1px}
@@ -205,7 +215,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .showhero{display:flex; gap:15px; padding:14px 20px 16px}
 .showhero .poster{width:106px; aspect-ratio:3/4; border-radius:18px; flex:none; color:#fff;
   padding:11px; display:flex; flex-direction:column; justify-content:flex-end;
-  overflow:hidden; background:#14161B; box-shadow:var(--p-sh)}
+  overflow:hidden; box-shadow:var(--p-sh);
+  background-color:#1D2B6B;
+  background-image:radial-gradient(rgba(255,255,255,.12) 1.1px, transparent 1.5px);
+  background-size:13px 13px; background-position:-4px -5px}
 .showhero .poster b{font-size:14px; line-height:1.3; font-weight:800}
 .showhero .poster span{font-size:10px; color:rgba(255,255,255,.5); margin-top:3px}
 .showhero .hinfo{display:flex; flex-direction:column; gap:6px; padding-top:4px}
@@ -360,7 +373,10 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .donesub{text-align:center; font-size:13px; color:var(--p-sub); margin-top:3px}
 .pass{margin:18px 16px 12px; border-radius:24px; overflow:hidden; box-shadow:var(--p-sh);
   background:var(--p-surface)}
-.pass .phead{overflow:hidden; color:#fff; padding:18px 20px 16px; background:#14161B}
+.pass .phead{overflow:hidden; color:#fff; padding:18px 20px 16px;
+  background-color:#1D2B6B;
+  background-image:radial-gradient(rgba(255,255,255,.12) 1.3px, transparent 1.7px);
+  background-size:16px 16px; background-position:-5px -7px}
 .pass .phead .brand{display:flex; justify-content:space-between; align-items:center;
   font-size:12px; font-weight:700; color:rgba(255,255,255,.55)}
 .pass .phead .tt{font-size:20px; font-weight:800; letter-spacing:-.015em; margin-top:10px}
@@ -395,11 +411,8 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .mockcell .cap{display:flex; gap:10px; align-items:baseline}
 .mockcell .cap .no{font-size:12px; color:var(--accent); font-variant-numeric:tabular-nums}
 .mockcell .cap .nm{font-weight:700; font-size:14px}
-.mockframe{width:100%; aspect-ratio:390/820; overflow:hidden; border-radius:26px;
-  position:relative; background:#F2F3F7; border:1px solid var(--line);
-  box-shadow:0 10px 30px rgba(16,19,25,.1)}
-.mockframe .phone{position:absolute; top:0; left:0; transform-origin:top left;
-  pointer-events:none; border:0; border-radius:0; box-shadow:none; height:820px; width:390px}
+.mockframe{width:100%; position:relative}
+.mockframe .phone{height:820px; min-height:0; pointer-events:none}
 .hidden{display:none !important}
 @media (prefers-reduced-motion: reduce){
   *{transition-duration:.01ms !important; animation-duration:.01ms !important}
@@ -428,7 +441,7 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
       <div class="pal">
         <span class="sw" style="background:#F2F3F7"><i>bg</i></span>
         <span class="sw" style="background:#FFFFFF"><i>surface</i></span>
-        <span class="sw" style="background:#14161B"><i>widget</i></span>
+        <span class="sw" style="background:#1D2B6B"><i>art</i></span>
         <span class="sw" style="background:#2E5BFF"><i>brand</i></span>
         <span class="sw" style="background:#FF453A"><i>danger</i></span>
       </div>
@@ -441,9 +454,9 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 
     <p class="note">
       정보 구조는 한국 티켓팅 문법 그대로, 표면은 iOS 위젯 톤 — 프로스티드 바,
-      22px 스쿼클 카드 + 깊은 그림자, 플랫 다크 위젯(카운트다운), 액티비티 링(대기열),
-      아일랜드형 선점 타이머, 월렛 패스(티켓). 그라디언트·글로우 없이 단색 면과
-      그림자로만 깊이를 만듭니다.
+      22px 스쿼클 카드 + 깊은 그림자, 액티비티 링(대기열), 아일랜드형 선점 타이머,
+      월렛 패스(티켓). 아트 서피스는 딥 인디고 + 좌석 도트 패턴 —
+      좌석맵 자체가 브랜드 그래픽입니다. 그라디언트·글로우 없음.
       상세: <span style="font-family:var(--mono); font-size:11px">docs/design/design-foundation.md</span>
     </p>
     <button class="reset" id="btnReset">시뮬레이션 리셋</button>
@@ -537,6 +550,7 @@ home(body,root,live){
     <div class="homesub">놓치면 안 되는 오픈, 한 곳에서</div>
     <button class="bigbanner" id="goDetail">
       <div class="art widget-dark" style="border-radius:0">
+        <div class="seatsig" style="margin-bottom:auto"><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i></div>
         <div class="lab">단독 공연</div>
         <div class="tt">2026 티켓러시 라이브</div>
         <div class="dd">2026.10.17 (토) 19:00 · 올림픽공원 체조경기장</div>
@@ -819,7 +833,7 @@ done(body,root,live){
     <div class="donesub">내 티켓에서 언제든 확인할 수 있어요</div>
     <div class="pass">
       <div class="phead">
-        <div class="brand"><span>티켓러시</span><span>모바일 티켓</span></div>
+        <div class="brand"><span>티켓러시 · 모바일 티켓</span><span class="seatsig"><i class="on"></i><i></i><i class="on"></i><i></i><i></i></span></div>
         <div class="tt">2026 티켓러시 라이브</div>
         <div class="td">올림픽공원 체조경기장</div>
       </div>
@@ -881,7 +895,7 @@ function buildMock(){
     cell.onclick=()=>{setMode("proto"); jumpTo(scr)};
     wrap.appendChild(cell);
     const frame=$(".mockframe",cell);
-    const fit=()=>{ph.style.transform=`scale(${frame.clientWidth/390})`};
+    const fit=()=>{ph.style.zoom=frame.clientWidth/390};
     new ResizeObserver(fit).observe(frame); fit();
   });
 }

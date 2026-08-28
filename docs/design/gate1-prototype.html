@@ -344,9 +344,12 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .ptile .pm{width:36px; height:36px; border-radius:11px; display:flex;
   align-items:center; justify-content:center; font-weight:800; font-size:13px}
 .pm.card{background:rgba(46,91,255,.1); color:var(--p-accent)}
-.pm.card svg{width:19px; height:19px}
+.pm.card svg, .pm.phone svg{width:19px; height:19px}
 .pm.kakao{background:#FEE500; color:#191600}
 .pm.naver{background:#03C75A; color:#fff}
+.pm.toss{background:#0064FF; color:#fff}
+.pm.payco{background:#FA2846; color:#fff}
+.pm.phone{background:rgba(60,60,67,.09); color:var(--p-ink)}
 .paynote{padding:0 20px 10px; font-size:12px; color:var(--p-sub)}
 /* iOS 스위치 */
 .switchrow{display:flex; align-items:center; justify-content:space-between;
@@ -801,6 +804,13 @@ pay(body,root,live){
         <span class="pm kakao">K</span>카카오페이</label>
       <label class="ptile"><input type="radio" name="pm" value="naver">
         <span class="pm naver">N</span>네이버페이</label>
+      <label class="ptile"><input type="radio" name="pm" value="toss">
+        <span class="pm toss">T</span>토스페이</label>
+      <label class="ptile"><input type="radio" name="pm" value="payco">
+        <span class="pm payco">P</span>페이코</label>
+      <label class="ptile"><input type="radio" name="pm" value="phone">
+        <span class="pm phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2" stroke-linecap="round"/></svg></span>
+        휴대폰</label>
     </div>
     <div class="paynote" id="paynote">결제창에서 카드사를 선택합니다 · 앱카드 지원</div>
     <div class="card">
@@ -818,7 +828,10 @@ pay(body,root,live){
   if(!live) return;
   const NOTES={card:"결제창에서 카드사를 선택합니다 · 앱카드 지원",
     kakao:"카카오톡으로 결제 요청을 보냅니다",
-    naver:"네이버페이 포인트를 함께 쓸 수 있습니다"};
+    naver:"네이버페이 포인트를 함께 쓸 수 있습니다",
+    toss:"토스 앱에서 바로 결제합니다",
+    payco:"페이코 포인트 적립·사용이 가능합니다",
+    phone:"다음 달 통신사 요금과 함께 청구됩니다"};
   $("#paytiles",body).addEventListener("change",e=>{
     $("#paynote",body).textContent=NOTES[e.target.value]||"";
   });

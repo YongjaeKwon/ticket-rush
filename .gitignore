@@ -1,0 +1,24 @@
+# env / secrets
+.env
+.env.*
+
+# backend (Gradle)
+backend/.gradle/
+backend/build/
+backend/**/build/
+
+# frontend
+node_modules/
+apps/web/.next/
+apps/mobile/.expo/
+dist/
+coverage/
+
+# claude code 개인 설정 (팀 공유 X)
+.claude/settings.local.json
+
+# etc
+*.log
+.DS_Store
+.idea/
+load/results/

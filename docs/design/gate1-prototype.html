@@ -75,10 +75,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .steps .no{font-size:12px; color:var(--sub); font-variant-numeric:tabular-nums; width:18px}
 .steps .nm{font-weight:500; font-size:14px}
 .steps button.on .no,.steps button.on .nm{color:var(--accent); font-weight:700}
-.pal{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:22px}
-.pal .sw{aspect-ratio:1; border-radius:10px; border:1px solid var(--line); position:relative}
-.pal .sw i{position:absolute; left:0; right:0; bottom:-18px; font-style:normal;
-  font-size:9px; color:var(--sub); text-align:center; white-space:nowrap; font-family:var(--mono)}
+.pal{display:grid; gap:7px; margin-bottom:14px}
+.pal .sw{display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:600}
+.pal .sw i{width:26px; height:26px; border-radius:8px; border:1px solid var(--line); flex:none; font-style:normal}
+.pal .sw code{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:11px;
+  font-weight:400; color:var(--sub)}
 .type-spec{border:1px solid var(--line); border-radius:14px; padding:14px; display:grid; gap:6px}
 .type-spec .t1{font-weight:800; font-size:20px; letter-spacing:-.02em}
 .type-spec .t2{font-size:13px; color:var(--sub)}
@@ -324,16 +325,29 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .pickbar .cta{width:auto; flex:none; padding:13px 22px; font-size:15px}
 
 /* ── 화면 5: 결제 ───────────────────────────────────────── */
-.paymeth{padding:2px 8px 6px}
-.paymeth label{display:flex; align-items:center; gap:11px; padding:13px 12px;
-  font-size:14px; font-weight:500; cursor:pointer; border-radius:14px}
-.paymeth label+label{border-top:1px solid var(--p-line)}
-.paymeth input{appearance:none; width:20px; height:20px; border-radius:50%;
-  border:1.6px solid var(--p-strong); flex:none; display:grid; place-content:center;
-  transition:all .18s}
-.paymeth input:checked{border-color:var(--p-accent); background:var(--p-accent)}
-.paymeth input:checked::after{content:""; width:7px; height:7px; border-radius:50%; background:#fff}
-.paymeth label:has(input:checked){font-weight:700}
+/* 결제수단 타일 — 모노그램 + 선택 시 브랜드 테두리와 체크 */
+.paytiles{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:2px 16px 10px}
+.ptile{position:relative; border:1.5px solid var(--p-line); border-radius:14px;
+  background:var(--p-surface); padding:13px 6px 11px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  font-size:12.5px; font-weight:600; color:var(--p-sub);
+  transition:border-color .15s, background .15s, transform .16s var(--spring)}
+.ptile:active{transform:scale(.96)}
+.ptile input{position:absolute; opacity:0; pointer-events:none}
+.ptile:has(input:checked){border-color:var(--p-accent); background:rgba(46,91,255,.05);
+  color:var(--p-accent); font-weight:700}
+.ptile::after{content:""; position:absolute; top:7px; right:7px; width:17px; height:17px;
+  border-radius:50%; background:var(--p-accent) center/9px no-repeat;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5l5 5 10-11'/%3E%3C/svg%3E");
+  opacity:0; transform:scale(.4); transition:all .18s var(--spring)}
+.ptile:has(input:checked)::after{opacity:1; transform:scale(1)}
+.ptile .pm{width:36px; height:36px; border-radius:11px; display:flex;
+  align-items:center; justify-content:center; font-weight:800; font-size:13px}
+.pm.card{background:rgba(46,91,255,.1); color:var(--p-accent)}
+.pm.card svg{width:19px; height:19px}
+.pm.kakao{background:#FEE500; color:#191600}
+.pm.naver{background:#03C75A; color:#fff}
+.paynote{padding:0 20px 10px; font-size:12px; color:var(--p-sub)}
 /* iOS 스위치 */
 .switchrow{display:flex; align-items:center; justify-content:space-between;
   padding:13px 18px; font-size:13px; color:var(--p-sub)}
@@ -439,11 +453,11 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
     <div class="side-sec">
       <h3>토큰</h3>
       <div class="pal">
-        <span class="sw" style="background:#F2F3F7"><i>bg</i></span>
-        <span class="sw" style="background:#FFFFFF"><i>surface</i></span>
-        <span class="sw" style="background:#1D2B6B"><i>art</i></span>
-        <span class="sw" style="background:#2E5BFF"><i>brand</i></span>
-        <span class="sw" style="background:#FF453A"><i>danger</i></span>
+        <span class="sw"><i style="background:#F2F3F7"></i>bg · 그라운드<code>#F2F3F7</code></span>
+        <span class="sw"><i style="background:#FFFFFF"></i>surface · 카드<code>#FFFFFF</code></span>
+        <span class="sw"><i style="background:#1D2B6B"></i>art · 좌석 도트 판<code>#1D2B6B</code></span>
+        <span class="sw"><i style="background:#2E5BFF"></i>brand · 액션<code>#2E5BFF</code></span>
+        <span class="sw"><i style="background:#FF453A"></i>danger · 긴급<code>#FF453A</code></span>
       </div>
       <div class="type-spec">
         <div class="t1">잔여 1,326석</div>
@@ -779,11 +793,16 @@ pay(body,root,live){
       <div class="row"><span class="k">예매수수료</span><span class="v num">${KRW(FEE)}원</span></div>
     </div>
     <div class="sechead"><h2>결제 수단</h2></div>
-    <div class="card paymeth">
-      <label><input type="radio" name="pm" checked> 신용·체크카드</label>
-      <label><input type="radio" name="pm"> 카카오페이</label>
-      <label><input type="radio" name="pm"> 네이버페이</label>
+    <div class="paytiles" id="paytiles">
+      <label class="ptile"><input type="radio" name="pm" value="card" checked>
+        <span class="pm card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19" stroke-width="2.6"/></svg></span>
+        카드</label>
+      <label class="ptile"><input type="radio" name="pm" value="kakao">
+        <span class="pm kakao">K</span>카카오페이</label>
+      <label class="ptile"><input type="radio" name="pm" value="naver">
+        <span class="pm naver">N</span>네이버페이</label>
     </div>
+    <div class="paynote" id="paynote">결제창에서 카드사를 선택합니다 · 앱카드 지원</div>
     <div class="card">
       <div class="agree"><input type="checkbox" id="agAll" checked><span>전체 동의</span></div>
       <div class="agree-sub">주문 내용 확인 및 결제 진행 동의 · 취소/환불 규정 동의</div>
@@ -797,6 +816,12 @@ pay(body,root,live){
     <div class="payprog" id="pprog"><i></i></div>
     <div class="ctabar"><button class="cta" id="payCta">${KRW(PRICE+FEE)}원 결제하기</button></div>`;
   if(!live) return;
+  const NOTES={card:"결제창에서 카드사를 선택합니다 · 앱카드 지원",
+    kakao:"카카오톡으로 결제 요청을 보냅니다",
+    naver:"네이버페이 포인트를 함께 쓸 수 있습니다"};
+  $("#paytiles",body).addEventListener("change",e=>{
+    $("#paynote",body).textContent=NOTES[e.target.value]||"";
+  });
   every(()=>{
     const s=Math.max(0,Math.ceil((state.holdUntil-Date.now())/1000));
     $("#holdT2",body).textContent=`${Math.floor(s/60)}:${pad(s%60)}`;

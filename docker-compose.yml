@@ -1,0 +1,38 @@
+# docker compose --profile infra up -d   → MySQL, Redis (1단계)
+# stage3 프로필(Kafka, Prometheus, Grafana, Tempo)은 3단계에서 추가한다.
+
+services:
+  mysql:
+    image: mysql:8.4
+    profiles: ["infra"]
+    container_name: ticketing-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ticketing
+      MYSQL_USER: ticketing
+      MYSQL_PASSWORD: ticketing
+      TZ: UTC
+    ports:
+      - "3307:3306"   # 이 PC의 로컬 MySQL 서비스가 3306을 점유하고 있어 호스트 포트는 3307
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uticketing", "-pticketing"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["infra"]
+    container_name: ticketing-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mysql-data:

@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ticketing
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/ticketing?serverTimezone=UTC&characterEncoding=UTF-8
+    username: ticketing
+    password: ticketing
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # 테이블은 Flyway만 만든다
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379

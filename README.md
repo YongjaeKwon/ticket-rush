@@ -1,20 +1,25 @@
-# 선착순 티켓팅 (ticketing)
+# 티켓러시 — 선착순 티켓팅 시스템
 
-수천 명이 같은 좌석을 동시에 잡아도 **이중 예매 0건**을 보장하는 예매 시스템.
-헥사고날 아키텍처 + DDD로 시작해 Kafka 기반 서비스 분리까지 **단계별로 진화**시키고, 각 단계를 **수치로 검증**한다.
+수천 명이 같은 좌석을 동시에 잡아도 **이중 예매가 0건**인 예매 시스템을 만드는 프로젝트입니다.
+모놀리스로 시작해 Kafka 기반 서비스 분리까지 단계별로 키워 가고, 각 단계의 성능과 정합성을 수치로 검증합니다.
 
-> 티켓팅 연습 사이트가 아니다. 혼자 흐름을 연습하는 시뮬레이터가 아니라, 다중 사용자 경합에서 정합성을 지키는 시스템이다.
-> `?demo=1`로 열면 가상 경쟁자들이 같이 좌석을 잡는 걸 실시간으로 볼 수 있다. (4단계)
+혼자 예매 흐름을 연습하는 시뮬레이터가 아닙니다. 여러 사용자가 경합하는 상황에서 데이터가 깨지지 않는다는 걸
+테스트와 부하 수치로 증명하는 데 목적이 있습니다.
 
-## 핵심 세 가지
+## 핵심 아이디어 — 좌석을 지키는 세 겹의 방어
 
-1. **Redis 홀드 + DB UNIQUE 이중 방어** — Redis가 죽어도 같은 좌석이 두 번 확정되지 않는다.
-2. **모놀리스 → 서비스 분리의 진화 과정이 태그로 남아 있다** — `v1-monolith` → `v3-msa`. 왜 처음부터 MSA가 아니었는지 커밋이 답한다.
-3. **모든 설계 결정에 수치가 붙어 있다** — 락 방식 비교, 대기열 유무별 에러율, 모바일 LCP/INP. (아래 표)
+같은 좌석을 두 사람이 가져가는 사고를 세 겹으로 막습니다.
 
-## 구성도
+| 겹 | 무엇 | 성격 |
+|---|---|---|
+| 1차 | Redis `SET NX EX` 선점 (5분 TTL) | 빠르다. 동시 요청 중 한 명만 통과시킨다. 대신 Redis가 죽으면 사라진다 |
+| 2차 | 도메인 규칙 — 만료된 홀드는 결제를 거부 | 홀드가 먼저 사라져 다른 사람이 좌석을 잡았을 가능성을 걸러낸다 |
+| 최종 | DB `confirmed_seat`의 (회차, 좌석) PK | Redis가 통째로 죽어도 같은 좌석의 두 번째 확정 INSERT는 DB가 물리적으로 거부한다 |
 
-<!-- docs/ARCHITECTURE.md 2-1의 mermaid를 여기 붙이거나 FigJam 이미지를 넣는다 -->
+"Redis가 죽은 상황"을 통합 테스트에서 실제로 재현해, 같은 좌석에 홀드가 두 건 생겨도 확정은 정확히 한 건만
+남는 것까지 확인합니다.
+
+## 예매 흐름
 
 ```mermaid
 flowchart LR
@@ -23,24 +28,50 @@ flowchart LR
   U -->|"2. 좌석 홀드 + JWT"| R["reservation"]
   R -->|"SET NX EX 5분"| RD
   R -->|"HELD + outbox, 한 트랜잭션"| DB[("MySQL — confirmed_seat UNIQUE")]
-  DB -->|"3. Outbox 릴레이"| K["Kafka"]
-  K --> P["payment"]
+  DB -->|"3. Outbox 릴레이"| K["Kafka (3단계)"]
+  K --> P["payment (3단계)"]
   P -->|"승인 / 실패"| K
   K -->|"4. 멱등 컨슘"| R
-  R -->|"SSE 좌석 상태"| U
+  R -->|"SSE 좌석 상태 (2단계)"| U
 ```
 
-## 로드맵
+대기열에 줄을 서고 → 좌석을 5분간 선점하고 → 결제하면 확정됩니다. 5분 안에 결제하지 않으면 좌석은
+자동으로 풀립니다. 1단계에서 결제는 mock 어댑터의 동기 호출이고, 3단계에서 이벤트 기반으로 바뀝니다 —
+이 교체가 헥사고날 아키텍처를 쓰는 이유이기도 합니다.
+
+## 로드맵과 진행 상황
 
 | 단계 | 내용 | 상태 | 태그 |
 |---|---|---|---|
-| 1 | 백엔드 뼈대 (모놀리스 + 헥사고날, catalog/queue/reservation) | 진행 중 | `v1-monolith` |
-| 2 | 웹 프론트 (모바일 웹, Canvas 좌석맵, SSE) | | `v2-web` |
-| 3 | 서비스 분리 + Kafka (Outbox, 멱등, 되돌리기, 푸시 이벤트) | | `v3-msa` |
-| 4 | 부하·성능 수치 + 가상 경쟁자 데모 | | `v4-bench` |
+| 1 | 백엔드 뼈대 — 모놀리스 + 헥사고날 (catalog / queue / reservation) | **진행 중 (7/12)** | `v1-monolith` |
+| 2 | 웹 프론트 — 모바일 웹, Canvas 좌석맵, SSE | 디자인 프로토타입 완성 | `v2-web` |
+| 3 | 서비스 분리 + Kafka — Outbox 릴레이, 멱등 컨슈머, 결제 되돌리기 | | `v3-msa` |
+| 4 | 부하 수치 + 가상 경쟁자 데모 | | `v4-bench` |
 | 5 | 모바일 앱 (Expo) | | `v5-app` |
 
-## 수치 (4단계에서 채운다)
+### 1단계에서 지금까지 만든 것
+
+- **catalog 모듈** — 공연 목록·상세, 좌석 배치(ETag + 불변 캐시), 좌석 상태 비트맵 API.
+  2,000석의 상태를 좌석당 2비트로 압축해 500바이트로 내려줍니다
+- **reservation 도메인** — 예매의 상태 전이(HELD → CONFIRMED / EXPIRED / CANCELLED) 규칙을
+  스프링 없이 순수 자바로 담고 단위 테스트로 검증
+- **좌석 홀드** — Redis 선점 → DB 기록 → 실패 시 되돌리기까지 한 흐름. 이벤트는 Outbox 테이블에
+  같은 트랜잭션으로 기록
+- **확정·만료·취소** — mock 결제(지연·거절 확률 설정 가능), `confirmed_seat` UNIQUE 처리,
+  10초 주기 만료 스케줄러
+- 테스트 35개 — 도메인 단위 테스트와 실물 MySQL·Redis(Testcontainers) 통합 테스트
+
+남은 것: REST API + 멱등 키, 동시성 테스트(1석 100요청 → 성공 1건), 대기열(queue 모듈), ArchUnit·CI.
+
+## 기술 스택
+
+Java 21 · Spring Boot 4.0 · Spring Modulith 2.0 · MySQL 8 (Flyway) · Redis 7 · Testcontainers ·
+(3단계부터) Kafka · (2단계부터) Next.js
+
+왜 이 조합인지는 [결정 기록](docs/adr/)에 남겨져 있습니다. 예: [NestJS 대신 Java/Spring을 고른 이유](docs/adr/0001-java-spring-over-nestjs.md),
+[경합 테이블에 FK를 걸지 않은 이유](docs/adr/0003-no-fk-on-contention-tables.md).
+
+## 수치 (4단계에서 채웁니다)
 
 | 항목 | 결과 |
 |---|---|
@@ -56,13 +87,18 @@ flowchart LR
 ## 실행
 
 ```bash
-docker compose --profile infra up -d
-cd backend && ./gradlew test && ./gradlew bootRun
-# http://localhost:8080/swagger-ui.html
+docker compose --profile infra up -d      # MySQL(호스트 3307), Redis
+cd backend
+./gradlew test                            # 전체 테스트 (Docker 필요 — Testcontainers)
+./gradlew bootRun                         # http://localhost:8080
+```
+
+```bash
+curl http://localhost:8080/api/events     # 시드된 공연 목록 확인
 ```
 
 ## 문서
 
-- [설계 문서](docs/ARCHITECTURE.md) — 구성도, 스택, 코드 구조, 도메인, 이벤트, API, 웹/앱, 인프라, 면접 포인트, 용어집
-- [결정 기록 (ADR)](docs/adr/) · [백로그](docs/backlog.md)
-- 에이전트 작업 규칙: [CLAUDE.md](CLAUDE.md)
+- [설계 문서](docs/ARCHITECTURE.md) — 구성도, 스택, 코드 구조, 도메인, 이벤트, API, 인프라, 면접 포인트, 용어집
+- [디자인 파운데이션](docs/design/design-foundation.md) — 디자인 토큰과 화면 문법, [동작하는 프로토타입](docs/design/gate1-prototype.html) 포함
+- [결정 기록 (ADR)](docs/adr/) · [백로그](docs/backlog.md) · 에이전트 작업 규칙: [CLAUDE.md](CLAUDE.md)

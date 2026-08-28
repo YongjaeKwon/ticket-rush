@@ -47,8 +47,22 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .stage{display:flex; flex-direction:column; align-items:center; padding:34px 20px 60px}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
-  .side{position:static; height:auto; border-right:0; border-bottom:1px solid var(--line); padding:20px 18px}
-  .stage{padding:22px 8px 48px}
+  .side{position:static; height:auto; border-right:0; border-bottom:1px solid var(--line);
+    padding:14px 16px; gap:12px}
+  .side .pal,.side .type-spec,.side .note,.side .side-sec h3{display:none}
+  .side .mark{font-size:17px}
+  .side .mark small{display:inline; margin-left:8px; font-size:11px}
+  .side .steps{flex-direction:row; overflow-x:auto; gap:6px; scrollbar-width:none}
+  .side .steps button{border-bottom:0; background:var(--bg); border-radius:999px;
+    padding:7px 13px; flex:none; gap:6px}
+  .side .steps .no{width:auto}
+  .side .steps button.on{background:var(--accent)}
+  .side .steps button.on .no,.side .steps button.on .nm{color:#fff}
+  .side .reset{margin-top:0; position:absolute; top:12px; right:14px; padding:6px 11px; font-size:12px}
+  .side{position:relative}
+  .stage{padding:14px 8px 40px}
+  .stagehead{margin-bottom:12px}
+  .stagehead .hint{display:none}
 }
 .mark{font-weight:800; font-size:24px; letter-spacing:-.02em; line-height:1.15}
 .mark small{display:block; font-weight:500; font-size:12px; color:var(--sub); margin-top:4px}
@@ -80,7 +94,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 
 /* ── 폰 프레임 (iPhone 톤) ──────────────────────────────── */
 .phone{
-  width:390px; max-width:100%; height:820px; border-radius:44px; overflow:hidden;
+  width:390px; max-width:100%; height:min(820px, calc(100vh - 180px)); min-height:560px;
+  border-radius:44px; overflow:hidden;
   background:#F2F3F7; color:#16181D; position:relative; display:flex; flex-direction:column;
   flex:none; font-family:var(--body);
   border:1px solid rgba(16,19,25,.12);
@@ -92,7 +107,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
   --p-danger:#FF453A; --p-dangerbg:#FFECEB;
   --p-glass:rgba(255,255,255,.72);
   --p-sh:0 1px 2px rgba(16,19,25,.04), 0 10px 28px rgba(16,19,25,.09)}
-@media (max-width:480px){ .phone{height:min(820px, calc(100vh - 150px)); border-radius:0; border:0} }
+@media (max-width:480px){ .phone{height:min(820px, calc(100vh - 130px)); border-radius:0; border:0} }
 
 /* iOS 상태바 + 프로스티드 헤더 */
 .statusbar{flex:none; display:flex; align-items:center; justify-content:space-between;
@@ -123,12 +138,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .badge.red{background:var(--p-dangerbg); color:var(--p-danger)}
 .badge.gray{background:rgba(60,60,67,.08); color:var(--p-sub)}
 .cta{display:block; width:100%; padding:16px; border-radius:18px; color:var(--p-on);
-  font-weight:700; font-size:16px; letter-spacing:-.01em;
-  background:linear-gradient(180deg,#4A78FF 0%, #2E5BFF 100%);
-  box-shadow:0 1px 2px rgba(16,19,25,.08), 0 8px 22px rgba(46,91,255,.34),
-    inset 0 1px 0 rgba(255,255,255,.28);
+  font-weight:700; font-size:16px; letter-spacing:-.01em; background:var(--p-accent);
+  box-shadow:0 6px 16px rgba(46,91,255,.24);
   transition:transform .16s var(--spring), filter .12s}
-.cta:active{transform:scale(.97); filter:brightness(.94)}
+.cta:active{transform:scale(.97); filter:brightness(.92)}
 .cta[disabled]{background:rgba(60,60,67,.14); color:var(--p-sub); box-shadow:none; cursor:not-allowed}
 .ctabar{flex:none; padding:10px 16px calc(18px + env(safe-area-inset-bottom));
   background:var(--p-glass); backdrop-filter:blur(18px) saturate(1.6);
@@ -146,14 +159,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .sechead h2{font-size:17px; font-weight:700; letter-spacing:-.02em}
 .sechead .more{font-size:13px; font-weight:500; color:var(--p-accent)}
 
-/* 다크 위젯 카드 (카운트다운·월렛 헤더 공용 아트) */
-.widget-dark{position:relative; overflow:hidden; color:#fff; border-radius:22px;
-  background:linear-gradient(165deg,#171A22 0%, #11131A 60%, #0D0F15 100%)}
-.widget-dark .glow{position:absolute; width:240px; height:240px; border-radius:50%;
-  filter:blur(4px); pointer-events:none;
-  background:radial-gradient(circle, rgba(74,120,255,.5), transparent 62%)}
-.widget-dark .glow.g2{background:radial-gradient(circle, rgba(126,222,255,.24), transparent 60%)}
-.widget-dark.urgent .glow{background:radial-gradient(circle, rgba(255,69,58,.55), transparent 62%)}
+/* 다크 카드 (카운트다운·포스터·월렛 헤더 공용) — 플랫 */
+.widget-dark{position:relative; overflow:hidden; color:#fff; border-radius:22px; background:#14161B}
+.widget-dark.urgent .cdnum b{color:#FF7A70}
 
 /* 탭바 (프로스티드) */
 .tabbar{flex:none; display:flex; background:var(--p-glass);
@@ -171,14 +179,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
   border-radius:24px; overflow:hidden; background:var(--p-surface); box-shadow:var(--p-sh);
   transition:transform .18s var(--spring)}
 .bigbanner:active{transform:scale(.975)}
-.bigbanner .art{aspect-ratio:16/9.4; padding:20px; display:flex; flex-direction:column;
+.bigbanner .art{aspect-ratio:16/8; padding:20px; display:flex; flex-direction:column;
   justify-content:flex-end; border-radius:0}
-.bigbanner .art .glow{right:-60px; top:-90px}
-.bigbanner .art .glow.g2{left:-70px; bottom:-120px; top:auto; right:auto}
-.bigbanner .art .lab{position:relative; font-size:11px; font-weight:700; letter-spacing:.12em;
-  opacity:.6; margin-bottom:6px}
-.bigbanner .art .tt{position:relative; font-size:26px; font-weight:800; line-height:1.16; letter-spacing:-.02em}
-.bigbanner .art .dd{position:relative; font-size:13px; opacity:.72; margin-top:6px}
+.bigbanner .art .lab{font-size:12px; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:7px}
+.bigbanner .art .tt{font-size:26px; font-weight:800; line-height:1.16; letter-spacing:-.02em}
+.bigbanner .art .dd{font-size:13px; color:rgba(255,255,255,.6); margin-top:6px}
 .bigbanner .meta{display:flex; align-items:center; justify-content:space-between; padding:14px 18px}
 .bigbanner .meta .open{font-size:14px; font-weight:700; letter-spacing:-.01em}
 .bigbanner .meta .venue{font-size:12px; color:var(--p-sub); margin-top:1px}
@@ -187,7 +192,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .openlist .item+.item{border-top:1px solid var(--p-line)}
 .openlist .thumb{width:46px; height:60px; border-radius:12px; flex:none; color:#fff;
   display:flex; align-items:flex-end; padding:6px; font-size:10px; font-weight:700;
-  background:linear-gradient(160deg,#2A2E39,#171A22)}
+  background:#1A1D24}
 .openlist .info{flex:1; min-width:0}
 .openlist .name{font-size:14px; font-weight:600; letter-spacing:-.01em}
 .openlist .sub2{font-size:12px; color:var(--p-sub); margin-top:1px}
@@ -200,12 +205,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
 .showhero{display:flex; gap:15px; padding:14px 20px 16px}
 .showhero .poster{width:106px; aspect-ratio:3/4; border-radius:18px; flex:none; color:#fff;
   padding:11px; display:flex; flex-direction:column; justify-content:flex-end;
-  position:relative; overflow:hidden;
-  background:linear-gradient(165deg,#1B1F29,#10131B); box-shadow:var(--p-sh)}
-.showhero .poster .glow{position:absolute; width:120px; height:120px; right:-40px; top:-40px;
-  border-radius:50%; background:radial-gradient(circle, rgba(74,120,255,.55), transparent 62%)}
-.showhero .poster b{position:relative; font-size:14px; line-height:1.3; font-weight:800}
-.showhero .poster span{position:relative; font-size:9px; opacity:.6; margin-top:3px; letter-spacing:.06em}
+  overflow:hidden; background:#14161B; box-shadow:var(--p-sh)}
+.showhero .poster b{font-size:14px; line-height:1.3; font-weight:800}
+.showhero .poster span{font-size:10px; color:rgba(255,255,255,.5); margin-top:3px}
 .showhero .hinfo{display:flex; flex-direction:column; gap:6px; padding-top:4px}
 .showhero h1{font-size:20px; font-weight:800; letter-spacing:-.02em; line-height:1.28}
 .showhero .meta{font-size:13px; color:var(--p-sub)}
@@ -216,13 +218,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
   background:var(--p-accent); display:flex; align-items:center; justify-content:center; color:#fff}
 .schedcell .pick svg{width:12px; height:12px}
 .cdwidget{margin:0 16px 14px; padding:20px 18px 18px; text-align:center}
-.cdwidget .lab{position:relative; font-size:12px; font-weight:600; letter-spacing:.1em; opacity:.55}
-.cdnum{position:relative; display:flex; justify-content:center; align-items:baseline;
+.cdwidget .lab{font-size:13px; font-weight:600; color:rgba(255,255,255,.55)}
+.cdnum{display:flex; justify-content:center; align-items:baseline;
   gap:2px; margin-top:8px; font-variant-numeric:tabular-nums}
 .cdnum b{font-size:52px; font-weight:800; letter-spacing:-.02em; line-height:1.1;
   min-width:70px; transition:color .3s}
 .cdnum i{font-style:normal; font-size:34px; font-weight:700; opacity:.35; transform:translateY(-4px)}
-.cdwidget .capt{position:relative; font-size:12px; opacity:.5; margin-top:8px}
+.cdwidget .capt{font-size:12px; color:rgba(255,255,255,.45); margin-top:8px}
 .demo-ff{text-align:right; padding:0 22px 10px}
 .demo-ff button{font-size:11px; color:var(--p-sub); text-decoration:underline; text-underline-offset:3px}
 details.terms{margin:0 16px 14px; background:var(--p-surface); border-radius:18px;
@@ -240,7 +242,7 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .ringwrap{position:relative; width:190px; height:190px; margin:18px auto 6px}
 .ringwrap svg{width:100%; height:100%; transform:rotate(-90deg)}
 .ringwrap .track{fill:none; stroke:rgba(60,60,67,.09); stroke-width:11}
-.ringwrap .prog{fill:none; stroke:url(#ringGrad); stroke-width:11; stroke-linecap:round;
+.ringwrap .prog{fill:none; stroke:var(--p-accent); stroke-width:11; stroke-linecap:round;
   transition:stroke-dashoffset .6s var(--ease)}
 .ringwrap .center{position:absolute; inset:0; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:1px}
@@ -252,7 +254,7 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
   font-size:12px; font-weight:600; color:var(--p-sub)}
 .qstats .pill b{color:var(--p-ink); font-weight:700}
 .enterflash{position:absolute; inset:0; z-index:15; color:#fff;
-  background:linear-gradient(180deg,#3D6BFF,#2448D0);
+  background:var(--p-accent);
   display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center;
   opacity:0; pointer-events:none; transition:opacity .25s var(--ease)}
 .enterflash.on{opacity:1}
@@ -287,8 +289,8 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .seat:active{transform:scale(.85)}
 .seat.taken,.seat.hold{background:rgba(60,60,67,.12); cursor:not-allowed}
 .seat.hold{animation:dim .4s var(--ease)}
-.seat.mine{background:linear-gradient(180deg,#4A78FF,#2E5BFF);
-  box-shadow:0 0 0 2px var(--p-surface), 0 0 0 4px var(--p-accent), 0 3px 8px rgba(46,91,255,.4)}
+.seat.mine{background:var(--p-accent);
+  box-shadow:0 0 0 2px var(--p-surface), 0 0 0 4px var(--p-accent)}
 .seat.blocked{background:transparent; cursor:not-allowed}
 @keyframes dim{0%{filter:brightness(.7)} 100%{filter:brightness(1)}}
 .seat.deny{animation:shake .3s linear}
@@ -349,23 +351,20 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 
 /* ── 화면 6: 완료 (월렛 패스) ───────────────────────────── */
 .doneicon{width:58px; height:58px; margin:22px auto 0; border-radius:50%;
-  background:linear-gradient(180deg,#4A78FF,#2E5BFF); color:#fff;
+  background:var(--p-accent); color:#fff;
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 10px 26px rgba(46,91,255,.4); animation:pop .5s var(--spring)}
+  box-shadow:0 8px 20px rgba(46,91,255,.3); animation:pop .5s var(--spring)}
 .doneicon svg{width:28px; height:28px}
 @keyframes pop{0%{transform:scale(.3); opacity:0} 100%{transform:scale(1); opacity:1}}
 .donetitle{text-align:center; font-size:21px; font-weight:800; letter-spacing:-.02em; margin-top:12px}
 .donesub{text-align:center; font-size:13px; color:var(--p-sub); margin-top:3px}
 .pass{margin:18px 16px 12px; border-radius:24px; overflow:hidden; box-shadow:var(--p-sh);
   background:var(--p-surface)}
-.pass .phead{position:relative; overflow:hidden; color:#fff; padding:18px 20px 16px;
-  background:linear-gradient(165deg,#171A22 0%, #11131A 60%, #0D0F15 100%)}
-.pass .phead .glow{position:absolute; width:220px; height:220px; right:-70px; top:-110px;
-  border-radius:50%; background:radial-gradient(circle, rgba(74,120,255,.5), transparent 62%)}
-.pass .phead .brand{position:relative; display:flex; justify-content:space-between;
-  font-size:11px; font-weight:700; letter-spacing:.1em; opacity:.6}
-.pass .phead .tt{position:relative; font-size:20px; font-weight:800; letter-spacing:-.015em; margin-top:10px}
-.pass .phead .td{position:relative; font-size:12px; opacity:.65; margin-top:3px}
+.pass .phead{overflow:hidden; color:#fff; padding:18px 20px 16px; background:#14161B}
+.pass .phead .brand{display:flex; justify-content:space-between; align-items:center;
+  font-size:12px; font-weight:700; color:rgba(255,255,255,.55)}
+.pass .phead .tt{font-size:20px; font-weight:800; letter-spacing:-.015em; margin-top:10px}
+.pass .phead .td{font-size:12px; color:rgba(255,255,255,.55); margin-top:3px}
 .pfields{display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; padding:18px 20px 16px}
 .pfields .f .fl{font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--p-sub)}
 .pfields .f .fv{font-size:15px; font-weight:700; letter-spacing:-.01em; margin-top:2px}
@@ -390,8 +389,8 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
 .toast.on{transform:none; opacity:1}
 
 /* ── 목업 모드 ─────────────────────────────────────────── */
-.mockgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-  gap:28px; width:100%; max-width:1280px}
+.mockgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:22px; width:100%; max-width:1420px}
 .mockcell{display:flex; flex-direction:column; gap:10px; cursor:pointer}
 .mockcell .cap{display:flex; gap:10px; align-items:baseline}
 .mockcell .cap .no{font-size:12px; color:var(--accent); font-variant-numeric:tabular-nums}
@@ -429,8 +428,8 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
       <div class="pal">
         <span class="sw" style="background:#F2F3F7"><i>bg</i></span>
         <span class="sw" style="background:#FFFFFF"><i>surface</i></span>
-        <span class="sw" style="background:linear-gradient(165deg,#171A22,#0D0F15)"><i>widget</i></span>
-        <span class="sw" style="background:linear-gradient(180deg,#4A78FF,#2E5BFF)"><i>brand</i></span>
+        <span class="sw" style="background:#14161B"><i>widget</i></span>
+        <span class="sw" style="background:#2E5BFF"><i>brand</i></span>
         <span class="sw" style="background:#FF453A"><i>danger</i></span>
       </div>
       <div class="type-spec">
@@ -441,9 +440,10 @@ details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); li
     </div>
 
     <p class="note">
-      정보 구조는 한국 티켓팅 문법 그대로, 표면을 iOS 위젯 톤으로 올렸습니다 —
-      프로스티드 블러 바, 22px 스쿼클 카드 + 깊은 그림자, 다크 위젯(카운트다운),
-      액티비티 링(대기열), 다이나믹 아일랜드형 선점 타이머, 월렛 패스(티켓).
+      정보 구조는 한국 티켓팅 문법 그대로, 표면은 iOS 위젯 톤 — 프로스티드 바,
+      22px 스쿼클 카드 + 깊은 그림자, 플랫 다크 위젯(카운트다운), 액티비티 링(대기열),
+      아일랜드형 선점 타이머, 월렛 패스(티켓). 그라디언트·글로우 없이 단색 면과
+      그림자로만 깊이를 만듭니다.
       상세: <span style="font-family:var(--mono); font-size:11px">docs/design/design-foundation.md</span>
     </p>
     <button class="reset" id="btnReset">시뮬레이션 리셋</button>
@@ -537,8 +537,7 @@ home(body,root,live){
     <div class="homesub">놓치면 안 되는 오픈, 한 곳에서</div>
     <button class="bigbanner" id="goDetail">
       <div class="art widget-dark" style="border-radius:0">
-        <span class="glow"></span><span class="glow g2"></span>
-        <div class="lab">SINGLE NIGHT</div>
+        <div class="lab">단독 공연</div>
         <div class="tt">2026 티켓러시 라이브</div>
         <div class="dd">2026.10.17 (토) 19:00 · 올림픽공원 체조경기장</div>
       </div>
@@ -577,7 +576,7 @@ home(body,root,live){
 detail(body,root,live){
   body.innerHTML=`
     <div class="showhero">
-      <div class="poster"><span class="glow"></span><b>2026<br>티켓러시<br>라이브</b><span>TICKET RUSH LIVE</span></div>
+      <div class="poster"><b>2026<br>티켓러시<br>라이브</b><span>10.17 (토) 19:00</span></div>
       <div class="hinfo">
         <span><span class="badge blue">단독판매</span> <span class="badge gray">1인 1매</span></span>
         <h1>2026 티켓러시 라이브</h1>
@@ -591,8 +590,6 @@ detail(body,root,live){
       <span class="pick">${svgCheckS}</span>
     </div>
     <div class="cdwidget widget-dark" id="board">
-      <span class="glow" style="right:-70px; top:-120px"></span>
-      <span class="glow g2" style="left:-80px; bottom:-140px"></span>
       <div class="lab">예매 오픈까지</div>
       <div class="cdnum" id="cdLine"><b>26</b><i>:</i><b>14</b><i>:</i><b>09</b></div>
       <div class="capt">오픈과 동시에 대기열이 시작됩니다</div>
@@ -634,9 +631,6 @@ queue(body,root,live){
       <div class="qlab">나의 대기 순서</div>
       <div class="ringwrap">
         <svg viewBox="0 0 120 120">
-          <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#7EDEFF"/><stop offset="1" stop-color="#2E5BFF"/>
-          </linearGradient></defs>
           <circle class="track" cx="60" cy="60" r="54"/>
           <circle class="prog" id="ring" cx="60" cy="60" r="54"
             stroke-dasharray="${C}" stroke-dashoffset="${C*0.98}"/>
@@ -822,10 +816,10 @@ done(body,root,live){
   body.innerHTML=`
     <div class="doneicon">${svgCheck}</div>
     <div class="donetitle">예매가 완료되었습니다</div>
-    <div class="donesub">Apple 지갑에 추가하듯, 내 티켓에서 언제든 확인할 수 있어요</div>
+    <div class="donesub">내 티켓에서 언제든 확인할 수 있어요</div>
     <div class="pass">
-      <div class="phead"><span class="glow"></span>
-        <div class="brand"><span>TICKET RUSH</span><span>ADMIT ONE</span></div>
+      <div class="phead">
+        <div class="brand"><span>티켓러시</span><span>모바일 티켓</span></div>
         <div class="tt">2026 티켓러시 라이브</div>
         <div class="td">올림픽공원 체조경기장</div>
       </div>

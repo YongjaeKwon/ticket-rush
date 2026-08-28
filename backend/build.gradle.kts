@@ -20,6 +20,8 @@ repositories {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.5")
+        // Boot 4 BOM은 Testcontainers 버전을 관리하지 않는다
+        mavenBom("org.testcontainers:testcontainers-bom:1.21.3")
     }
 }
 
@@ -40,6 +42,9 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-mysql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Boot 4에서 TestRestTemplate는 별도 모듈로 분리됨 (RestTemplateBuilder는 restclient 모듈)
+    testImplementation("org.springframework.boot:spring-boot-resttestclient")
+    testImplementation("org.springframework.boot:spring-boot-restclient")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     testImplementation("org.testcontainers:mysql")

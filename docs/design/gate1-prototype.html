@@ -4,48 +4,46 @@
 <style>
 /* ── 셸 토큰: 라이트 기본, 뷰어 테마 대응 ─────────────────── */
 :root{
-  --bg:#F4F6F8; --surface:#FFFFFF; --ink:#191F28; --sub:#6B7684;
-  --line:#E5E8EB; --line-strong:#D1D6DB;
-  --accent:#335CFF; --accent-press:#2749D6; --on-accent:#FFFFFF;
-  --danger:#F04452;
+  --bg:#F2F3F7; --surface:#FFFFFF; --ink:#16181D; --sub:#8A8F98;
+  --line:rgba(60,60,67,.12); --line-strong:rgba(60,60,67,.24);
+  --accent:#2E5BFF; --accent-press:#2448D0; --on-accent:#FFFFFF;
+  --danger:#FF453A;
+  --card-sh:0 1px 2px rgba(16,19,25,.04), 0 12px 32px rgba(16,19,25,.08);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#101216; --surface:#1B1E24; --ink:#E9EBEE; --sub:#8B95A1;
-    --line:#2A2E36; --line-strong:#3A3F49;
-    --accent:#5B7CFF; --accent-press:#4361E8; --on-accent:#FFFFFF;
-    --danger:#FF6B76;
+    --bg:#0D0F13; --surface:#191C22; --ink:#EBEDF0; --sub:#8A919C;
+    --line:rgba(235,237,240,.12); --line-strong:rgba(235,237,240,.24);
+    --accent:#5B84FF; --accent-press:#4468E8; --on-accent:#FFFFFF;
+    --danger:#FF6B61;
+    --card-sh:0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#101216; --surface:#1B1E24; --ink:#E9EBEE; --sub:#8B95A1;
-  --line:#2A2E36; --line-strong:#3A3F49;
-  --accent:#5B7CFF; --accent-press:#4361E8; --on-accent:#FFFFFF;
-  --danger:#FF6B76;
+  --bg:#0D0F13; --surface:#191C22; --ink:#EBEDF0; --sub:#8A919C;
+  --line:rgba(235,237,240,.12); --line-strong:rgba(235,237,240,.24);
+  --accent:#5B84FF; --accent-press:#4468E8; --on-accent:#FFFFFF;
+  --danger:#FF6B61;
+  --card-sh:0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box; margin:0; padding:0}
 :root{
   --ease:cubic-bezier(.16,1,.3,1);
-  --body:"Pretendard Variable",Pretendard,"Noto Sans KR",system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.4,.44,1);
+  --body:"Pretendard Variable",Pretendard,"Noto Sans KR",-apple-system,system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 html,body{height:100%}
-body{
-  background:var(--bg); color:var(--ink);
-  font-family:var(--body); font-size:15px; line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
+body{background:var(--bg); color:var(--ink); font-family:var(--body);
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased}
 button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
-button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .num{font-variant-numeric:tabular-nums}
 
-/* ── 레이아웃: 사이드바 + 스테이지 ───────────────────────── */
+/* ── 셸 레이아웃 ────────────────────────────────────────── */
 .app{display:grid; grid-template-columns:300px 1fr; min-height:100vh}
-.side{
-  border-right:1px solid var(--line); padding:28px 24px 40px; background:var(--surface);
-  display:flex; flex-direction:column; gap:26px;
-  position:sticky; top:0; height:100vh; overflow-y:auto;
-}
+.side{border-right:1px solid var(--line); padding:28px 24px 40px; background:var(--surface);
+  display:flex; flex-direction:column; gap:26px; position:sticky; top:0; height:100vh; overflow-y:auto}
 .stage{display:flex; flex-direction:column; align-items:center; padding:34px 20px 60px}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
@@ -53,289 +51,357 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
   .stage{padding:22px 8px 48px}
 }
 .mark{font-weight:800; font-size:24px; letter-spacing:-.02em; line-height:1.15}
-.mark small{display:block; font-weight:500; font-size:12px; color:var(--sub); margin-top:4px; letter-spacing:0}
-.side-sec h3{font-size:12px; font-weight:700; color:var(--sub); margin-bottom:12px; letter-spacing:.02em}
+.mark small{display:block; font-weight:500; font-size:12px; color:var(--sub); margin-top:4px}
+.side-sec h3{font-size:12px; font-weight:700; color:var(--sub); margin-bottom:12px}
 .modes{display:flex; background:var(--bg); border-radius:12px; padding:3px}
 .modes button{flex:1; padding:8px 0; font-weight:600; font-size:13px; color:var(--sub); border-radius:9px}
-.modes button.on{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(25,31,40,.1)}
+.modes button.on{background:var(--surface); color:var(--ink); box-shadow:0 1px 4px rgba(16,19,25,.12)}
 .steps{display:flex; flex-direction:column}
 .steps button{display:flex; align-items:center; gap:10px; text-align:left; padding:9px 2px; border-bottom:1px solid var(--line)}
 .steps .no{font-size:12px; color:var(--sub); font-variant-numeric:tabular-nums; width:18px}
 .steps .nm{font-weight:500; font-size:14px}
 .steps button.on .no,.steps button.on .nm{color:var(--accent); font-weight:700}
 .pal{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:22px}
-.pal .sw{aspect-ratio:1; border-radius:8px; border:1px solid var(--line); position:relative}
+.pal .sw{aspect-ratio:1; border-radius:10px; border:1px solid var(--line); position:relative}
 .pal .sw i{position:absolute; left:0; right:0; bottom:-18px; font-style:normal;
   font-size:9px; color:var(--sub); text-align:center; white-space:nowrap; font-family:var(--mono)}
-.type-spec{border:1px solid var(--line); border-radius:12px; padding:14px; display:grid; gap:6px}
-.type-spec .t1{font-weight:800; font-size:20px; letter-spacing:-.01em}
+.type-spec{border:1px solid var(--line); border-radius:14px; padding:14px; display:grid; gap:6px}
+.type-spec .t1{font-weight:800; font-size:20px; letter-spacing:-.02em}
 .type-spec .t2{font-size:13px; color:var(--sub)}
 .type-spec .t3{font-family:var(--mono); font-size:12px; color:var(--sub)}
 .side .note{font-size:12px; color:var(--sub); line-height:1.6}
-.side .reset{margin-top:auto; background:var(--bg); border-radius:10px; padding:10px; font-weight:600; font-size:13px; color:var(--sub)}
+.side .reset{margin-top:auto; background:var(--bg); border-radius:12px; padding:10px;
+  font-weight:600; font-size:13px; color:var(--sub)}
 .side .reset:hover{color:var(--ink)}
+.stagehead{width:100%; max-width:1280px; margin-bottom:22px; display:flex;
+  justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap}
+.stagehead h2{font-weight:800; font-size:20px; letter-spacing:-.01em}
+.stagehead .hint{font-size:13px; color:var(--sub)}
 
-/* ── 폰 프레임 (내부 라이트 고정 — 한국 앱 문법) ─────────── */
+/* ── 폰 프레임 (iPhone 톤) ──────────────────────────────── */
 .phone{
-  width:390px; max-width:100%; height:800px; border:1px solid var(--line-strong);
-  border-radius:20px; background:#F4F6F8; color:#191F28; overflow:hidden;
-  position:relative; display:flex; flex-direction:column; flex:none;
-  font-family:var(--body);
+  width:390px; max-width:100%; height:820px; border-radius:44px; overflow:hidden;
+  background:#F2F3F7; color:#16181D; position:relative; display:flex; flex-direction:column;
+  flex:none; font-family:var(--body);
+  border:1px solid rgba(16,19,25,.12);
+  box-shadow:0 2px 6px rgba(16,19,25,.06), 0 24px 60px rgba(16,19,25,.16);
 }
-.phone,.phone *{--p-bg:#F4F6F8; --p-surface:#FFFFFF; --p-ink:#191F28; --p-sub:#6B7684;
-  --p-line:#E5E8EB; --p-strong:#D1D6DB; --p-accent:#335CFF; --p-press:#2749D6;
-  --p-on:#FFFFFF; --p-danger:#F04452; --p-dangerbg:#FDEBEC}
-@media (max-width:480px){ .phone{height:min(800px, calc(100vh - 150px)); border-radius:0; border-left:0; border-right:0} }
+.phone,.phone *{--p-bg:#F2F3F7; --p-surface:#FFFFFF; --p-ink:#16181D; --p-sub:#8A8F98;
+  --p-line:rgba(60,60,67,.12); --p-strong:rgba(60,60,67,.26);
+  --p-accent:#2E5BFF; --p-press:#2448D0; --p-on:#FFFFFF;
+  --p-danger:#FF453A; --p-dangerbg:#FFECEB;
+  --p-glass:rgba(255,255,255,.72);
+  --p-sh:0 1px 2px rgba(16,19,25,.04), 0 10px 28px rgba(16,19,25,.09)}
+@media (max-width:480px){ .phone{height:min(820px, calc(100vh - 150px)); border-radius:0; border:0} }
 
-/* 앱 헤더 */
-.pbar{flex:none; display:flex; align-items:center; gap:8px; height:52px;
-  padding:0 16px; background:var(--p-surface); border-bottom:1px solid var(--p-line)}
-.pbar .back{width:28px; height:28px; display:flex; align-items:center; justify-content:center;
-  margin-left:-6px; border-radius:8px; color:var(--p-ink)}
-.pbar .back:active{background:var(--p-bg)}
+/* iOS 상태바 + 프로스티드 헤더 */
+.statusbar{flex:none; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 26px 0; font-size:14px; font-weight:700; letter-spacing:0;
+  position:relative; z-index:12}
+.statusbar .icons{display:flex; gap:5px; align-items:center}
+.statusbar svg{height:12px; display:block}
+.pbar{flex:none; display:flex; align-items:center; gap:8px; min-height:48px;
+  padding:4px 16px 0; position:relative; z-index:12}
+.pbar .back{width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  margin-left:-8px; border-radius:50%; color:var(--p-accent)}
+.pbar .back:active{background:rgba(46,91,255,.1)}
 .pbar .tit{font-weight:700; font-size:17px; letter-spacing:-.01em}
 .pbar .spacer{flex:1}
-.pbar .stepno{font-size:12px; color:var(--p-sub); font-variant-numeric:tabular-nums}
+.pbar .stepno{font-size:12px; font-weight:600; color:var(--p-sub); font-variant-numeric:tabular-nums;
+  background:var(--p-surface); border-radius:999px; padding:3px 10px; box-shadow:0 1px 3px rgba(16,19,25,.07)}
+.headwrap{flex:none; background:var(--p-glass); backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6); border-bottom:1px solid var(--p-line)}
 .pbody{flex:1; overflow-y:auto; overflow-x:hidden; position:relative; background:var(--p-bg);
   display:flex; flex-direction:column; scrollbar-width:none}
 .pbody::-webkit-scrollbar{display:none}
 
-/* 공통 */
-.card{background:var(--p-surface); border-radius:16px; margin:0 16px 12px;
-  box-shadow:0 1px 3px rgba(25,31,40,.05)}
-.badge{display:inline-flex; align-items:center; border-radius:6px; font-weight:700; font-size:11px;
-  padding:3px 7px; letter-spacing:0}
-.badge.blue{background:#EAEFFF; color:#335CFF}
+/* 공통 부품 */
+.card{background:var(--p-surface); border-radius:22px; margin:0 16px 14px; box-shadow:var(--p-sh)}
+.badge{display:inline-flex; align-items:center; border-radius:999px; font-weight:700;
+  font-size:11px; padding:4px 9px}
+.badge.blue{background:rgba(46,91,255,.1); color:var(--p-accent)}
 .badge.red{background:var(--p-dangerbg); color:var(--p-danger)}
-.badge.gray{background:#F2F4F6; color:#6B7684}
-.cta{display:block; width:100%; padding:16px; border-radius:14px;
-  background:var(--p-accent); color:var(--p-on); font-weight:700; font-size:16px;
-  transition:transform .12s var(--ease), background .12s var(--ease)}
-.cta:active{transform:scale(.985); background:var(--p-press)}
-.cta[disabled]{background:#E5E8EB; color:#8B95A1; cursor:not-allowed}
-.ctabar{flex:none; padding:10px 16px calc(12px + env(safe-area-inset-bottom));
-  background:var(--p-surface); border-top:1px solid var(--p-line)}
-.rows{padding:4px 16px}
+.badge.gray{background:rgba(60,60,67,.08); color:var(--p-sub)}
+.cta{display:block; width:100%; padding:16px; border-radius:18px; color:var(--p-on);
+  font-weight:700; font-size:16px; letter-spacing:-.01em;
+  background:linear-gradient(180deg,#4A78FF 0%, #2E5BFF 100%);
+  box-shadow:0 1px 2px rgba(16,19,25,.08), 0 8px 22px rgba(46,91,255,.34),
+    inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .16s var(--spring), filter .12s}
+.cta:active{transform:scale(.97); filter:brightness(.94)}
+.cta[disabled]{background:rgba(60,60,67,.14); color:var(--p-sub); box-shadow:none; cursor:not-allowed}
+.ctabar{flex:none; padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  background:var(--p-glass); backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6); border-top:1px solid var(--p-line)}
+.rows{padding:4px 18px}
 .row{display:flex; justify-content:space-between; align-items:baseline; gap:12px;
-  padding:11px 0; font-size:14px}
+  padding:12px 0; font-size:14px}
 .row+.row{border-top:1px solid var(--p-line)}
 .row .k{color:var(--p-sub)}
-.row .v{font-weight:500; text-align:right}
-.notebox{background:#F2F4F6; border-radius:12px; margin:0 16px 12px; padding:13px 15px;
-  font-size:12px; color:#6B7684; line-height:1.65}
-.notebox b{color:#4E5968; font-weight:600}
-.sechead{display:flex; align-items:baseline; justify-content:space-between; padding:18px 18px 10px}
-.sechead h2{font-size:17px; font-weight:700; letter-spacing:-.01em}
-.sechead .more{font-size:12px; color:var(--p-sub)}
+.row .v{font-weight:600; text-align:right}
+.notebox{border-radius:16px; margin:0 16px 14px; padding:13px 16px;
+  background:rgba(60,60,67,.05); font-size:12px; color:var(--p-sub); line-height:1.65}
+.notebox b{color:var(--p-ink); font-weight:600}
+.sechead{display:flex; align-items:baseline; justify-content:space-between; padding:16px 20px 10px}
+.sechead h2{font-size:17px; font-weight:700; letter-spacing:-.02em}
+.sechead .more{font-size:13px; font-weight:500; color:var(--p-accent)}
 
-/* 하단 탭바 (목록 화면) */
-.tabbar{flex:none; display:flex; background:var(--p-surface); border-top:1px solid var(--p-line);
-  padding:6px 8px calc(8px + env(safe-area-inset-bottom))}
+/* 다크 위젯 카드 (카운트다운·월렛 헤더 공용 아트) */
+.widget-dark{position:relative; overflow:hidden; color:#fff; border-radius:22px;
+  background:linear-gradient(165deg,#171A22 0%, #11131A 60%, #0D0F15 100%)}
+.widget-dark .glow{position:absolute; width:240px; height:240px; border-radius:50%;
+  filter:blur(4px); pointer-events:none;
+  background:radial-gradient(circle, rgba(74,120,255,.5), transparent 62%)}
+.widget-dark .glow.g2{background:radial-gradient(circle, rgba(126,222,255,.24), transparent 60%)}
+.widget-dark.urgent .glow{background:radial-gradient(circle, rgba(255,69,58,.55), transparent 62%)}
+
+/* 탭바 (프로스티드) */
+.tabbar{flex:none; display:flex; background:var(--p-glass);
+  backdrop-filter:blur(18px) saturate(1.6); -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  border-top:1px solid var(--p-line); padding:8px 8px calc(16px + env(safe-area-inset-bottom))}
 .tabbar button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-  padding:5px 0; font-size:10px; font-weight:500; color:#B0B8C1}
-.tabbar button.on{color:var(--p-ink)}
-.tabbar svg{width:22px; height:22px}
+  padding:5px 0; font-size:10px; font-weight:600; color:#AEB3BC}
+.tabbar button.on{color:var(--p-accent)}
+.tabbar svg{width:23px; height:23px}
 
 /* ── 화면 1: 목록 ───────────────────────────────────────── */
-.homehead{display:flex; align-items:center; justify-content:space-between; padding:16px 18px 4px}
-.homehead h1{font-size:22px; font-weight:800; letter-spacing:-.02em}
-.homehead svg{width:22px; height:22px; color:var(--p-ink)}
-.bigbanner{display:block; width:calc(100% - 32px); margin:12px 16px 4px; text-align:left;
-  border-radius:16px; overflow:hidden; background:var(--p-surface);
-  box-shadow:0 1px 3px rgba(25,31,40,.06); transition:transform .15s var(--ease)}
-.bigbanner:active{transform:scale(.99)}
-.bigbanner .art{position:relative; aspect-ratio:16/9; background:
-  linear-gradient(160deg,#16181D 0%,#23262E 55%,#2C3350 100%); color:#fff;
-  display:flex; flex-direction:column; justify-content:flex-end; padding:18px}
-.bigbanner .art .glow{position:absolute; right:-30px; top:-40px; width:190px; height:190px;
-  border-radius:50%; background:radial-gradient(circle,rgba(91,124,255,.55),transparent 65%)}
-.bigbanner .art .tt{font-size:24px; font-weight:800; line-height:1.2; letter-spacing:-.01em; position:relative}
-.bigbanner .art .dd{font-size:12px; opacity:.75; margin-top:4px; position:relative}
-.bigbanner .meta{display:flex; align-items:center; justify-content:space-between; padding:13px 16px}
-.bigbanner .meta .l{display:flex; flex-direction:column; gap:2px}
-.bigbanner .meta .venue{font-size:13px; color:var(--p-sub)}
-.bigbanner .meta .open{font-size:13px; font-weight:600}
-.openlist{padding-bottom:4px}
-.openlist .item{display:flex; align-items:center; gap:12px; padding:13px 16px}
+.hometitle{padding:8px 20px 2px; font-size:30px; font-weight:800; letter-spacing:-.025em}
+.homesub{padding:0 20px 12px; font-size:13px; color:var(--p-sub)}
+.bigbanner{display:block; width:calc(100% - 32px); margin:2px 16px 6px; text-align:left;
+  border-radius:24px; overflow:hidden; background:var(--p-surface); box-shadow:var(--p-sh);
+  transition:transform .18s var(--spring)}
+.bigbanner:active{transform:scale(.975)}
+.bigbanner .art{aspect-ratio:16/9.4; padding:20px; display:flex; flex-direction:column;
+  justify-content:flex-end; border-radius:0}
+.bigbanner .art .glow{right:-60px; top:-90px}
+.bigbanner .art .glow.g2{left:-70px; bottom:-120px; top:auto; right:auto}
+.bigbanner .art .lab{position:relative; font-size:11px; font-weight:700; letter-spacing:.12em;
+  opacity:.6; margin-bottom:6px}
+.bigbanner .art .tt{position:relative; font-size:26px; font-weight:800; line-height:1.16; letter-spacing:-.02em}
+.bigbanner .art .dd{position:relative; font-size:13px; opacity:.72; margin-top:6px}
+.bigbanner .meta{display:flex; align-items:center; justify-content:space-between; padding:14px 18px}
+.bigbanner .meta .open{font-size:14px; font-weight:700; letter-spacing:-.01em}
+.bigbanner .meta .venue{font-size:12px; color:var(--p-sub); margin-top:1px}
+.openlist{padding:2px 0 4px}
+.openlist .item{display:flex; align-items:center; gap:13px; padding:13px 18px}
 .openlist .item+.item{border-top:1px solid var(--p-line)}
-.openlist .thumb{width:44px; height:58px; border-radius:8px; flex:none;
-  background:linear-gradient(150deg,#E8ECF3,#D6DCE6); display:flex; align-items:center;
-  justify-content:center; font-size:11px; font-weight:700; color:#8B95A1}
+.openlist .thumb{width:46px; height:60px; border-radius:12px; flex:none; color:#fff;
+  display:flex; align-items:flex-end; padding:6px; font-size:10px; font-weight:700;
+  background:linear-gradient(160deg,#2A2E39,#171A22)}
 .openlist .info{flex:1; min-width:0}
 .openlist .name{font-size:14px; font-weight:600; letter-spacing:-.01em}
 .openlist .sub2{font-size:12px; color:var(--p-sub); margin-top:1px}
-.openlist .alarm{font-size:12px; font-weight:600; color:var(--p-accent);
-  border:1px solid var(--p-accent); border-radius:8px; padding:6px 10px; flex:none}
+.openlist .alarm{font-size:12px; font-weight:700; color:var(--p-accent);
+  background:rgba(46,91,255,.09); border-radius:999px; padding:7px 12px; flex:none;
+  transition:transform .16s var(--spring)}
+.openlist .alarm:active{transform:scale(.93)}
 
 /* ── 화면 2: 상세 ───────────────────────────────────────── */
-.showhero{display:flex; gap:14px; padding:18px 16px 16px; background:var(--p-surface)}
-.showhero .poster{width:104px; aspect-ratio:3/4; border-radius:12px; flex:none;
-  background:linear-gradient(160deg,#16181D,#2C3350); color:#fff; padding:10px;
-  display:flex; flex-direction:column; justify-content:flex-end}
-.showhero .poster b{font-size:14px; line-height:1.25; font-weight:800}
-.showhero .poster span{font-size:9px; opacity:.7; margin-top:3px}
-.showhero .hinfo{display:flex; flex-direction:column; gap:5px; padding-top:2px}
-.showhero h1{font-size:19px; font-weight:800; letter-spacing:-.015em; line-height:1.3}
+.showhero{display:flex; gap:15px; padding:14px 20px 16px}
+.showhero .poster{width:106px; aspect-ratio:3/4; border-radius:18px; flex:none; color:#fff;
+  padding:11px; display:flex; flex-direction:column; justify-content:flex-end;
+  position:relative; overflow:hidden;
+  background:linear-gradient(165deg,#1B1F29,#10131B); box-shadow:var(--p-sh)}
+.showhero .poster .glow{position:absolute; width:120px; height:120px; right:-40px; top:-40px;
+  border-radius:50%; background:radial-gradient(circle, rgba(74,120,255,.55), transparent 62%)}
+.showhero .poster b{position:relative; font-size:14px; line-height:1.3; font-weight:800}
+.showhero .poster span{position:relative; font-size:9px; opacity:.6; margin-top:3px; letter-spacing:.06em}
+.showhero .hinfo{display:flex; flex-direction:column; gap:6px; padding-top:4px}
+.showhero h1{font-size:20px; font-weight:800; letter-spacing:-.02em; line-height:1.28}
 .showhero .meta{font-size:13px; color:var(--p-sub)}
-.schedcell{display:flex; align-items:center; justify-content:space-between; padding:14px 16px}
-.schedcell .d{display:flex; flex-direction:column; gap:2px}
-.schedcell .date{font-size:15px; font-weight:700}
-.schedcell .seatsleft{font-size:12px; color:var(--p-sub)}
-.schedcell .pick{width:20px; height:20px; border-radius:50%; border:2px solid var(--p-accent);
-  display:flex; align-items:center; justify-content:center; flex:none}
-.schedcell .pick i{width:10px; height:10px; border-radius:50%; background:var(--p-accent)}
-.cdcard{padding:18px 16px; text-align:center}
-.cdcard .lab{font-size:13px; color:var(--p-sub); font-weight:500}
-.cdnum{display:flex; justify-content:center; align-items:baseline; gap:4px; margin-top:8px}
-.cdnum .seg{background:#191F28; color:#fff; border-radius:10px; min-width:52px;
-  padding:10px 6px; font-size:28px; font-weight:800; font-variant-numeric:tabular-nums;
-  transition:background .3s}
-.cdnum .col{font-size:22px; font-weight:800; color:#B0B8C1}
-.cdcard.urgent .seg{background:var(--p-danger)}
-.cdcard .capt{font-size:12px; color:var(--p-sub); margin-top:10px}
-.demo-ff{text-align:right; padding:0 20px 8px}
+.schedcell{display:flex; align-items:center; justify-content:space-between; padding:15px 18px}
+.schedcell .date{font-size:15px; font-weight:700; letter-spacing:-.01em}
+.schedcell .seatsleft{font-size:12px; color:var(--p-sub); margin-top:1px}
+.schedcell .pick{width:22px; height:22px; border-radius:50%; flex:none;
+  background:var(--p-accent); display:flex; align-items:center; justify-content:center; color:#fff}
+.schedcell .pick svg{width:12px; height:12px}
+.cdwidget{margin:0 16px 14px; padding:20px 18px 18px; text-align:center}
+.cdwidget .lab{position:relative; font-size:12px; font-weight:600; letter-spacing:.1em; opacity:.55}
+.cdnum{position:relative; display:flex; justify-content:center; align-items:baseline;
+  gap:2px; margin-top:8px; font-variant-numeric:tabular-nums}
+.cdnum b{font-size:52px; font-weight:800; letter-spacing:-.02em; line-height:1.1;
+  min-width:70px; transition:color .3s}
+.cdnum i{font-style:normal; font-size:34px; font-weight:700; opacity:.35; transform:translateY(-4px)}
+.cdwidget .capt{position:relative; font-size:12px; opacity:.5; margin-top:8px}
+.demo-ff{text-align:right; padding:0 22px 10px}
 .demo-ff button{font-size:11px; color:var(--p-sub); text-decoration:underline; text-underline-offset:3px}
-details.terms{margin:0 16px 12px; background:var(--p-surface); border-radius:16px;
-  box-shadow:0 1px 3px rgba(25,31,40,.05); overflow:hidden}
+details.terms{margin:0 16px 14px; background:var(--p-surface); border-radius:18px;
+  box-shadow:var(--p-sh); overflow:hidden}
 details.terms summary{list-style:none; cursor:pointer; display:flex; justify-content:space-between;
-  align-items:center; padding:14px 16px; font-size:14px; font-weight:600}
+  align-items:center; padding:15px 18px; font-size:14px; font-weight:600}
 details.terms summary::-webkit-details-marker{display:none}
 details.terms summary::after{content:"⌄"; color:var(--p-sub); transition:transform .2s}
 details.terms[open] summary::after{transform:rotate(180deg)}
-details.terms .tbody{padding:0 16px 14px; font-size:12px; color:var(--p-sub); line-height:1.7}
+details.terms .tbody{padding:0 18px 15px; font-size:12px; color:var(--p-sub); line-height:1.7}
 
-/* ── 화면 3: 대기열 ─────────────────────────────────────── */
-.qcard{margin-top:22px; padding:26px 20px 22px; text-align:center}
-.qcard .qlab{font-size:14px; font-weight:600; color:var(--p-sub)}
-.qpos{font-size:56px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums;
-  line-height:1.15; margin-top:4px}
-.qpos small{font-size:22px; font-weight:700; color:var(--p-sub); margin-left:2px}
-.qgauge{height:8px; background:#F2F4F6; border-radius:999px; overflow:hidden; margin:18px 4px 0}
-.qgauge i{display:block; height:100%; width:2%; border-radius:999px; background:var(--p-accent);
-  transition:width .6s var(--ease)}
-.qmeta{display:flex; justify-content:space-between; margin:10px 4px 0; font-size:12px; color:var(--p-sub)}
-.qtips{margin:0 16px}
-.enterflash{position:absolute; inset:0; background:var(--p-accent); color:#fff; z-index:5;
+/* ── 화면 3: 대기열 (액티비티 링) ───────────────────────── */
+.qwidget{margin-top:18px; padding:26px 20px 24px; text-align:center}
+.qwidget .qlab{font-size:13px; font-weight:600; color:var(--p-sub)}
+.ringwrap{position:relative; width:190px; height:190px; margin:18px auto 6px}
+.ringwrap svg{width:100%; height:100%; transform:rotate(-90deg)}
+.ringwrap .track{fill:none; stroke:rgba(60,60,67,.09); stroke-width:11}
+.ringwrap .prog{fill:none; stroke:url(#ringGrad); stroke-width:11; stroke-linecap:round;
+  transition:stroke-dashoffset .6s var(--ease)}
+.ringwrap .center{position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:1px}
+.ringwrap .pos{font-size:40px; font-weight:800; letter-spacing:-.025em; line-height:1.05;
+  font-variant-numeric:tabular-nums}
+.ringwrap .cap{font-size:12px; font-weight:600; color:var(--p-sub)}
+.qstats{display:flex; justify-content:center; gap:8px; margin-top:12px}
+.qstats .pill{background:rgba(60,60,67,.06); border-radius:999px; padding:7px 14px;
+  font-size:12px; font-weight:600; color:var(--p-sub)}
+.qstats .pill b{color:var(--p-ink); font-weight:700}
+.enterflash{position:absolute; inset:0; z-index:15; color:#fff;
+  background:linear-gradient(180deg,#3D6BFF,#2448D0);
   display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center;
   opacity:0; pointer-events:none; transition:opacity .25s var(--ease)}
 .enterflash.on{opacity:1}
-.enterflash .big{font-size:30px; font-weight:800}
+.enterflash .big{font-size:30px; font-weight:800; letter-spacing:-.02em}
 .enterflash small{font-size:13px; opacity:.85}
 
-/* ── 화면 4: 좌석 선택 (라이트 — 한국 좌석맵 문법) ───────── */
-.holdbar{flex:none; display:none; align-items:center; justify-content:space-between;
-  padding:10px 16px; background:var(--p-dangerbg); color:var(--p-danger); font-size:13px; font-weight:600}
-.holdbar .t{font-variant-numeric:tabular-nums; font-weight:800; font-size:15px}
-.holdbar.on{display:flex}
-.stagebox{margin:14px 46px 4px; padding:7px 0; text-align:center; border-radius:8px;
-  background:#E8ECF1; color:#8B95A1; font-size:11px; font-weight:700; letter-spacing:.2em}
-.secrow{display:flex; gap:6px; padding:10px 16px 2px}
-.secrow button{flex:1; padding:8px 0; border-radius:10px; background:var(--p-surface);
-  border:1px solid var(--p-line); font-weight:700; font-size:13px; color:var(--p-sub)}
-.secrow button.on{background:var(--p-ink); border-color:var(--p-ink); color:#fff}
-.secrow button[disabled]{opacity:.45; cursor:not-allowed}
-.secmeta{display:flex; justify-content:space-between; padding:10px 18px 6px; align-items:baseline}
+/* ── 화면 4: 좌석 선택 ─────────────────────────────────── */
+.island{position:absolute; top:10px; left:50%; transform:translate(-50%,-70px); z-index:14;
+  display:flex; align-items:center; gap:9px; background:#101319; color:#fff;
+  border-radius:999px; padding:9px 18px; font-size:13px; font-weight:600; white-space:nowrap;
+  box-shadow:0 8px 24px rgba(16,19,25,.4); transition:transform .4s var(--spring)}
+.island.on{transform:translate(-50%,0)}
+.island .dot{width:7px; height:7px; border-radius:50%; background:var(--p-danger);
+  animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.island .t{font-variant-numeric:tabular-nums; font-weight:800; color:#FF6B61}
+.seg{display:flex; background:rgba(60,60,67,.08); border-radius:12px; padding:3px; margin:12px 16px 4px}
+.seg button{flex:1; padding:8px 0; border-radius:9px; font-weight:700; font-size:13px; color:var(--p-sub)}
+.seg button.on{background:var(--p-surface); color:var(--p-ink); box-shadow:0 1px 4px rgba(16,19,25,.14)}
+.seg button[disabled]{opacity:.4; cursor:not-allowed}
+.stagebox{margin:12px 60px 2px; padding:7px 0; text-align:center; border-radius:999px;
+  background:rgba(60,60,67,.07); color:var(--p-sub); font-size:10px; font-weight:700; letter-spacing:.24em}
+.secmeta{display:flex; justify-content:space-between; padding:10px 22px 6px; align-items:baseline}
 .secmeta .l{font-size:13px; font-weight:600}
-.secmeta .r{font-size:12px; color:var(--p-accent); font-weight:600}
-.seatwrap{padding:6px 16px 10px}
+.secmeta .l span{color:var(--p-sub); font-weight:400}
+.secmeta .r{font-size:12px; color:var(--p-accent); font-weight:700}
+.seatwrap{padding:4px 16px 8px}
 .seatgrid{display:grid; grid-template-columns:repeat(12,1fr); gap:5px;
-  background:var(--p-surface); border-radius:14px; padding:12px;
-  box-shadow:0 1px 3px rgba(25,31,40,.05)}
-.seat{aspect-ratio:1; border-radius:5px; border:0; padding:0; background:#CFDCFF;
-  transition:transform .12s var(--ease), background .18s}
-.seat:active{transform:scale(.9)}
-.seat.taken{background:#E5E8EB; cursor:not-allowed}
-.seat.hold{background:#E5E8EB; cursor:not-allowed; animation:dim .4s var(--ease)}
-.seat.mine{background:var(--p-accent); box-shadow:0 0 0 2px #fff,0 0 0 4px var(--p-accent)}
+  background:var(--p-surface); border-radius:20px; padding:14px; box-shadow:var(--p-sh)}
+.seat{aspect-ratio:1; border-radius:6px; border:0; padding:0; background:#D6E1FF;
+  transition:transform .14s var(--spring), background .18s}
+.seat:active{transform:scale(.85)}
+.seat.taken,.seat.hold{background:rgba(60,60,67,.12); cursor:not-allowed}
+.seat.hold{animation:dim .4s var(--ease)}
+.seat.mine{background:linear-gradient(180deg,#4A78FF,#2E5BFF);
+  box-shadow:0 0 0 2px var(--p-surface), 0 0 0 4px var(--p-accent), 0 3px 8px rgba(46,91,255,.4)}
 .seat.blocked{background:transparent; cursor:not-allowed}
-@keyframes dim{0%{filter:brightness(.75)} 100%{filter:brightness(1)}}
+@keyframes dim{0%{filter:brightness(.7)} 100%{filter:brightness(1)}}
 .seat.deny{animation:shake .3s linear}
 @keyframes shake{25%{transform:translateX(-2px)} 50%{transform:translateX(2px)} 75%{transform:translateX(-1px)}}
-.legend{display:flex; gap:14px; justify-content:center; padding:2px 0 8px; flex-wrap:wrap}
+.legend{display:flex; gap:14px; justify-content:center; padding:4px 0 8px; flex-wrap:wrap}
 .legend span{display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--p-sub)}
-.legend i{width:11px; height:11px; border-radius:3px; display:inline-block; background:#CFDCFF}
-.legend i.tk{background:#E5E8EB}
+.legend i{width:11px; height:11px; border-radius:4px; display:inline-block; background:#D6E1FF}
+.legend i.tk{background:rgba(60,60,67,.12)}
 .legend i.mn{background:var(--p-accent)}
-/* 하단 선택 바 */
 .pickbar{flex:none; display:none; align-items:center; gap:12px;
-  padding:12px 16px calc(14px + env(safe-area-inset-bottom));
-  background:var(--p-surface); border-top:1px solid var(--p-line)}
+  padding:12px 16px calc(18px + env(safe-area-inset-bottom));
+  background:var(--p-glass); backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6); border-top:1px solid var(--p-line)}
 .pickbar.on{display:flex}
 .pickbar .info{flex:1}
-.pickbar .sid{font-size:15px; font-weight:700}
+.pickbar .sid{font-size:15px; font-weight:700; letter-spacing:-.01em}
 .pickbar .spr{font-size:13px; color:var(--p-sub)}
 .pickbar .cta{width:auto; flex:none; padding:13px 22px; font-size:15px}
 
 /* ── 화면 5: 결제 ───────────────────────────────────────── */
-.paymeth{padding:6px 16px 14px; display:grid; gap:8px}
-.paymeth label{display:flex; align-items:center; gap:10px; border:1px solid var(--p-line);
-  border-radius:12px; padding:13px 14px; font-size:14px; font-weight:500; cursor:pointer}
-.paymeth label:has(input:checked){border-color:var(--p-accent); background:#F5F8FF;
-  color:var(--p-accent); font-weight:700}
-.paymeth input{accent-color:#335CFF; width:17px; height:17px}
-.agree{display:flex; align-items:center; gap:9px; padding:14px 16px; font-size:13px}
-.agree input{accent-color:#335CFF; width:17px; height:17px}
-.agree .all{font-weight:700; font-size:14px}
-.agree.subitem{padding:0 16px 12px 42px; color:var(--p-sub); font-size:12px}
-.failsim{display:flex; gap:8px; align-items:center; margin:2px 20px 0; font-size:12px; color:var(--p-sub)}
-.failsim input{accent-color:#F04452; width:15px; height:15px}
-.totalrow{display:flex; justify-content:space-between; align-items:baseline; padding:2px 20px 8px}
+.paymeth{padding:2px 8px 6px}
+.paymeth label{display:flex; align-items:center; gap:11px; padding:13px 12px;
+  font-size:14px; font-weight:500; cursor:pointer; border-radius:14px}
+.paymeth label+label{border-top:1px solid var(--p-line)}
+.paymeth input{appearance:none; width:20px; height:20px; border-radius:50%;
+  border:1.6px solid var(--p-strong); flex:none; display:grid; place-content:center;
+  transition:all .18s}
+.paymeth input:checked{border-color:var(--p-accent); background:var(--p-accent)}
+.paymeth input:checked::after{content:""; width:7px; height:7px; border-radius:50%; background:#fff}
+.paymeth label:has(input:checked){font-weight:700}
+/* iOS 스위치 */
+.switchrow{display:flex; align-items:center; justify-content:space-between;
+  padding:13px 18px; font-size:13px; color:var(--p-sub)}
+.sw{position:relative; width:46px; height:28px; flex:none}
+.sw input{position:absolute; opacity:0; width:100%; height:100%; cursor:pointer; z-index:2; margin:0}
+.sw i{position:absolute; inset:0; border-radius:999px; background:rgba(60,60,67,.18);
+  transition:background .2s}
+.sw i::after{content:""; position:absolute; top:2px; left:2px; width:24px; height:24px;
+  border-radius:50%; background:#fff; box-shadow:0 2px 5px rgba(16,19,25,.25);
+  transition:transform .22s var(--spring)}
+.sw input:checked+i{background:#34C759}
+.sw input:checked+i::after{transform:translateX(18px)}
+.agree{display:flex; align-items:center; gap:10px; padding:14px 18px; font-size:14px; font-weight:700}
+.agree input{appearance:none; width:21px; height:21px; border-radius:50%;
+  border:1.6px solid var(--p-strong); flex:none; display:grid; place-content:center; transition:all .18s}
+.agree input:checked{border-color:var(--p-accent); background:var(--p-accent)}
+.agree input:checked::after{content:""; width:10px; height:6px; border-left:2px solid #fff;
+  border-bottom:2px solid #fff; transform:rotate(-45deg) translate(1px,-1px)}
+.agree-sub{padding:0 18px 13px 49px; font-size:12px; color:var(--p-sub); margin-top:-6px}
+.totalrow{display:flex; justify-content:space-between; align-items:baseline; padding:2px 22px 10px}
 .totalrow .k{font-size:14px; font-weight:600}
-.totalrow .v{font-size:20px; font-weight:800; color:var(--p-danger); font-variant-numeric:tabular-nums}
+.totalrow .v{font-size:22px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
 .payprog{height:3px; margin:0 16px; background:var(--p-line); border-radius:2px; overflow:hidden; opacity:0}
 .payprog i{display:block; height:100%; width:0; background:var(--p-accent)}
 .payprog.on{opacity:1}
 .payprog.on i{animation:fill 1.1s var(--ease) forwards}
 @keyframes fill{to{width:100%}}
 
-/* ── 화면 6: 완료 ───────────────────────────────────────── */
-.doneicon{width:56px; height:56px; margin:26px auto 0; border-radius:50%;
-  background:var(--p-accent); display:flex; align-items:center; justify-content:center;
-  animation:pop .45s var(--ease)}
-.doneicon svg{width:28px; height:28px; color:#fff}
-@keyframes pop{0%{transform:scale(.4); opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1); opacity:1}}
-.donetitle{text-align:center; font-size:20px; font-weight:800; margin-top:12px}
+/* ── 화면 6: 완료 (월렛 패스) ───────────────────────────── */
+.doneicon{width:58px; height:58px; margin:22px auto 0; border-radius:50%;
+  background:linear-gradient(180deg,#4A78FF,#2E5BFF); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 10px 26px rgba(46,91,255,.4); animation:pop .5s var(--spring)}
+.doneicon svg{width:28px; height:28px}
+@keyframes pop{0%{transform:scale(.3); opacity:0} 100%{transform:scale(1); opacity:1}}
+.donetitle{text-align:center; font-size:21px; font-weight:800; letter-spacing:-.02em; margin-top:12px}
 .donesub{text-align:center; font-size:13px; color:var(--p-sub); margin-top:3px}
-.ticket{margin:18px 16px 12px; position:relative; overflow:hidden}
-.ticket .thead{background:linear-gradient(160deg,#16181D,#2C3350); color:#fff;
-  padding:16px; border-radius:16px 16px 0 0}
-.ticket .thead .tt{font-size:18px; font-weight:800}
-.ticket .thead .td{font-size:12px; opacity:.75; margin-top:2px}
-.ticket .tbody{background:var(--p-surface); border-radius:0 0 16px 16px; padding:4px 0 0}
+.pass{margin:18px 16px 12px; border-radius:24px; overflow:hidden; box-shadow:var(--p-sh);
+  background:var(--p-surface)}
+.pass .phead{position:relative; overflow:hidden; color:#fff; padding:18px 20px 16px;
+  background:linear-gradient(165deg,#171A22 0%, #11131A 60%, #0D0F15 100%)}
+.pass .phead .glow{position:absolute; width:220px; height:220px; right:-70px; top:-110px;
+  border-radius:50%; background:radial-gradient(circle, rgba(74,120,255,.5), transparent 62%)}
+.pass .phead .brand{position:relative; display:flex; justify-content:space-between;
+  font-size:11px; font-weight:700; letter-spacing:.1em; opacity:.6}
+.pass .phead .tt{position:relative; font-size:20px; font-weight:800; letter-spacing:-.015em; margin-top:10px}
+.pass .phead .td{position:relative; font-size:12px; opacity:.65; margin-top:3px}
+.pfields{display:grid; grid-template-columns:1fr 1fr; gap:14px 10px; padding:18px 20px 16px}
+.pfields .f .fl{font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--p-sub)}
+.pfields .f .fv{font-size:15px; font-weight:700; letter-spacing:-.01em; margin-top:2px}
+.pfields .f.wide{grid-column:1/-1}
 .perf{position:relative; height:0; border-top:2px dashed var(--p-line); margin:0 14px}
-.perf::before,.perf::after{content:""; position:absolute; top:-10px; width:20px; height:20px;
+.perf::before,.perf::after{content:""; position:absolute; top:-11px; width:22px; height:22px;
   border-radius:50%; background:var(--p-bg)}
-.perf::before{left:-24px} .perf::after{right:-24px}
-.barwrap{display:flex; align-items:stretch; gap:2px; height:48px; margin:14px 20px 6px}
+.perf::before{left:-26px} .perf::after{right:-26px}
+.barwrap{display:flex; align-items:stretch; gap:2px; height:46px; margin:16px 24px 6px}
 .barwrap i{display:block; background:var(--p-ink)}
 .bcode{font-family:var(--mono); font-size:11px; letter-spacing:.26em; text-align:center;
-  color:var(--p-sub); padding-bottom:16px}
+  color:var(--p-sub); padding-bottom:18px}
 
-/* 토스트 (스낵바) */
-.toast{position:absolute; left:16px; right:16px; bottom:100px; z-index:20;
-  background:rgba(25,31,40,.94); color:#fff; border-radius:12px;
-  padding:12px 16px; font-size:13px; transform:translateY(12px); opacity:0;
-  transition:all .25s var(--ease); pointer-events:none}
+/* 토스트 */
+.toast{position:absolute; left:16px; right:16px; bottom:110px; z-index:20;
+  background:rgba(16,19,25,.92); backdrop-filter:blur(10px); color:#fff; border-radius:16px;
+  padding:12px 16px; font-size:13px; transform:translateY(12px) scale(.97); opacity:0;
+  transition:all .3s var(--spring); pointer-events:none;
+  box-shadow:0 10px 30px rgba(16,19,25,.35)}
 .toast .code{font-family:var(--mono); font-size:10px; color:#FF8A93; display:block;
   letter-spacing:.04em; margin-bottom:2px}
 .toast.on{transform:none; opacity:1}
 
 /* ── 목업 모드 ─────────────────────────────────────────── */
-.mockgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-  gap:26px; width:100%; max-width:1280px}
+.mockgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:28px; width:100%; max-width:1280px}
 .mockcell{display:flex; flex-direction:column; gap:10px; cursor:pointer}
 .mockcell .cap{display:flex; gap:10px; align-items:baseline}
 .mockcell .cap .no{font-size:12px; color:var(--accent); font-variant-numeric:tabular-nums}
 .mockcell .cap .nm{font-weight:700; font-size:14px}
-.mockframe{width:100%; aspect-ratio:390/800; overflow:hidden; border:1px solid var(--line);
-  border-radius:14px; position:relative; background:#F4F6F8}
+.mockframe{width:100%; aspect-ratio:390/820; overflow:hidden; border-radius:26px;
+  position:relative; background:#F2F3F7; border:1px solid var(--line);
+  box-shadow:0 10px 30px rgba(16,19,25,.1)}
 .mockframe .phone{position:absolute; top:0; left:0; transform-origin:top left;
-  pointer-events:none; border:0; border-radius:0; height:800px; width:390px}
+  pointer-events:none; border:0; border-radius:0; box-shadow:none; height:820px; width:390px}
 .hidden{display:none !important}
-.stagehead{width:100%; max-width:1280px; margin-bottom:22px; display:flex;
-  justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap}
-.stagehead h2{font-weight:800; font-size:20px; letter-spacing:-.01em}
-.stagehead .hint{font-size:13px; color:var(--sub)}
 @media (prefers-reduced-motion: reduce){
   *{transition-duration:.01ms !important; animation-duration:.01ms !important}
 }
@@ -343,7 +409,7 @@ details.terms .tbody{padding:0 16px 14px; font-size:12px; color:var(--p-sub); li
 
 <div class="app">
   <aside class="side">
-    <div class="mark">티켓러시<small>GATE · 디자인 파운데이션 v2 (한국식)</small></div>
+    <div class="mark">티켓러시<small>GATE · 디자인 파운데이션 v3 (한국식 × iOS 위젯)</small></div>
 
     <div class="side-sec">
       <h3>모드</h3>
@@ -361,23 +427,23 @@ details.terms .tbody{padding:0 16px 14px; font-size:12px; color:var(--p-sub); li
     <div class="side-sec">
       <h3>토큰</h3>
       <div class="pal">
-        <span class="sw" style="background:#F4F6F8"><i>bg</i></span>
+        <span class="sw" style="background:#F2F3F7"><i>bg</i></span>
         <span class="sw" style="background:#FFFFFF"><i>surface</i></span>
-        <span class="sw" style="background:#191F28"><i>ink</i></span>
-        <span class="sw" style="background:#335CFF"><i>brand</i></span>
-        <span class="sw" style="background:#F04452"><i>danger</i></span>
+        <span class="sw" style="background:linear-gradient(165deg,#171A22,#0D0F15)"><i>widget</i></span>
+        <span class="sw" style="background:linear-gradient(180deg,#4A78FF,#2E5BFF)"><i>brand</i></span>
+        <span class="sw" style="background:#FF453A"><i>danger</i></span>
       </div>
       <div class="type-spec">
         <div class="t1">잔여 1,326석</div>
-        <div class="t2">본문 Pretendard 15/1.6 · 무게로 위계를 만듭니다</div>
+        <div class="t2">Pretendard 무게 위계 · 큰 숫자는 -0.02em</div>
         <div class="t3">TR-2026-001284</div>
       </div>
     </div>
 
     <p class="note">
-      인터파크 계열의 정보 구조(회차 선택·유의사항·수수료·대기 안내)에
-      국내 앱 표준 비주얼(흰 카드 16px, 미묘한 그림자, 뱃지, 하단 고정 CTA)을 얹었습니다.
-      브랜드 블루 하나 + 위험/긴급 레드, 나머지는 무채색.
+      정보 구조는 한국 티켓팅 문법 그대로, 표면을 iOS 위젯 톤으로 올렸습니다 —
+      프로스티드 블러 바, 22px 스쿼클 카드 + 깊은 그림자, 다크 위젯(카운트다운),
+      액티비티 링(대기열), 다이나믹 아일랜드형 선점 타이머, 월렛 패스(티켓).
       상세: <span style="font-family:var(--mono); font-size:11px">docs/design/design-foundation.md</span>
     </p>
     <button class="reset" id="btnReset">시뮬레이션 리셋</button>
@@ -401,15 +467,16 @@ const KRW=n=>n.toLocaleString("ko-KR");
 const pad=(n,w=2)=>String(n).padStart(w,"0");
 const STEPS=[["1","공연 목록"],["2","공연 상세"],["3","대기열"],["4","좌석 선택"],["5","결제"],["6","예매 완료"]];
 const SCREENS=["home","detail","queue","seats","pay","done"];
-const TITLES={home:"티켓",detail:"공연 상세",queue:"대기열",seats:"좌석 선택",pay:"결제",done:"예매 완료"};
+const TITLES={home:"",detail:"공연 상세",queue:"대기열",seats:"좌석 선택",pay:"결제",done:"예매 완료"};
 const PRICE=132000, FEE=2000;
 
-const svgSearch='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
-const svgBack='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+const svgBack='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
 const svgCheck='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>';
-const svgHome='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>';
-const svgTicket='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M13 6v12" stroke-dasharray="2 3"/></svg>';
-const svgMy='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>';
+const svgCheckS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4.5 4.5L19 7"/></svg>';
+const svgHome='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>';
+const svgTicket='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M13 6v12" stroke-dasharray="2 3"/></svg>';
+const svgMy='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>';
+const statusIcons='<svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg viewBox="0 0 16 11" fill="currentColor"><path d="M8 9.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM8 6c1.9 0 3.6.8 4.8 2l-1.4 1.4A4.8 4.8 0 0 0 8 8a4.8 4.8 0 0 0-3.4 1.4L3.2 8A6.8 6.8 0 0 1 8 6zm0-4c3 0 5.7 1.2 7.7 3.2l-1.4 1.4A8.8 8.8 0 0 0 8 4a8.8 8.8 0 0 0-6.3 2.6L.3 5.2A10.8 10.8 0 0 1 8 2z" transform="translate(0 -1.5)"/></svg><svg viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="currentColor"/><path d="M23.5 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>';
 
 /* ── 전역 상태 ── */
 const state={};
@@ -435,12 +502,11 @@ function seedSeats(){
   return arr;
 }
 const seatId=i=>`A구역 ${Math.floor(i/12)+1}열 ${i%12+1}번`;
-const seatCode=i=>`A-${pad(Math.floor(i/12)+1)}-${pad(i%12+1)}`;
 
 function toast(root, code, msg){
   let t=$(".toast",root);
   if(!t){t=document.createElement("div"); t.className="toast"; root.appendChild(t)}
-  t.innerHTML=`<span class="code">${code}</span>${msg}`;
+  t.innerHTML=(code?`<span class="code">${code}</span>`:"")+msg;
   t.classList.remove("on"); void t.offsetWidth; t.classList.add("on");
   later(()=>t.classList.remove("on"),2400);
 }
@@ -449,14 +515,15 @@ function toast(root, code, msg){
 function render(root, screen, live){
   root.innerHTML="";
   const i=SCREENS.indexOf(screen);
-  const bar=document.createElement("div"); bar.className="pbar";
-  bar.innerHTML= screen==="home"
-    ? `<span class="tit">티켓러시</span><span class="spacer"></span><span class="stepno">1 / 6</span>`
-    : `<button class="back" aria-label="뒤로">${svgBack}</button><span class="tit">${TITLES[screen]}</span><span class="spacer"></span><span class="stepno">${i+1} / 6</span>`;
-  root.appendChild(bar);
-  if(live && screen!=="home"){
-    $(".back",bar).onclick=()=>go(SCREENS[Math.max(0,i-1)]);
-  }
+  const head=document.createElement("div"); head.className="headwrap";
+  head.innerHTML=`
+    <div class="statusbar"><span class="num">9:41</span><span class="icons">${statusIcons}</span></div>
+    <div class="pbar">${screen==="home"
+      ?`<span class="tit" style="font-size:19px">티켓러시</span>`
+      :`<button class="back" aria-label="뒤로">${svgBack}</button><span class="tit">${TITLES[screen]}</span>`}
+      <span class="spacer"></span><span class="stepno">${i+1} / 6</span></div>`;
+  root.appendChild(head);
+  if(live && screen!=="home") $(".back",head).onclick=()=>go(SCREENS[Math.max(0,i-1)]);
   const body=document.createElement("div"); body.className="pbody scr-"+screen;
   root.appendChild(body);
   RENDER[screen](body, root, live);
@@ -466,15 +533,18 @@ const RENDER={
 /* 1 ── 목록 */
 home(body,root,live){
   body.innerHTML=`
-    <div class="homehead"><h1>지금 예매</h1>${svgSearch}</div>
+    <div class="hometitle">지금 예매</div>
+    <div class="homesub">놓치면 안 되는 오픈, 한 곳에서</div>
     <button class="bigbanner" id="goDetail">
-      <div class="art"><span class="glow"></span>
+      <div class="art widget-dark" style="border-radius:0">
+        <span class="glow"></span><span class="glow g2"></span>
+        <div class="lab">SINGLE NIGHT</div>
         <div class="tt">2026 티켓러시 라이브</div>
         <div class="dd">2026.10.17 (토) 19:00 · 올림픽공원 체조경기장</div>
       </div>
       <div class="meta">
-        <div class="l"><span class="open">9.7 (일) 11:00 예매 오픈</span>
-        <span class="venue">전석 ${KRW(PRICE)}원 · 1인 1매</span></div>
+        <div><div class="open">9.7 (일) 11:00 예매 오픈</div>
+        <div class="venue">전석 ${KRW(PRICE)}원 · 1인 1매</div></div>
         <span class="badge red">오픈 D-1</span>
       </div>
     </button>
@@ -484,16 +554,16 @@ home(body,root,live){
         <div class="thumb">겨울</div>
         <div class="info"><div class="name">겨울, 소극장 시리즈</div>
         <div class="sub2">12.5 (금) 오픈 · 대학로 아트홀</div></div>
-        <button class="alarm">오픈 알림</button>
+        <button class="alarm">알림 받기</button>
       </div>
       <div class="item">
         <div class="thumb">신년</div>
         <div class="info"><div class="name">신년 카운트다운 공연</div>
         <div class="sub2">12.31 (수) 오픈 · 잠실 실내체육관</div></div>
-        <button class="alarm">오픈 알림</button>
+        <button class="alarm">알림 받기</button>
       </div>
     </div>
-    <div class="notebox"><b>안내</b> · 본 서비스는 계정당 1매만 예매할 수 있는 선착순 예매를 지원합니다.</div>
+    <div class="notebox"><b>안내</b> · 계정당 1매만 예매할 수 있는 선착순 예매 서비스입니다.</div>
     <div style="flex:1"></div>
     <div class="tabbar">
       <button class="on">${svgHome}홈</button>
@@ -507,7 +577,7 @@ home(body,root,live){
 detail(body,root,live){
   body.innerHTML=`
     <div class="showhero">
-      <div class="poster"><b>2026<br>티켓러시<br>라이브</b><span>TICKET RUSH LIVE</span></div>
+      <div class="poster"><span class="glow"></span><b>2026<br>티켓러시<br>라이브</b><span>TICKET RUSH LIVE</span></div>
       <div class="hinfo">
         <span><span class="badge blue">단독판매</span> <span class="badge gray">1인 1매</span></span>
         <h1>2026 티켓러시 라이브</h1>
@@ -515,19 +585,16 @@ detail(body,root,live){
         <span class="meta">2026.10.17 (토) 19:00 · 120분</span>
       </div>
     </div>
-    <div class="sechead"><h2>회차 선택</h2></div>
     <div class="card schedcell">
-      <div class="d"><span class="date num">10.17 (토) 19:00</span>
-      <span class="seatsleft">전 구역 2,000석 · 예매 오픈 전</span></div>
-      <span class="pick"><i></i></span>
+      <div><div class="date num">10.17 (토) 19:00</div>
+      <div class="seatsleft">전 구역 2,000석 · 예매 오픈 전</div></div>
+      <span class="pick">${svgCheckS}</span>
     </div>
-    <div class="card cdcard" id="board">
+    <div class="cdwidget widget-dark" id="board">
+      <span class="glow" style="right:-70px; top:-120px"></span>
+      <span class="glow g2" style="left:-80px; bottom:-140px"></span>
       <div class="lab">예매 오픈까지</div>
-      <div class="cdnum" id="cdLine">
-        <span class="seg num">26</span><span class="col">:</span>
-        <span class="seg num">14</span><span class="col">:</span>
-        <span class="seg num">09</span>
-      </div>
+      <div class="cdnum" id="cdLine"><b>26</b><i>:</i><b>14</b><i>:</i><b>09</b></div>
       <div class="capt">오픈과 동시에 대기열이 시작됩니다</div>
     </div>
     <div class="demo-ff"><button id="ff">시연용 · 오픈 5초 전으로 이동</button></div>
@@ -536,53 +603,67 @@ detail(body,root,live){
       <div class="tbody">
         · 예매 오픈 직후 접속이 몰리면 대기열이 적용됩니다.<br>
         · 좌석 선점 후 5분 안에 결제하지 않으면 자동 취소됩니다.<br>
-        · 같은 좌석은 두 번 결제되지 않습니다. 티켓 예매수수료 ${KRW(FEE)}원이 부과됩니다.
+        · 같은 좌석은 두 번 결제되지 않습니다. 예매수수료 ${KRW(FEE)}원이 부과됩니다.
       </div>
     </details>
     <div style="flex:1"></div>
     <div class="ctabar"><button class="cta" id="ctaBook" disabled>오픈 대기 중</button></div>`;
-  const segs=body.querySelectorAll("#cdLine .seg");
+  const segs=body.querySelectorAll("#cdLine b");
   const remain=()=>Math.max(0,state.openAt-Date.now());
   const setCd=ms=>{const s=Math.floor(ms/1000);
     const v=[pad(Math.floor(s/3600)),pad(Math.floor(s%3600/60)),pad(s%60)];
     segs.forEach((el,i)=>{if(el.textContent!==v[i])el.textContent=v[i]})};
-  if(!live){ return; }
+  if(!live) return;
   const tick=()=>{
     const ms=remain(); setCd(ms);
     $("#board",body).classList.toggle("urgent",ms<11000&&ms>0);
     if(ms<=0){const b=$("#ctaBook",body);
       if(b.disabled){b.disabled=false; b.textContent="예매하기"; b.onclick=()=>go("queue");
         $(".capt",body).textContent="예매가 시작됐습니다";
-        $("#board",body).classList.remove("urgent");}}
+        $("#board",body).classList.remove("urgent")}}
   };
   tick(); every(tick,250);
   $("#ff",body).onclick=()=>{state.openAt=Date.now()+5300};
 },
 
-/* 3 ── 대기열 */
+/* 3 ── 대기열 (액티비티 링) */
 queue(body,root,live){
+  const C=2*Math.PI*54;
   body.innerHTML=`
-    <div class="card qcard">
+    <div class="card qwidget">
       <div class="qlab">나의 대기 순서</div>
-      <div class="qpos num" id="qPos">1,284<small>번째</small></div>
-      <div class="qgauge"><i id="qFill"></i></div>
-      <div class="qmeta"><span id="qAhead">앞에 1,284명</span><span id="qEta">예상 약 8분</span></div>
+      <div class="ringwrap">
+        <svg viewBox="0 0 120 120">
+          <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7EDEFF"/><stop offset="1" stop-color="#2E5BFF"/>
+          </linearGradient></defs>
+          <circle class="track" cx="60" cy="60" r="54"/>
+          <circle class="prog" id="ring" cx="60" cy="60" r="54"
+            stroke-dasharray="${C}" stroke-dashoffset="${C*0.98}"/>
+        </svg>
+        <div class="center"><div class="pos num" id="qPos">1,284</div><div class="cap">번째</div></div>
+      </div>
+      <div class="qstats">
+        <span class="pill num" id="qAhead">앞에 <b>1,284</b>명</span>
+        <span class="pill num" id="qEta">예상 <b>약 8분</b></span>
+      </div>
     </div>
-    <div class="notebox qtips">
+    <div class="notebox">
       <b>잠시만 기다려 주세요</b> · 접속 인원이 많아 순서대로 입장하고 있습니다.<br>
-      새로고침해도 순서는 유지됩니다. 순서가 되면 자동으로 좌석 선택으로 이동합니다.
+      새로고침해도 순서는 유지됩니다. 순서가 되면 자동으로 이동해요.
     </div>
     <div style="flex:1"></div>
     <div class="enterflash" id="qFlash"><span class="big">입장했습니다</span><small>좌석 선택으로 이동합니다</small></div>`;
+  const ring=$("#ring",body);
   const upd=()=>{
-    $("#qPos",body).innerHTML=`${KRW(state.queuePos)}<small>번째</small>`;
-    $("#qAhead",body).textContent=`앞에 ${KRW(state.queuePos)}명`;
-    $("#qFill",body).style.width=Math.max(2,100*(1-state.queuePos/state.queueTotal))+"%";
-    $("#qEta",body).textContent=`예상 약 ${Math.max(1,Math.ceil(state.queuePos/160))}분`;
+    $("#qPos",body).textContent=KRW(state.queuePos);
+    $("#qAhead",body).innerHTML=`앞에 <b>${KRW(state.queuePos)}</b>명`;
+    $("#qEta",body).innerHTML=`예상 <b>약 ${Math.max(1,Math.ceil(state.queuePos/160))}분</b>`;
+    ring.style.strokeDashoffset=C*Math.max(0,state.queuePos/state.queueTotal);
   };
-  if(!live){ $("#qPos",body).innerHTML=`842<small>번째</small>`;
-    $("#qAhead",body).textContent="앞에 842명"; $("#qFill",body).style.width="34%";
-    $("#qEta",body).textContent="예상 약 6분"; return; }
+  if(!live){ $("#qPos",body).textContent="842";
+    $("#qAhead",body).innerHTML="앞에 <b>842</b>명"; $("#qEta",body).innerHTML="예상 <b>약 6분</b>";
+    ring.style.strokeDashoffset=C*0.66; return; }
   upd();
   every(()=>{
     if(state.queuePos<=0) return;
@@ -599,12 +680,13 @@ queue(body,root,live){
 seats(body,root,live){
   if(!state.seats) state.seats=seedSeats();
   body.innerHTML=`
-    <div class="holdbar" id="holdbar"><span>좌석 선점 중 · 시간 내에 결제해 주세요</span><span class="t" id="holdT">5:00</span></div>
-    <div class="stagebox">STAGE</div>
-    <div class="secrow">
+    <div class="island${state.held?" on":""}" id="island"><span class="dot"></span>
+      <span>선점 중</span><span class="t" id="holdT">5:00</span></div>
+    <div class="seg">
       <button class="on">A</button><button disabled>B</button><button disabled>C</button><button disabled>D</button>
     </div>
-    <div class="secmeta"><span class="l">A구역 1~120번 <span style="color:var(--p-sub);font-weight:400">/ 500석</span></span>
+    <div class="stagebox">STAGE</div>
+    <div class="secmeta"><span class="l">A구역 1~120번 <span>/ 500석</span></span>
       <span class="r num" id="freeCnt"></span></div>
     <div class="seatwrap"><div class="seatgrid" id="grid"></div></div>
     <div class="legend">
@@ -631,7 +713,6 @@ seats(body,root,live){
     $("#pbSeat",body).textContent=seatId(state.mySeat==null?40:state.mySeat); return; }
 
   const pickbar=$("#pickbar",body);
-  const showPick=i=>{pickbar.classList.add("on"); $("#pbSeat",body).textContent=seatId(i)};
   grid.onclick=e=>{
     const b=e.target.closest(".seat"); if(!b) return;
     const i=+b.dataset.i;
@@ -642,13 +723,14 @@ seats(body,root,live){
       return;
     }
     if(state.mySeat!=null) cells[state.mySeat].classList.remove("mine");
-    state.mySeat=i; b.classList.add("mine"); showPick(i);
+    state.mySeat=i; b.classList.add("mine");
+    pickbar.classList.add("on"); $("#pbSeat",body).textContent=seatId(i);
   };
   $("#pbCta",body).onclick=()=>{
     if(state.mySeat==null) return;
     if(!state.held){
       state.held=true; state.holdUntil=Date.now()+5*60*1000;
-      $("#holdbar",body).classList.add("on");
+      $("#island",body).classList.add("on");
       const c=$("#pbCta",body); c.textContent="결제하기";
       toast(root,"","좌석을 선점했어요. 5분 안에 결제를 완료해 주세요.");
       c.onclick=()=>go("pay");
@@ -658,7 +740,7 @@ seats(body,root,live){
     if(state.held){
       const s=Math.max(0,Math.ceil((state.holdUntil-Date.now())/1000));
       $("#holdT",body).textContent=`${Math.floor(s/60)}:${pad(s%60)}`;
-      if(s<=0){state.held=false; $("#holdbar",body).classList.remove("on");
+      if(s<=0){state.held=false; $("#island",body).classList.remove("on");
         if(state.mySeat!=null){cells[state.mySeat].classList.remove("mine");
           state.seats[state.mySeat]=0; state.mySeat=null}
         pickbar.classList.remove("on");
@@ -679,7 +761,7 @@ seats(body,root,live){
 pay(body,root,live){
   const sid=state.mySeat!=null?seatId(state.mySeat):"A구역 4열 5번";
   body.innerHTML=`
-    <div class="holdbar on"><span>좌석 선점 중 · 시간 내에 결제해 주세요</span><span class="t" id="holdT2">4:41</span></div>
+    <div class="island on"><span class="dot"></span><span>선점 중</span><span class="t" id="holdT2">4:41</span></div>
     <div class="sechead"><h2>주문 정보</h2></div>
     <div class="card rows">
       <div class="row"><span class="k">공연</span><span class="v">2026 티켓러시 라이브</span></div>
@@ -689,16 +771,19 @@ pay(body,root,live){
       <div class="row"><span class="k">예매수수료</span><span class="v num">${KRW(FEE)}원</span></div>
     </div>
     <div class="sechead"><h2>결제 수단</h2></div>
-    <div class="paymeth">
+    <div class="card paymeth">
       <label><input type="radio" name="pm" checked> 신용·체크카드</label>
       <label><input type="radio" name="pm"> 카카오페이</label>
       <label><input type="radio" name="pm"> 네이버페이</label>
     </div>
     <div class="card">
-      <div class="agree"><input type="checkbox" id="agAll" checked><span class="all">전체 동의</span></div>
-      <div class="agree subitem">주문 내용 확인 및 결제 진행 동의 · 취소/환불 규정 동의</div>
+      <div class="agree"><input type="checkbox" id="agAll" checked><span>전체 동의</span></div>
+      <div class="agree-sub">주문 내용 확인 및 결제 진행 동의 · 취소/환불 규정 동의</div>
+      <div class="switchrow" style="border-top:1px solid var(--p-line)">
+        <span>결제 실패 시뮬레이션 <span style="opacity:.6">(PG 거절 응답)</span></span>
+        <span class="sw"><input type="checkbox" id="simFail"><i></i></span>
+      </div>
     </div>
-    <label class="failsim"><input type="checkbox" id="simFail"> 결제 실패 시뮬레이션 (PG 거절 응답)</label>
     <div style="flex:1"></div>
     <div class="totalrow"><span class="k">총 결제 금액</span><span class="v">${KRW(PRICE+FEE)}원</span></div>
     <div class="payprog" id="pprog"><i></i></div>
@@ -727,7 +812,7 @@ pay(body,root,live){
   };
 },
 
-/* 6 ── 완료 */
+/* 6 ── 완료 (월렛 패스) */
 done(body,root,live){
   const i=state.mySeat!=null?state.mySeat:41;
   const bars=Array.from({length:46},()=>{
@@ -737,22 +822,22 @@ done(body,root,live){
   body.innerHTML=`
     <div class="doneicon">${svgCheck}</div>
     <div class="donetitle">예매가 완료되었습니다</div>
-    <div class="donesub">내 티켓에서 언제든 확인할 수 있어요</div>
-    <div class="ticket">
-      <div class="thead">
+    <div class="donesub">Apple 지갑에 추가하듯, 내 티켓에서 언제든 확인할 수 있어요</div>
+    <div class="pass">
+      <div class="phead"><span class="glow"></span>
+        <div class="brand"><span>TICKET RUSH</span><span>ADMIT ONE</span></div>
         <div class="tt">2026 티켓러시 라이브</div>
-        <div class="td">2026.10.17 (토) 19:00 · 올림픽공원 체조경기장</div>
+        <div class="td">올림픽공원 체조경기장</div>
       </div>
-      <div class="tbody">
-        <div class="rows">
-          <div class="row"><span class="k">좌석</span><span class="v">${seatId(i)}</span></div>
-          <div class="row"><span class="k">예매 번호</span><span class="v" style="font-family:var(--mono)">TR-2026-001284</span></div>
-          <div class="row"><span class="k">결제 금액</span><span class="v num">${KRW(PRICE+FEE)}원</span></div>
-        </div>
-        <div class="perf"></div>
-        <div class="barwrap" aria-hidden="true">${bars}</div>
-        <div class="bcode">TR20260907001284</div>
+      <div class="pfields">
+        <div class="f"><div class="fl">일시</div><div class="fv num">10.17 (토) 19:00</div></div>
+        <div class="f"><div class="fl">좌석</div><div class="fv">${seatId(i)}</div></div>
+        <div class="f"><div class="fl">결제 금액</div><div class="fv num">${KRW(PRICE+FEE)}원</div></div>
+        <div class="f"><div class="fl">예매 번호</div><div class="fv" style="font-family:var(--mono); font-size:13px">TR-2026-001284</div></div>
       </div>
+      <div class="perf"></div>
+      <div class="barwrap" aria-hidden="true">${bars}</div>
+      <div class="bcode">TR20260907001284</div>
     </div>
     <div class="notebox">입장 QR은 공연 당일 활성화됩니다. 같은 좌석은 두 번 확정되지 않아요 — 이 티켓이 유일합니다.</div>
     <div style="flex:1"></div>

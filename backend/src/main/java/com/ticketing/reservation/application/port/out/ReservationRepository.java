@@ -11,4 +11,13 @@ public interface ReservationRepository {
     Reservation save(Reservation reservation);
 
     Optional<Reservation> findById(long reservationId);
+
+    /** 만료 시각이 지난 HELD 예매를 오래된 순으로 최대 100건. */
+    java.util.List<Reservation> findExpiredHeld(java.time.LocalDateTime now);
+
+    /**
+     * confirmed_seat에 확정 사실을 기록한다. (schedule_id, seat_id) PK가
+     * 이중 예매의 최종 방어선 — 이미 확정된 좌석이면 false를 돌려준다.
+     */
+    boolean registerConfirmedSeat(long scheduleId, long seatId, long reservationId);
 }

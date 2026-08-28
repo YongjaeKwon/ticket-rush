@@ -1,6 +1,6 @@
 package com.ticketing.reservation.application.port.out;
 
-import com.ticketing.reservation.domain.ReservationHeld;
+import com.ticketing.reservation.domain.DomainEvent;
 
 /**
  * 도메인 이벤트 발행. 1단계 구현은 Outbox 테이블 기록 —
@@ -8,5 +8,5 @@ import com.ticketing.reservation.domain.ReservationHeld;
  */
 public interface EventPublisher {
 
-    void publish(ReservationHeld event);
+    void publish(DomainEvent event);
 }

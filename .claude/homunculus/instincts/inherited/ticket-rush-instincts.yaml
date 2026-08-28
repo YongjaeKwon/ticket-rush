@@ -1,0 +1,107 @@
+# Instincts generated from https://github.com/YongjaeKwon/ticket-rush
+# Generated: 2026-08-28T07:31:40.098Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: ticket-rush-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/YongjaeKwon/ticket-rush
+---
+
+# Ticket Rush Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat
+
+## Evidence
+
+- 1 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat(catalog): 읽기 전용 catalog 모듈 — 조회 API 4종 + 좌석 상태 비트맵
+
+---
+id: ticket-rush-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/YongjaeKwon/ticket-rush
+---
+
+# Ticket Rush Commit Length
+
+## Action
+
+Write moderate-length commit messages (~55 characters)
+
+## Evidence
+
+- Average commit message length: 55 chars
+- Based on 1 commits
+
+---
+id: ticket-rush-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/YongjaeKwon/ticket-rush
+---
+
+# Ticket Rush Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: ticket-rush-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/YongjaeKwon/ticket-rush
+---
+
+# Ticket Rush Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: ticket-rush-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/YongjaeKwon/ticket-rush
+---
+
+# Ticket Rush Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+

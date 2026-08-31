@@ -6,6 +6,7 @@ import com.ticketing.catalog.application.port.in.GetSeatLayoutUseCase;
 import com.ticketing.catalog.application.port.in.GetSeatStatusUseCase;
 import com.ticketing.catalog.application.port.out.CatalogReader;
 import com.ticketing.catalog.application.port.out.ConfirmedSeatReader;
+import com.ticketing.catalog.application.port.out.SeatHoldReader;
 import com.ticketing.catalog.domain.EventDetail;
 import com.ticketing.catalog.domain.EventSummary;
 import com.ticketing.catalog.domain.SeatLayout;
@@ -23,10 +24,13 @@ public class CatalogQueryService
 
     private final CatalogReader catalogReader;
     private final ConfirmedSeatReader confirmedSeatReader;
+    private final SeatHoldReader seatHoldReader;
 
-    public CatalogQueryService(CatalogReader catalogReader, ConfirmedSeatReader confirmedSeatReader) {
+    public CatalogQueryService(CatalogReader catalogReader, ConfirmedSeatReader confirmedSeatReader,
+                               SeatHoldReader seatHoldReader) {
         this.catalogReader = catalogReader;
         this.confirmedSeatReader = confirmedSeatReader;
+        this.seatHoldReader = seatHoldReader;
     }
 
     @Override
@@ -49,6 +53,8 @@ public class CatalogQueryService
     @Override
     public SeatStatusBitmap getStatus(long scheduleId) {
         SeatLayout layout = getLayout(scheduleId);
-        return SeatStatusBitmap.of(layout, confirmedSeatReader.confirmedSeatIds(scheduleId));
+        return SeatStatusBitmap.of(layout,
+                confirmedSeatReader.confirmedSeatIds(scheduleId),
+                seatHoldReader.heldSeatIds(scheduleId));
     }
 }

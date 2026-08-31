@@ -34,6 +34,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     // Boot 4 모듈화로 Flyway 자동 설정이 별도 모듈로 분리됨
     implementation("org.springframework.boot:spring-boot-flyway")
+    // API 문서 → openapi.json → 웹/앱 타입 자동 생성의 원본 (8-1)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     // 이벤트 로그(event_publication)는 JDBC 레지스트리 — 공식 DDL을 Flyway로 관리 (V3)
     implementation("org.springframework.modulith:spring-modulith-starter-jdbc")

@@ -12,8 +12,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -32,14 +30,17 @@ class CatalogApiIntegrationTest {
     @ServiceConnection
     static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4");
 
-    /* Redis는 이 테스트에서 안 쓰므로 헬스체크가 붙잡지 않게 비활성 */
-    @DynamicPropertySource
-    static void props(DynamicPropertyRegistry registry) {
-        registry.add("management.health.redis.enabled", () -> "false");
-    }
+    /* 좌석 상태 API가 홀드 키를 읽으므로 Redis도 실물로 띄운다 */
+    @Container
+    @ServiceConnection
+    static final org.testcontainers.containers.GenericContainer<?> redis =
+            new org.testcontainers.containers.GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
 
     @Autowired
     TestRestTemplate rest;
+
+    @Autowired
+    org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
     @Test
     void 공연_목록에_시드_공연이_나온다() {
@@ -121,6 +122,23 @@ class CatalogApiIntegrationTest {
             }
         }
         assertThat(totalBytes).isEqualTo(500);
+    }
+
+    @Test
+    void 홀드_중인_좌석은_비트맵에_01로_나타난다() {
+        // 좌석 id 5 = A구역의 5번째(index 4). 홀드 키를 직접 심어 홀드 상황을 재현
+        redisTemplate.opsForValue().set("hold:1:5", "someone",
+                java.time.Duration.ofMinutes(1));
+        try {
+            JsonNode body = rest.getForObject("/api/schedules/1/seats/status", JsonNode.class);
+            byte[] bitmap = Base64.getDecoder().decode(
+                    body.get("sections").get(0).get("bitmap").asText());
+
+            // index 4 = 두 번째 바이트의 최상위 2비트 → 01
+            assertThat((bitmap[1] >> 6) & 0b11).isEqualTo(0b01);
+        } finally {
+            redisTemplate.delete("hold:1:5");
+        }
     }
 
     @Test

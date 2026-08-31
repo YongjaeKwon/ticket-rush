@@ -22,7 +22,7 @@ class SeatStatusBitmapTest {
 
     @Test
     void 좌석_500개는_125바이트다() {
-        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 500), Set.of());
+        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 500), Set.of(), Set.of());
 
         assertThat(bitmap.sections()).hasSize(1);
         assertThat(bitmap.sections().getFirst().seatCount()).isEqualTo(500);
@@ -32,7 +32,7 @@ class SeatStatusBitmapTest {
     @Test
     void 확정_좌석은_배치_순서_위치에_10으로_찍힌다() {
         // 좌석 id 1~8, 그중 3번째(index 2)와 8번째(index 7)가 확정
-        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 8), Set.of(3L, 8L));
+        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 8), Set.of(3L, 8L), Set.of());
         byte[] bytes = bitmap.sections().getFirst().bitmap();
 
         assertThat(bytes).hasSize(2);
@@ -47,8 +47,21 @@ class SeatStatusBitmapTest {
     }
 
     @Test
+    void 홀드는_01로_찍히고_확정이_홀드보다_우선한다() {
+        // 좌석 1~4: 1번 홀드, 2번 확정, 3번은 홀드이면서 확정(확정 우선), 4번 빈자리
+        SeatStatusBitmap bitmap = SeatStatusBitmap.of(
+                layoutWithSeats(1, 1, 4), Set.of(2L, 3L), Set.of(1L, 3L));
+        byte[] bytes = bitmap.sections().getFirst().bitmap();
+
+        assertThat(SeatStatusBitmap.statusAt(bytes, 0)).isEqualTo(SeatStatusBitmap.HELD);
+        assertThat(SeatStatusBitmap.statusAt(bytes, 1)).isEqualTo(SeatStatusBitmap.CONFIRMED);
+        assertThat(SeatStatusBitmap.statusAt(bytes, 2)).isEqualTo(SeatStatusBitmap.CONFIRMED);
+        assertThat(SeatStatusBitmap.statusAt(bytes, 3)).isEqualTo(SeatStatusBitmap.FREE);
+    }
+
+    @Test
     void 좌석수가_4의_배수가_아니어도_바이트는_올림이다() {
-        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 5), Set.of());
+        SeatStatusBitmap bitmap = SeatStatusBitmap.of(layoutWithSeats(1, 1, 5), Set.of(), Set.of());
 
         assertThat(bitmap.sections().getFirst().bitmap()).hasSize(2);
     }
@@ -56,7 +69,7 @@ class SeatStatusBitmapTest {
     @Test
     void 모든_좌석이_확정이면_전부_10이다() {
         Set<Long> all = LongStream.rangeClosed(1, 12).boxed().collect(java.util.stream.Collectors.toSet());
-        byte[] bytes = SeatStatusBitmap.of(layoutWithSeats(1, 1, 12), all).sections().getFirst().bitmap();
+        byte[] bytes = SeatStatusBitmap.of(layoutWithSeats(1, 1, 12), all, Set.of()).sections().getFirst().bitmap();
 
         for (int i = 0; i < 12; i++) {
             assertThat(SeatStatusBitmap.statusAt(bytes, i)).isEqualTo(SeatStatusBitmap.CONFIRMED);

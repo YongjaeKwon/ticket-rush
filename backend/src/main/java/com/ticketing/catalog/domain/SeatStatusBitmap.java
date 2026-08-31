@@ -20,14 +20,18 @@ public record SeatStatusBitmap(long scheduleId, List<SectionBitmap> sections) {
     public record SectionBitmap(long sectionId, int seatCount, byte[] bitmap) {
     }
 
-    /** 배치 순서를 기준으로 확정 좌석만 반영해 비트맵을 만든다. 홀드 반영은 5번 항목 이후. */
-    public static SeatStatusBitmap of(SeatLayout layout, Set<Long> confirmedSeatIds) {
+    /** 배치 순서를 기준으로 확정·홀드 좌석을 반영해 비트맵을 만든다. 확정이 홀드보다 우선. */
+    public static SeatStatusBitmap of(SeatLayout layout, Set<Long> confirmedSeatIds,
+                                      Set<Long> heldSeatIds) {
         List<SectionBitmap> sections = new ArrayList<>();
         for (SeatLayout.SectionLayout section : layout.sections()) {
             List<SeatLayout.SeatPosition> seats = section.seats();
             byte[] bitmap = new byte[(seats.size() + 3) / 4];
             for (int i = 0; i < seats.size(); i++) {
-                int status = confirmedSeatIds.contains(seats.get(i).id()) ? CONFIRMED : FREE;
+                long seatId = seats.get(i).id();
+                int status = confirmedSeatIds.contains(seatId) ? CONFIRMED
+                        : heldSeatIds.contains(seatId) ? HELD
+                        : FREE;
                 bitmap[i / 4] |= (byte) (status << (6 - (i % 4) * 2));
             }
             sections.add(new SectionBitmap(section.id(), seats.size(), bitmap));

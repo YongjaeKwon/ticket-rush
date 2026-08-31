@@ -86,13 +86,13 @@ export default async function EventDetailPage({
         style={{ background: "var(--glass)", borderColor: "var(--line)" }}
       >
         <div className="mx-auto max-w-md">
-          {/* 대기열 화면은 다음 단위 — 지금은 자리만 잡아둔다 */}
-          <button
-            className="w-full rounded-cta bg-brand py-4 text-base font-bold text-white transition-transform active:scale-[.97]"
+          <Link
+            href={schedule ? `/schedules/${schedule.id}/queue` : "#"}
+            className="block w-full rounded-cta bg-brand py-4 text-center text-base font-bold text-white transition-transform active:scale-[.97]"
             style={{ boxShadow: "var(--shadow-cta)" }}
           >
             예매하기
-          </button>
+          </Link>
         </div>
       </div>
     </main>

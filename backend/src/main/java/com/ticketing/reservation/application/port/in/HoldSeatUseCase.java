@@ -2,12 +2,15 @@ package com.ticketing.reservation.application.port.in;
 
 import java.time.LocalDateTime;
 
-/** 좌석 하나를 5분간 선점한다. 이미 선점된 좌석이면 SEAT_ALREADY_HELD. */
+/**
+ * 좌석 하나를 5분간 선점한다. 이미 선점된 좌석이면 SEAT_ALREADY_HELD.
+ * 대기열 입장권(admissionToken) 없이는 홀드할 수 없다 — ADMISSION_REQUIRED.
+ */
 public interface HoldSeatUseCase {
 
     HoldResult hold(HoldSeatCommand command);
 
-    record HoldSeatCommand(long scheduleId, long seatId, String userId) {
+    record HoldSeatCommand(long scheduleId, long seatId, String userId, String admissionToken) {
     }
 
     record HoldResult(long reservationId, LocalDateTime expiresAt) {

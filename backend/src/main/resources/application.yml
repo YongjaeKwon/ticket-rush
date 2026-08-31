@@ -19,3 +19,14 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+# 대기열 입장권(JWT) — queue가 발급, reservation은 서명만 검증. 운영에선 환경변수로 덮는다
+admission:
+  jwt:
+    secret: ${ADMISSION_JWT_SECRET:ticket-rush-dev-secret-override-in-prod-0123456789}
+    ttl: 10m
+
+queue:
+  admission:
+    batch-size: 100   # 1초마다 입장시키는 인원 — 4단계에서 값별 DB 에러율 비교
+    enabled: true

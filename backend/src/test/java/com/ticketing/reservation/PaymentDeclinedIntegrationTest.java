@@ -36,6 +36,13 @@ class PaymentDeclinedIntegrationTest {
     HoldSeatUseCase holdSeat;
 
     @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
+    private String admissionFor(String userId) {
+        return tokenIssuer.issue(1L, userId);
+    }
+
+    @Autowired
     ConfirmReservationUseCase confirmReservation;
 
     @Autowired
@@ -46,7 +53,7 @@ class PaymentDeclinedIntegrationTest {
 
     @Test
     void 결제가_거절되면_HELD와_홀드가_그대로_남아_재시도할_수_있다() {
-        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 40L, "user-1")).reservationId();
+        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 40L, "user-1", admissionFor("user-1"))).reservationId();
 
         ApiException e = catchThrowableOfType(ApiException.class,
                 () -> confirmReservation.confirm(new ConfirmCommand(reservationId, "user-1")));

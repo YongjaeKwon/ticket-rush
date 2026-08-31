@@ -57,10 +57,14 @@ class ReservationApiIntegrationTest {
         redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
     }
 
+    @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
     private HttpHeaders headersFor(String userId, String idemKey) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("X-User-Id", userId);
+        headers.setBearerAuth(tokenIssuer.issue(1L, userId));   // 대기열 입장권
         if (idemKey != null) {
             headers.set("Idempotency-Key", idemKey);
         }
@@ -109,6 +113,20 @@ class ReservationApiIntegrationTest {
 
         assertThat(conflict.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(conflict.getBody().get("code").asText()).isEqualTo("IDEMPOTENCY_CONFLICT");
+    }
+
+    @Test
+    void 입장권_없이_홀드하면_401_ADMISSION_REQUIRED다() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-User-Id", "user-1");
+        headers.set("Idempotency-Key", UUID.randomUUID().toString());
+
+        ResponseEntity<JsonNode> response = rest.postForEntity("/api/reservations",
+                new HttpEntity<>("{\"scheduleId\":1,\"seatId\":70}", headers), JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody().get("code").asText()).isEqualTo("ADMISSION_REQUIRED");
     }
 
     @Test

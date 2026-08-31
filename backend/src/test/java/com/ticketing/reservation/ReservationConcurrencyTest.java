@@ -49,6 +49,13 @@ class ReservationConcurrencyTest {
     HoldSeatUseCase holdSeat;
 
     @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
+    private String admissionFor(String userId) {
+        return tokenIssuer.issue(1L, userId);
+    }
+
+    @Autowired
     ConfirmReservationUseCase confirmReservation;
 
     @Autowired
@@ -107,7 +114,7 @@ class ReservationConcurrencyTest {
 
         long startedAt = System.currentTimeMillis();
         RaceResult result = race(100, runner ->
-                holdSeat.hold(new HoldSeatCommand(1L, seatId, "user-" + runner)));
+                holdSeat.hold(new HoldSeatCommand(1L, seatId, "user-" + runner, admissionFor("user-" + runner))));
         long elapsed = System.currentTimeMillis() - startedAt;
 
         assertThat(result.success().get()).isEqualTo(1);
@@ -133,7 +140,7 @@ class ReservationConcurrencyTest {
         List<Long> reservationIds = new java.util.ArrayList<>();
         for (int i = 0; i < 10; i++) {
             reservationIds.add(holdSeat.hold(
-                    new HoldSeatCommand(1L, seatId, "user-" + i)).reservationId());
+                    new HoldSeatCommand(1L, seatId, "user-" + i, admissionFor("user-" + i))).reservationId());
             redisTemplate.delete("hold:1:" + seatId);        // 홀드 유실 재현
         }
 
@@ -160,7 +167,7 @@ class ReservationConcurrencyTest {
     void 서로_다른_좌석_100건은_전부_성공한다() throws InterruptedException {
         long startedAt = System.currentTimeMillis();
         RaceResult result = race(100, runner ->
-                holdSeat.hold(new HoldSeatCommand(1L, 200L + runner, "user-" + runner)));
+                holdSeat.hold(new HoldSeatCommand(1L, 200L + runner, "user-" + runner, admissionFor("user-" + runner))));
         long elapsed = System.currentTimeMillis() - startedAt;
 
         assertThat(result.success().get()).isEqualTo(100);

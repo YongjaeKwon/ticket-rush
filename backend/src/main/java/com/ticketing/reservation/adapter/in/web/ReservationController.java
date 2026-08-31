@@ -60,8 +60,12 @@ class ReservationController {
 
     @PostMapping
     ResponseEntity<HoldResponse> hold(@RequestHeader("X-User-Id") String userId,
+                                      @RequestHeader(value = "Authorization", required = false) String authorization,
                                       @Valid @RequestBody HoldRequest request) {
-        var result = holdSeat.hold(new HoldSeatCommand(request.scheduleId(), request.seatId(), userId));
+        String token = authorization != null && authorization.startsWith("Bearer ")
+                ? authorization.substring("Bearer ".length()) : null;
+        var result = holdSeat.hold(
+                new HoldSeatCommand(request.scheduleId(), request.seatId(), userId, token));
         return ResponseEntity.created(URI.create("/api/reservations/" + result.reservationId()))
                 .body(new HoldResponse(result.reservationId(), result.expiresAt()));
     }

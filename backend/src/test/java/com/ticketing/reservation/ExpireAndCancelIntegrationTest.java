@@ -38,6 +38,13 @@ class ExpireAndCancelIntegrationTest {
     HoldSeatUseCase holdSeat;
 
     @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
+    private String admissionFor(String userId) {
+        return tokenIssuer.issue(1L, userId);
+    }
+
+    @Autowired
     ExpireHoldUseCase expireHold;
 
     @Autowired
@@ -59,9 +66,9 @@ class ExpireAndCancelIntegrationTest {
 
     @Test
     void 만료_배치는_시한이_지난_HELD만_EXPIRED로_바꾸고_이벤트를_남긴다() {
-        long overdue1 = holdSeat.hold(new HoldSeatCommand(1L, 50L, "user-1")).reservationId();
-        long overdue2 = holdSeat.hold(new HoldSeatCommand(1L, 51L, "user-2")).reservationId();
-        long alive = holdSeat.hold(new HoldSeatCommand(1L, 52L, "user-3")).reservationId();
+        long overdue1 = holdSeat.hold(new HoldSeatCommand(1L, 50L, "user-1", admissionFor("user-1"))).reservationId();
+        long overdue2 = holdSeat.hold(new HoldSeatCommand(1L, 51L, "user-2", admissionFor("user-2"))).reservationId();
+        long alive = holdSeat.hold(new HoldSeatCommand(1L, 52L, "user-3", admissionFor("user-3"))).reservationId();
         jdbc.sql("UPDATE reservation SET expires_at = expires_at - INTERVAL 10 MINUTE WHERE id IN (:a, :b)")
                 .param("a", overdue1).param("b", overdue2).update();
 
@@ -81,7 +88,7 @@ class ExpireAndCancelIntegrationTest {
 
     @Test
     void 취소하면_CANCELLED가_되고_좌석이_바로_풀린다() {
-        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 53L, "user-1")).reservationId();
+        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 53L, "user-1", admissionFor("user-1"))).reservationId();
 
         cancelReservation.cancel(new CancelCommand(reservationId, "user-1"));
 
@@ -89,7 +96,7 @@ class ExpireAndCancelIntegrationTest {
                 .query(String.class).single()).isEqualTo("CANCELLED");
         assertThat(redisTemplate.hasKey("hold:1:53")).isFalse();
         // 좌석이 풀렸으니 다른 사용자가 곧바로 잡을 수 있다
-        long retaken = holdSeat.hold(new HoldSeatCommand(1L, 53L, "user-2")).reservationId();
+        long retaken = holdSeat.hold(new HoldSeatCommand(1L, 53L, "user-2", admissionFor("user-2"))).reservationId();
         assertThat(retaken).isPositive();
         Long events = jdbc.sql("SELECT COUNT(*) FROM outbox WHERE event_type = 'ReservationCancelled'")
                 .query(Long.class).single();
@@ -98,7 +105,7 @@ class ExpireAndCancelIntegrationTest {
 
     @Test
     void 남의_예매는_취소할_수_없다() {
-        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 54L, "user-1")).reservationId();
+        long reservationId = holdSeat.hold(new HoldSeatCommand(1L, 54L, "user-1", admissionFor("user-1"))).reservationId();
 
         ApiException e = catchThrowableOfType(ApiException.class,
                 () -> cancelReservation.cancel(new CancelCommand(reservationId, "user-2")));

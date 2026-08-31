@@ -38,6 +38,13 @@ class HoldSeatIntegrationTest {
     HoldSeatUseCase holdSeat;
 
     @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
+    private String admissionFor(String userId) {
+        return tokenIssuer.issue(1L, userId);
+    }
+
+    @Autowired
     StringRedisTemplate redisTemplate;
 
     @Autowired
@@ -52,7 +59,7 @@ class HoldSeatIntegrationTest {
 
     @Test
     void 홀드에_성공하면_Redis_키와_DB_HELD_행과_Outbox_이벤트가_함께_남는다() {
-        HoldResult result = holdSeat.hold(new HoldSeatCommand(1L, 17L, "user-1"));
+        HoldResult result = holdSeat.hold(new HoldSeatCommand(1L, 17L, "user-1", admissionFor("user-1")));
 
         assertThat(result.reservationId()).isPositive();
 
@@ -77,10 +84,10 @@ class HoldSeatIntegrationTest {
 
     @Test
     void 같은_좌석을_두_번_홀드하면_두_번째는_SEAT_ALREADY_HELD다() {
-        holdSeat.hold(new HoldSeatCommand(1L, 18L, "user-1"));
+        holdSeat.hold(new HoldSeatCommand(1L, 18L, "user-1", admissionFor("user-1")));
 
         ApiException e = catchThrowableOfType(ApiException.class,
-                () -> holdSeat.hold(new HoldSeatCommand(1L, 18L, "user-2")));
+                () -> holdSeat.hold(new HoldSeatCommand(1L, 18L, "user-2", admissionFor("user-2"))));
 
         assertThat(e.code()).isEqualTo("SEAT_ALREADY_HELD");
         // 첫 사용자의 선점과 예매는 그대로다
@@ -92,8 +99,8 @@ class HoldSeatIntegrationTest {
 
     @Test
     void 다른_좌석은_서로_영향_없이_홀드된다() {
-        holdSeat.hold(new HoldSeatCommand(1L, 20L, "user-1"));
-        HoldResult second = holdSeat.hold(new HoldSeatCommand(1L, 21L, "user-2"));
+        holdSeat.hold(new HoldSeatCommand(1L, 20L, "user-1", admissionFor("user-1")));
+        HoldResult second = holdSeat.hold(new HoldSeatCommand(1L, 21L, "user-2", admissionFor("user-2")));
 
         assertThat(second.reservationId()).isPositive();
     }
@@ -104,7 +111,7 @@ class HoldSeatIntegrationTest {
         String tooLongUserId = "u".repeat(65);
 
         catchThrowableOfType(RuntimeException.class,
-                () -> holdSeat.hold(new HoldSeatCommand(1L, 19L, tooLongUserId)));
+                () -> holdSeat.hold(new HoldSeatCommand(1L, 19L, tooLongUserId, admissionFor(tooLongUserId))));
 
         // Redis 키가 남아 있지 않다 → 좌석은 곧바로 다른 사람이 잡을 수 있다
         assertThat(redisTemplate.hasKey("hold:1:19")).isFalse();
@@ -114,7 +121,7 @@ class HoldSeatIntegrationTest {
         assertThat(count).isZero();
 
         // 그리고 실제로 다른 사용자가 즉시 홀드할 수 있다
-        HoldResult retry = holdSeat.hold(new HoldSeatCommand(1L, 19L, "user-2"));
+        HoldResult retry = holdSeat.hold(new HoldSeatCommand(1L, 19L, "user-2", admissionFor("user-2")));
         assertThat(retry.reservationId()).isPositive();
     }
 }

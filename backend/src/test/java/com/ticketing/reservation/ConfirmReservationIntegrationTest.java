@@ -55,8 +55,12 @@ class ConfirmReservationIntegrationTest {
         redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
     }
 
+    @Autowired
+    com.ticketing.queue.application.port.out.AdmissionTokenIssuer tokenIssuer;
+
     private long holdSeatAs(String userId, long seatId) {
-        return holdSeat.hold(new HoldSeatCommand(1L, seatId, userId)).reservationId();
+        return holdSeat.hold(new HoldSeatCommand(1L, seatId, userId,
+                tokenIssuer.issue(1L, userId))).reservationId();
     }
 
     @Test

@@ -1,5 +1,7 @@
 # 티켓러시 — 선착순 티켓팅 시스템
 
+![CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)
+
 수천 명이 같은 좌석을 동시에 잡아도 **이중 예매가 0건**인 예매 시스템을 만드는 프로젝트입니다.
 모놀리스로 시작해 Kafka 기반 서비스 분리까지 단계별로 키워 가고, 각 단계의 성능과 정합성을 수치로 검증합니다.
 
@@ -43,25 +45,27 @@ flowchart LR
 
 | 단계 | 내용 | 상태 | 태그 |
 |---|---|---|---|
-| 1 | 백엔드 뼈대 — 모놀리스 + 헥사고날 (catalog / queue / reservation) | **진행 중 (7/12)** | `v1-monolith` |
+| 1 | 백엔드 뼈대 — 모놀리스 + 헥사고날 (catalog / queue / reservation) | **완료** | `v1-monolith` |
 | 2 | 웹 프론트 — 모바일 웹, Canvas 좌석맵, SSE | 디자인 프로토타입 완성 | `v2-web` |
 | 3 | 서비스 분리 + Kafka — Outbox 릴레이, 멱등 컨슈머, 결제 되돌리기 | | `v3-msa` |
 | 4 | 부하 수치 + 가상 경쟁자 데모 | | `v4-bench` |
 | 5 | 모바일 앱 (Expo) | | `v5-app` |
 
-### 1단계에서 지금까지 만든 것
+### 1단계에서 만든 것
 
 - **catalog 모듈** — 공연 목록·상세, 좌석 배치(ETag + 불변 캐시), 좌석 상태 비트맵 API.
   2,000석의 상태를 좌석당 2비트로 압축해 500바이트로 내려줍니다
-- **reservation 도메인** — 예매의 상태 전이(HELD → CONFIRMED / EXPIRED / CANCELLED) 규칙을
-  스프링 없이 순수 자바로 담고 단위 테스트로 검증
-- **좌석 홀드** — Redis 선점 → DB 기록 → 실패 시 되돌리기까지 한 흐름. 이벤트는 Outbox 테이블에
-  같은 트랜잭션으로 기록
-- **확정·만료·취소** — mock 결제(지연·거절 확률 설정 가능), `confirmed_seat` UNIQUE 처리,
-  10초 주기 만료 스케줄러
-- 테스트 35개 — 도메인 단위 테스트와 실물 MySQL·Redis(Testcontainers) 통합 테스트
-
-남은 것: REST API + 멱등 키, 동시성 테스트(1석 100요청 → 성공 1건), 대기열(queue 모듈), ArchUnit·CI.
+- **reservation 모듈** — 상태 전이 규칙은 순수 자바 도메인에, 좌석 홀드(Redis 선점 → DB 기록 →
+  실패 시 되돌리기)·확정(mock 결제 + `confirmed_seat` UNIQUE)·만료 스케줄러·취소는 유스케이스로.
+  이벤트 4종은 Outbox 테이블에 같은 트랜잭션으로 기록
+- **queue 모듈** — ZSET 대기열(재진입해도 자리 유지), 1초마다 N명씩 입장, 10분짜리 JWT 입장권.
+  reservation은 입장권의 서명만 검증해서 queue를 호출하지 않습니다 — 3단계 분리 대비
+- **REST API + 멱등 처리** — 예매 API 4개와 대기열 API 2개. 상태를 바꾸는 요청은
+  Idempotency-Key로 중복 실행을 막습니다(같은 키면 저장된 응답 재생)
+- **동시성 증명** — 1석 100요청 동시 발사 → 성공 정확히 1건(48ms). Redis가 죽어 홀드가 중복된
+  상황에서도 동시 확정의 승자는 1명 — 이중 예매 0건
+- **아키텍처 검증 + CI** — ArchUnit 의존 방향 3규칙과 Spring Modulith 모듈 경계 검사(위반 0건),
+  push마다 GitHub Actions에서 전체 테스트 55개 실행
 
 ## 기술 스택
 

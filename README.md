@@ -1,5 +1,7 @@
 # 티켓러시 — 선착순 티켓팅 시스템
 
+**한국어** | [English](README.en.md)
+
 ![CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)
 
 수천 명이 같은 좌석을 동시에 잡아도 **이중 예매가 0건**인 예매 시스템을 만드는 프로젝트입니다.

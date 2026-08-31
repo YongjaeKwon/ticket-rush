@@ -1,5 +1,5 @@
 # 0004. 좌석 상태 비트맵 — catalog가 confirmed_seat를 직접 읽는다 (1단계)
-날짜: 2026-08-28 · 단계: 1 · 상태: 결정
+날짜: 2026-08-28 · 단계: 1 · 상태: 결정 · [English](0004-catalog-reads-confirmed-seat.en.md)
 
 ## 문맥
 좌석 상태 API는 catalog 소관인데, 확정 사실(confirmed_seat)은 reservation의 데이터다. 아직 reservation 모듈이 없다.

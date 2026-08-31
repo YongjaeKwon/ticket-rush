@@ -1,5 +1,5 @@
 # 0002. Spring Boot 4.0 + Modulith 2.0 (3.5/1.4 대신)
-날짜: 2026-08-28 · 단계: 1 · 상태: 결정
+날짜: 2026-08-28 · 단계: 1 · 상태: 결정 · [English](0002-spring-boot-4-modulith-2.en.md)
 
 ## 문맥
 ARCHITECTURE 4-1은 "Spring Boot 최신 안정판, 버전은 ADR에 기록". 후보는 Boot 3.5 + Modulith 1.4(자료 많음)와 Boot 4.0 + Modulith 2.0(최신 안정).

@@ -57,4 +57,6 @@ tasks.withType<Test> {
     useJUnitPlatform()
     // 테스트 JVM 힙 상한 — 컨테이너(MySQL·Redis)와 함께 돌 때 메모리 폭주 방지
     maxHeapSize = "768m"
+    // JVM 크래시 덤프는 저장소 루트가 아니라 build/ 아래로 (clean 시 함께 정리)
+    jvmArgs("-XX:ErrorFile=build/hs_err_pid%p.log")
 }

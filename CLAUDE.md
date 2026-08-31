@@ -19,7 +19,7 @@
 
 ## 1. 현재 단계
 
-**STAGE = 1**  (사람이 올린다. 에이전트는 바꾸지 않는다.)
+**STAGE = 2**  (사람이 올린다. 에이전트는 바꾸지 않는다. — 2026-08-31 사람 지시로 2로 올림, v1-monolith 태그 완료)
 
 | 단계 | 만드는 것 | 태그 |
 |---|---|---|
@@ -34,18 +34,29 @@
 
 ### STAGE 1 체크리스트 (사람이 체크한다. 위에서부터 순서대로)
 
-- [ ] Gradle(Kotlin DSL) + Spring Boot + Modulith 프로젝트. Compose `infra` 프로필(MySQL, Redis). `./gradlew test` 빈 통과
-- [ ] Flyway `V1__init.sql`(catalog 4 테이블, reservation, confirmed_seat, outbox) + `V2__seed.sql`(공연 1, 회차 1, 4구역 × 500석)
-- [ ] `catalog` 모듈: 공연 목록/상세, 좌석 배치, 좌석 상태 비트맵 API (읽기 전용)
-- [ ] `reservation` 도메인: 상태 전이, `confirm()`의 만료 검사 — 스프링 없이 단위 테스트
-- [ ] `HoldSeatUseCase` + `SeatHoldStore`(Redis `SET NX EX`) + `ReservationRepository`(JPA, 엔티티↔도메인 매핑) + Outbox 행 기록
-- [ ] `ConfirmReservationUseCase` + `PaymentGateway`(Mock, 지연·실패율 설정) + `confirmed_seat` UNIQUE 처리
-- [ ] `ExpireHoldUseCase` + 만료 스케줄러(10초, DB 기준) / `CancelReservationUseCase`
-- [ ] REST 어댑터 + `Idempotency-Key` + Problem Details 에러 + Testcontainers 통합 테스트
-- [ ] 동시성 테스트: 1석 100요청 → 성공 1. 확정 UNIQUE 충돌 테스트
-- [ ] `queue` 모듈: ZSET 진입/순번, 스케줄러 입장(N명), JWT 발급. `reservation`은 JWT 서명만 검증
-- [ ] ArchUnit + `ApplicationModules.verify()` 통과, GitHub Actions에서 `gradlew test`
-- [ ] README 로드맵·수치 자리 정리 후 `git tag v1-monolith`
+- [x] Gradle(Kotlin DSL) + Spring Boot + Modulith 프로젝트. Compose `infra` 프로필(MySQL, Redis). `./gradlew test` 빈 통과
+- [x] Flyway `V1__init.sql`(catalog 4 테이블, reservation, confirmed_seat, outbox) + `V2__seed.sql`(공연 1, 회차 1, 4구역 × 500석)
+- [x] `catalog` 모듈: 공연 목록/상세, 좌석 배치, 좌석 상태 비트맵 API (읽기 전용)
+- [x] `reservation` 도메인: 상태 전이, `confirm()`의 만료 검사 — 스프링 없이 단위 테스트
+- [x] `HoldSeatUseCase` + `SeatHoldStore`(Redis `SET NX EX`) + `ReservationRepository`(JPA, 엔티티↔도메인 매핑) + Outbox 행 기록
+- [x] `ConfirmReservationUseCase` + `PaymentGateway`(Mock, 지연·실패율 설정) + `confirmed_seat` UNIQUE 처리
+- [x] `ExpireHoldUseCase` + 만료 스케줄러(10초, DB 기준) / `CancelReservationUseCase`
+- [x] REST 어댑터 + `Idempotency-Key` + Problem Details 에러 + Testcontainers 통합 테스트
+- [x] 동시성 테스트: 1석 100요청 → 성공 1. 확정 UNIQUE 충돌 테스트
+- [x] `queue` 모듈: ZSET 진입/순번, 스케줄러 입장(N명), JWT 발급. `reservation`은 JWT 서명만 검증
+- [x] ArchUnit + `ApplicationModules.verify()` 통과, GitHub Actions에서 `gradlew test`
+- [x] README 로드맵·수치 자리 정리 후 `git tag v1-monolith`
+
+### STAGE 2 체크리스트 (사람이 체크한다. 위에서부터 순서대로)
+
+- [ ] 백엔드에 springdoc-openapi 추가, `/v3/api-docs`에서 openapi.json 확인
+- [ ] pnpm 모노레포: `apps/web`(Next.js App Router + TS + TanStack Query + Tailwind) + `packages/api-client`(openapi 타입 생성, `pnpm gen:api`) + `packages/seat-map-core` 골격
+- [ ] 공연 목록·상세 화면 — 서버 렌더링(SSR), GATE 디자인 토큰 적용
+- [ ] 대기열 화면 + 백엔드 `GET /schedules/{id}/queue/stream`(SSE) — 폴링 폴백 포함
+- [ ] `seat-map-core`: 비트맵 디코딩·히트 테스트 (렌더러 무관 순수 TS, 단위 테스트)
+- [ ] 좌석맵 화면 — Canvas 렌더링 + `GET /schedules/{id}/seats/stream`(SSE, 변경분만)
+- [ ] 홀드 → 결제 → 완료 화면 — 멱등 키 재시도, 낙관적 UI, 홀드 카운트다운
+- [ ] Playwright E2E(대기열→좌석→결제, 모바일 에뮬레이션) + CI에 웹 테스트 추가, README GIF 후 `git tag v2-web`
 
 ## 2. 작업 규칙
 

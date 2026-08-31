@@ -4,4 +4,5 @@ packages:
 
 # pnpm은 의존성의 빌드 스크립트를 기본 차단한다 — 허용 목록만 실행
 allowBuilds:
+  esbuild: true
   unrs-resolver: true

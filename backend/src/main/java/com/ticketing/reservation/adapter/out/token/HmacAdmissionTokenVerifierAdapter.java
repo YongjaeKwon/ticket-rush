@@ -21,6 +21,6 @@ class HmacAdmissionTokenVerifierAdapter implements AdmissionTokenVerifier {
         return HmacJwt.verify(token, secret)
                 .map(claims -> new AdmissionClaims(
                         claims.get("scheduleId").asLong(),
-                        claims.get("sub").asText()));
+                        claims.get("sub").asString()));
     }
 }

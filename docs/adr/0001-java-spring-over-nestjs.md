@@ -1,5 +1,5 @@
 # 0001. 백엔드 언어 — Java/Spring (NestJS 대신)
-날짜: 2026-08-28 · 단계: 1 · 상태: 결정
+날짜: 2026-08-28 · 단계: 1 · 상태: 결정 · [English](0001-java-spring-over-nestjs.en.md)
 
 ## 문맥
 프론트 개발자의 학습·포트폴리오 프로젝트. 학습 목표는 Kafka, 동시성 제어, DDD/헥사고날. 후보는 Java/Spring과 NestJS(TypeScript 풀스택).

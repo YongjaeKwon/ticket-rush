@@ -1,5 +1,5 @@
 # 0003. 경합 테이블(reservation, confirmed_seat)에는 FK를 걸지 않는다
-날짜: 2026-08-28 · 단계: 1 · 상태: 결정
+날짜: 2026-08-28 · 단계: 1 · 상태: 결정 · [English](0003-no-fk-on-contention-tables.en.md)
 
 ## 문맥
 V1__init.sql 설계 중. catalog 4테이블은 FK로 묶었는데, 홀드·확정이 몰리는 reservation/confirmed_seat에도 schedule·seat FK를 걸지 결정 필요.

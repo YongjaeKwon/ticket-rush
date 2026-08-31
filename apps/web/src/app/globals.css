@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* GATE 디자인 토큰 (docs/design/design-foundation.md v3.1)
+   — 여기 없는 색·그림자·모서리값을 화면 코드에 새로 만들지 않는다 */
+:root {
+  --bg: #f2f3f7;
+  --surface: #ffffff;
+  --ink: #16181d;
+  --sub: #8a8f98;
+  --line: rgba(60, 60, 67, 0.12);
+  --brand: #2e5bff;
+  --brand-press: #2448d0;
+  --danger: #ff453a;
+  --danger-bg: #ffeceb;
+  --art: #1d2b6b; /* 딥 인디고 — 좌석 도트 아트 판 */
+  --glass: rgba(255, 255, 255, 0.72);
+  --shadow-card: 0 1px 2px rgba(16, 19, 25, 0.04), 0 10px 28px rgba(16, 19, 25, 0.09);
+  --shadow-cta: 0 6px 16px rgba(46, 91, 255, 0.24);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.44, 1);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-brand: var(--brand);
+  --color-brand-press: var(--brand-press);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-art: var(--art);
+  --radius-card: 22px;
+  --radius-cta: 18px;
+  --radius-cell: 14px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

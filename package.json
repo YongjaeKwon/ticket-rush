@@ -1,0 +1,8 @@
+{
+  "name": "ticket-rush",
+  "private": true,
+  "scripts": {
+    "gen:api": "pnpm -F @ticket-rush/api-client gen"
+  },
+  "packageManager": "pnpm@11.24.0"
+}

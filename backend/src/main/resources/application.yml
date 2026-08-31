@@ -11,6 +11,11 @@ spring:
     hibernate:
       ddl-auto: validate   # 테이블은 Flyway만 만든다
     open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          # JVM 기본 시간대(KST)로의 암묵 변환 차단 — DB 값은 항상 UTC 그대로 읽고 쓴다
+          time_zone: UTC
 
   flyway:
     enabled: true

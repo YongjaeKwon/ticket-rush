@@ -2,6 +2,7 @@ package com.ticketing.catalog.adapter.in.web;
 
 import com.ticketing.catalog.application.port.in.GetEventDetailUseCase;
 import com.ticketing.catalog.application.port.in.GetEventsUseCase;
+import com.ticketing.catalog.application.port.in.GetScheduleDetailUseCase;
 import com.ticketing.catalog.application.port.in.GetSeatLayoutUseCase;
 import com.ticketing.catalog.application.port.in.GetSeatStatusUseCase;
 import org.springframework.http.CacheControl;
@@ -20,13 +21,16 @@ class CatalogController {
 
     private final GetEventsUseCase getEvents;
     private final GetEventDetailUseCase getEventDetail;
+    private final GetScheduleDetailUseCase getScheduleDetail;
     private final GetSeatLayoutUseCase getSeatLayout;
     private final GetSeatStatusUseCase getSeatStatus;
 
     CatalogController(GetEventsUseCase getEvents, GetEventDetailUseCase getEventDetail,
+                      GetScheduleDetailUseCase getScheduleDetail,
                       GetSeatLayoutUseCase getSeatLayout, GetSeatStatusUseCase getSeatStatus) {
         this.getEvents = getEvents;
         this.getEventDetail = getEventDetail;
+        this.getScheduleDetail = getScheduleDetail;
         this.getSeatLayout = getSeatLayout;
         this.getSeatStatus = getSeatStatus;
     }
@@ -39,6 +43,11 @@ class CatalogController {
     @GetMapping("/events/{eventId}")
     CatalogResponses.EventDetailResponse event(@PathVariable long eventId) {
         return CatalogResponses.EventDetailResponse.from(getEventDetail.getEvent(eventId));
+    }
+
+    @GetMapping("/schedules/{scheduleId}")
+    CatalogResponses.ScheduleDetailResponse schedule(@PathVariable long scheduleId) {
+        return CatalogResponses.ScheduleDetailResponse.from(getScheduleDetail.getSchedule(scheduleId));
     }
 
     /** 배치는 정적 — 캐시 불변 선언, ETag는 ShallowEtagHeaderFilter가 붙인다. */

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { getEvents } from "@/lib/api";
 import { formatDateTime, dDay } from "@/lib/format";
+import { TICKET_PRICE, formatKrw } from "@/lib/pricing";
 import { ArtPanel, SeatSig } from "@/components/ArtPanel";
 
 export default async function HomePage() {
@@ -36,7 +37,7 @@ export default async function HomePage() {
               <p className="text-sm font-bold">
                 {featured.openAt ? `${formatDateTime(featured.openAt)} 예매 오픈` : ""}
               </p>
-              <p className="text-xs text-sub">전석 132,000원 · 1인 1매</p>
+              <p className="text-xs text-sub">전석 {formatKrw(TICKET_PRICE)} · 1인 1매</p>
             </div>
             {featured.openAt && dDay(featured.openAt) >= 0 && (
               <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">

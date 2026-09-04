@@ -2,8 +2,10 @@
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function parseUtc(value: string): Date {
-  // "2026-09-07T11:00:00" (UTC, 오프셋 없음) → Z를 붙여 확정
-  return new Date(value.endsWith("Z") ? value : `${value}Z`);
+  // "2026-09-07T11:00:00" (UTC, 오프셋 없음) → Z를 붙여 확정.
+  // 자바 LocalDateTime은 소수초를 6자리까지 내보내는데 ECMAScript 날짜 형식은 3자리까지만 보장한다 → 잘라낸다
+  const normalized = value.replace(/(\.\d{3})\d+/, "$1");
+  return new Date(normalized.endsWith("Z") ? normalized : `${normalized}Z`);
 }
 
 /** "9.7 (일) 11:00" — 한국 티켓팅 표기 */

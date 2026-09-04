@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ApiError } from "@ticket-rush/api-client";
 import { getEvent } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
+import { BOOKING_FEE, TICKET_PRICE, formatKrw } from "@/lib/pricing";
 import { ArtPanel } from "@/components/ArtPanel";
 import { OpenCountdown } from "@/components/OpenCountdown";
 
@@ -54,7 +55,7 @@ export default async function EventDetailPage({
           <p className="text-[15px] font-bold tabular-nums">
             {schedule?.startsAt ? formatDateTime(schedule.startsAt) : "회차 정보 없음"}
           </p>
-          <p className="text-xs text-sub">전 구역 2,000석 · 전석 132,000원</p>
+          <p className="text-xs text-sub">전 구역 2,000석 · 전석 {formatKrw(TICKET_PRICE)}</p>
         </div>
         <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-brand text-white">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4.5 4.5L19 7" /></svg>
@@ -77,7 +78,7 @@ export default async function EventDetailPage({
         <div className="px-4 pb-4 text-xs leading-relaxed text-sub">
           · 예매 오픈 직후 접속이 몰리면 대기열이 적용됩니다.
           <br />· 좌석 선점 후 5분 안에 결제하지 않으면 자동 취소됩니다.
-          <br />· 같은 좌석은 두 번 결제되지 않습니다. 예매수수료 2,000원이 부과됩니다.
+          <br />· 같은 좌석은 두 번 결제되지 않습니다. 예매수수료 {formatKrw(BOOKING_FEE)}이 부과됩니다.
         </div>
       </details>
 

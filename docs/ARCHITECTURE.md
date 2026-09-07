@@ -278,6 +278,7 @@ backend/src/main/java/com/ticketing
 | 단계 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
 | 1 | GET | `/events`, `/events/{id}` | 공연 목록/상세 (catalog) |
+| 2 | GET | `/schedules/{id}` | 회차 상세 + 공연 요약. 결제·완료 화면이 예매 → 회차 → 공연으로 거슬러 올라갈 때 |
 | 1 | GET | `/schedules/{id}/seats/layout` | 좌석 배치. 정적, `Cache-Control: immutable` + ETag |
 | 1 | GET | `/schedules/{id}/seats/status` | 좌석 상태 비트맵 (8-3) |
 | 1 | POST | `/schedules/{id}/queue` | 대기열 진입 → `{position}` |

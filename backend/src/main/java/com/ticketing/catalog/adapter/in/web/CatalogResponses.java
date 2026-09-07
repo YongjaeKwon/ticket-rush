@@ -2,6 +2,7 @@ package com.ticketing.catalog.adapter.in.web;
 
 import com.ticketing.catalog.domain.EventDetail;
 import com.ticketing.catalog.domain.EventSummary;
+import com.ticketing.catalog.domain.ScheduleDetail;
 import com.ticketing.catalog.domain.SeatLayout;
 import com.ticketing.catalog.domain.SeatStatusBitmap;
 
@@ -32,6 +33,18 @@ final class CatalogResponses {
                     e.schedules().stream()
                             .map(s -> new ScheduleResponse(s.id(), s.startsAt()))
                             .toList());
+        }
+    }
+
+    /** 회차 + 공연 요약. 예매 → 회차 → 공연으로 거슬러 올라가는 결제·완료 화면용. */
+    record ScheduleDetailResponse(long id, LocalDateTime startsAt, EventRef event) {
+
+        record EventRef(long id, String title, String venue) {
+        }
+
+        static ScheduleDetailResponse from(ScheduleDetail s) {
+            return new ScheduleDetailResponse(s.id(), s.startsAt(),
+                    new EventRef(s.eventId(), s.eventTitle(), s.venue()));
         }
     }
 

@@ -310,6 +310,7 @@ from seat-hold onward also `Authorization: Bearer <admission JWT>`.
 | Stage | Method | Path | Description |
 |---|---|---|---|
 | 1 | GET | `/events`, `/events/{id}` | event list/detail (catalog) |
+| 2 | GET | `/schedules/{id}` | schedule detail + event summary. lets the payment/done screens walk back reservation → schedule → event |
 | 1 | GET | `/schedules/{id}/seats/layout` | seat layout. static, `Cache-Control: immutable` + ETag |
 | 1 | GET | `/schedules/{id}/seats/status` | seat-status bitmap (8-3) |
 | 1 | POST | `/schedules/{id}/queue` | join queue → `{position}` |

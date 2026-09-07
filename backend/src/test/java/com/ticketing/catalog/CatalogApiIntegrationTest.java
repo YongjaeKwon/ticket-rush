@@ -71,6 +71,26 @@ class CatalogApiIntegrationTest {
     }
 
     @Test
+    void 회차_상세에_공연_요약이_붙는다() {
+        JsonNode body = rest.getForObject("/api/schedules/1", JsonNode.class);
+
+        // 시드(V2__seed.sql) 값에 고정 — 회차 시각과 공연 오픈 시각을 바꿔 매핑해도 잡히도록
+        assertThat(body.get("id").asLong()).isEqualTo(1L);
+        assertThat(body.get("startsAt").asText()).isEqualTo("2026-10-17T10:00:00");
+        assertThat(body.get("event").get("id").asLong()).isEqualTo(1L);
+        assertThat(body.get("event").get("title").asText()).isEqualTo("2026 TICKET RUSH LIVE");
+        assertThat(body.get("event").get("venue").asText()).isEqualTo("올림픽공원 체조경기장");
+    }
+
+    @Test
+    void 없는_회차의_상세는_SCHEDULE_NOT_FOUND() {
+        ResponseEntity<JsonNode> response = rest.getForEntity("/api/schedules/999", JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().get("code").asText()).isEqualTo("SCHEDULE_NOT_FOUND");
+    }
+
+    @Test
     void 좌석_배치는_4구역_2000석이고_불변_캐시와_ETag가_붙는다() {
         ResponseEntity<JsonNode> response = rest.getForEntity("/api/schedules/1/seats/layout", JsonNode.class);
 

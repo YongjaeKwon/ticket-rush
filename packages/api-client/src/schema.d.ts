@@ -52,6 +52,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/schedules/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["schedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/schedules/{scheduleId}/seats/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stream"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/schedules/{scheduleId}/seats/status": {
         parameters: {
             query?: never;
@@ -76,6 +108,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["layout"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/schedules/{scheduleId}/queue/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stream_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -173,6 +221,23 @@ export interface components {
             reservationId?: number;
             status?: string;
             paymentTransactionId?: string;
+        };
+        EventRef: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            venue?: string;
+        };
+        ScheduleDetailResponse: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            startsAt?: string;
+            event?: components["schemas"]["EventRef"];
+        };
+        SseEmitter: {
+            /** Format: int64 */
+            timeout?: number;
         };
         SeatStatusResponse: {
             /** Format: int64 */
@@ -332,6 +397,50 @@ export interface operations {
             };
         };
     };
+    schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ScheduleDetailResponse"];
+                };
+            };
+        };
+    };
+    stream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["SseEmitter"];
+                };
+            };
+        };
+    };
     status: {
         parameters: {
             query?: never;
@@ -372,6 +481,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SeatLayoutResponse"];
+                };
+            };
+        };
+    };
+    stream_1: {
+        parameters: {
+            query: {
+                userId: string;
+            };
+            header?: never;
+            path: {
+                scheduleId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": components["schemas"]["SseEmitter"];
                 };
             };
         };

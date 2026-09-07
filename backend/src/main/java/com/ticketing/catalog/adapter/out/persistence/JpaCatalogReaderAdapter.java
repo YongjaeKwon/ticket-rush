@@ -3,6 +3,7 @@ package com.ticketing.catalog.adapter.out.persistence;
 import com.ticketing.catalog.application.port.out.CatalogReader;
 import com.ticketing.catalog.domain.EventDetail;
 import com.ticketing.catalog.domain.EventSummary;
+import com.ticketing.catalog.domain.ScheduleDetail;
 import com.ticketing.catalog.domain.SeatLayout;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +42,13 @@ class JpaCatalogReaderAdapter implements CatalogReader {
                 schedules.findByEventIdOrderByStartsAtAsc(e.getId()).stream()
                         .map(s -> new EventDetail.ScheduleSummary(s.getId(), s.getStartsAt()))
                         .toList()));
+    }
+
+    @Override
+    public Optional<ScheduleDetail> findSchedule(long scheduleId) {
+        return schedules.findById(scheduleId).flatMap(s -> events.findById(s.getEventId())
+                .map(e -> new ScheduleDetail(s.getId(), s.getStartsAt(),
+                        e.getId(), e.getTitle(), e.getVenue())));
     }
 
     @Override

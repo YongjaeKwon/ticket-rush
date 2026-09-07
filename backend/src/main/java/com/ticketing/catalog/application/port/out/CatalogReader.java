@@ -2,6 +2,7 @@ package com.ticketing.catalog.application.port.out;
 
 import com.ticketing.catalog.domain.EventDetail;
 import com.ticketing.catalog.domain.EventSummary;
+import com.ticketing.catalog.domain.ScheduleDetail;
 import com.ticketing.catalog.domain.SeatLayout;
 
 import java.util.List;
@@ -13,6 +14,8 @@ public interface CatalogReader {
     List<EventSummary> findEvents();
 
     Optional<EventDetail> findEvent(long eventId);
+
+    Optional<ScheduleDetail> findSchedule(long scheduleId);
 
     Optional<SeatLayout> findLayout(long scheduleId);
 }

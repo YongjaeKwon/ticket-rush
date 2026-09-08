@@ -2,39 +2,17 @@
 
 [한국어](README.md) | **English**
 
-[![Backend CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml)
+A concert booking service covering queue admission, seat selection, mock payment, and reservation confirmation.
 
-A concert booking service that explores what happens when several users select the same seat.
-The web flow covers browsing events, joining a queue, holding a seat, making a mock payment, and receiving confirmation.
+![Ticket Rush seat-selection design prototype](docs/images/seat-selection-prototype.png)
 
-My focus is **keeping reservation state consistent when requests overlap or a response never reaches the user**.
-The implementation separates the responsibilities of Redis and the database, with explicit rules and tests for expiry and retries.
+*Seat-selection design prototype — a preview used to design the screens and booking flow. [Prototype source](docs/design/gate1-prototype.html)*
 
-## Design choices
+## Key features
 
-### Redis for temporary holds, the database for confirmed bookings
-
-Selecting a seat gives the user five minutes to pay. A Redis hold succeeds only if its key does not already exist, filtering competing requests for that seat.
-Because a hold key can be lost, a composite database primary key on `(schedule, seat)` also prevents a second confirmation.
-
-The reservation update, confirmed-seat row, and event record share one DB transaction.
-This separates a temporary claim from a confirmed booking and assigns each to storage suited to its lifetime and responsibility.
-
-### Separate waiting for payment from changing the database
-
-Payment is called outside the DB transaction so that waiting for a payment response does not keep a DB connection occupied.
-After payment, the service checks reservation state and expiry again inside the transaction. It releases the Redis hold after the confirmation commits.
-
-This means payment approval and database persistence can succeed or fail independently.
-Handling a failure between them is a follow-up task described below.
-
-### Distinguish a missing response from a declined payment
-
-A missing payment response does not establish that the server failed to process the request.
-The web client therefore queries the reservation first and retains the key for an attempt whose outcome is unknown.
-A new attempt after a declined payment receives a new key.
-
-This decision logic is a pure function, separate from the screen code. The [decision record](docs/adr/0006-idempotency-key-per-attempt.en.md) explains the reasoning and limitations.
+- **Prevent duplicate seat confirmations.** Redis holds a seat for five minutes; a MySQL primary key on `(schedule, seat)` limits final confirmation. The reservation update, confirmed-seat row, and event record share one transaction. [Confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [Concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **Handle retries when a payment response is missing.** The client queries the reservation first and retains the key for an attempt whose outcome is unknown. A new attempt after a decline gets a new key. [Retry rules](apps/web/src/lib/confirm-policy.ts) · [Tests](apps/web/src/lib/confirm-policy.test.ts) · [Decision record](docs/adr/0006-idempotency-key-per-attempt.en.md)
+- **Connect the queue and seat selection in the web app.** SSE delivers queue positions and seat-status changes; Canvas handles seat selection. The app shows the remaining payment time after a hold. [Web screens](apps/web/src/app/) · [Seat calculations](packages/seat-map-core/src/) · [Queue SSE test](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
 ## Current structure
 
@@ -55,7 +33,8 @@ It shows the remaining hold time and guides the user according to the payment re
 **Stack:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
 Flyway manages database changes; tests use JUnit, Testcontainers, and Vitest.
 
-## Reading the code and tests
+<details>
+<summary>Behavior covered by the code and tests</summary>
 
 **Several holds for one seat must still lead to a single confirmation.**
 The [hold service](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java) and [confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) handle these steps separately.
@@ -71,6 +50,8 @@ The [reservation domain](backend/src/main/java/com/ticketing/reservation/domain/
 
 The concurrency tests invoke Java use cases directly against MySQL and Redis in Testcontainers.
 Data loss is simulated by deleting hold keys, rather than stopping the Redis server. Backend [CI](.github/workflows/ci.yml) runs the full Gradle suite on pushes to `main` and on pull requests.
+
+</details>
 
 ## Run locally
 

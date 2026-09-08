@@ -2,39 +2,17 @@
 
 **한국어** | [English](README.en.md)
 
-[![Backend CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml)
+대기열 입장부터 좌석 선택, 모의 결제, 예매 완료까지 구현한 공연 예매 서비스입니다.
 
-여러 사용자가 같은 좌석을 동시에 선택하는 상황을 다룬 공연 예매 서비스입니다.
-웹에서 공연 조회부터 대기열 입장, 좌석 선점, 모의 결제, 예매 완료까지 이어지는 흐름을 구현했습니다.
+![티켓러시 좌석 선택 디자인 프로토타입](docs/images/seat-selection-prototype.png)
 
-이 프로젝트에서는 **요청이 겹치거나 응답을 받지 못했을 때 예매 상태를 어떻게 일관되게 유지할지**에 관심을 두었습니다.
-Redis와 DB에 맡길 책임을 나누고, 만료와 재시도 같은 상황에서 어떤 처리가 필요한지를 코드와 테스트로 구체화했습니다.
+*좌석 선택 디자인 프로토타입 — 화면 구성과 예매 흐름을 설계한 미리보기입니다. [프로토타입 원본](docs/design/gate1-prototype.html)*
 
-## 설계에서 내린 선택
+## 핵심 구현
 
-### 임시 선점은 Redis에, 확정된 예매는 DB에
-
-좌석을 선택한 사용자에게는 5분의 결제 시간을 줍니다. Redis에서 키가 없을 때만 선점에 성공하도록 해 같은 좌석에 대한 경쟁 요청을 걸러냅니다.
-다만 선점 키가 사라질 수 있으므로, 최종 확정은 DB의 `(회차, 좌석)` 복합 기본키로 한 번 더 제한했습니다.
-
-예매 상태 변경, 확정 좌석 저장, 이벤트 기록은 하나의 DB 트랜잭션으로 묶었습니다.
-임시로 잡아 둔 좌석과 확정된 예매를 구분하고, 각각의 수명과 책임에 맞는 저장소를 사용한 선택입니다.
-
-### 결제를 기다리는 시간과 DB를 변경하는 시간을 분리
-
-결제 응답을 기다리는 동안 DB 커넥션을 계속 점유하지 않도록 결제 호출을 트랜잭션 밖에 두었습니다.
-결제 이후에는 트랜잭션 안에서 예매 상태와 만료 시각을 다시 확인하고, 확정 정보가 커밋된 뒤 Redis 선점을 해제합니다.
-
-이 구조에서는 결제 승인과 DB 저장이 각각 성공하는지 살펴야 합니다.
-두 작업 사이에서 실패했을 때의 보상 처리는 아래의 후속 과제로 남겼습니다.
-
-### 응답을 받지 못한 경우와 결제가 거절된 경우를 구분
-
-사용자가 결제 결과를 받지 못했다고 해서 서버의 처리까지 실패한 것은 아닙니다.
-그래서 화면은 예매 상태를 먼저 조회하고, 결과를 알 수 없는 시도의 키를 유지하도록 했습니다.
-반면 결제가 거절된 뒤 다시 시도할 때는 새로운 키를 사용합니다.
-
-이 판단을 화면 코드와 분리한 순수 함수로 작성하고, [결정 기록](docs/adr/0006-idempotency-key-per-attempt.md)에 선택 이유와 제약을 남겼습니다.
+- **같은 좌석의 중복 확정 방지.** Redis로 좌석을 5분간 선점하고, MySQL의 `(회차, 좌석)` 기본키로 최종 확정을 제한합니다. 예매 상태·확정 좌석·이벤트 기록은 하나의 트랜잭션으로 묶었습니다. [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **결제 응답을 받지 못했을 때의 재시도.** 예매 상태를 먼저 조회하고 같은 시도의 키를 유지합니다. 결제 거절 뒤 새로 시도할 때는 다른 키를 사용합니다. [재시도 규칙](apps/web/src/lib/confirm-policy.ts) · [테스트](apps/web/src/lib/confirm-policy.test.ts) · [선택 이유](docs/adr/0006-idempotency-key-per-attempt.md)
+- **대기열부터 좌석 선택까지 웹에서 연결.** SSE로 대기 순번과 좌석 상태를 전달하고, Canvas로 좌석을 선택합니다. 선점 후에는 남은 결제 시간을 보여 줍니다. [웹 화면](apps/web/src/app/) · [좌석 계산](packages/seat-map-core/src/) · [대기열 SSE 테스트](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
 ## 현재 구성
 
@@ -55,7 +33,8 @@ flowchart LR
 **사용 기술:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
 DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vitest를 사용합니다.
 
-## 코드와 테스트에서 살펴볼 부분
+<details>
+<summary>코드와 테스트에서 확인한 동작</summary>
 
 **좌석을 선점한 요청이 여러 건이어도 최종 확정은 하나여야 합니다.**
 [선점 처리](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java)와 [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java)를 나누어 읽을 수 있습니다.
@@ -71,6 +50,8 @@ DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vite
 
 동시성 테스트는 Testcontainers의 MySQL·Redis를 사용해 Java 유스케이스를 직접 호출합니다.
 Redis 서버를 중단시키는 대신 홀드 키를 삭제해 데이터 유실 상황을 재현합니다. 백엔드 [CI](.github/workflows/ci.yml)는 `main` push와 PR에서 전체 Gradle 테스트를 실행합니다.
+
+</details>
 
 ## 실행
 

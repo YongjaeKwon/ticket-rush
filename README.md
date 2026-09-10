@@ -1,137 +1,121 @@
-# 티켓러시 — 선착순 티켓팅 시스템
+# 티켓러시
 
 **한국어** | [English](README.en.md)
 
-![CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)
+대기열 입장부터 좌석 선택, 모의 결제, 예매 완료까지 구현한 공연 예매 서비스입니다.
 
-수천 명이 같은 좌석을 동시에 잡아도 **이중 예매가 0건**인 예매 시스템을 만드는 프로젝트입니다.
-모놀리스로 시작해 Kafka 기반 서비스 분리까지 단계별로 키워 가고, 각 단계의 성능과 정합성을 수치로 검증합니다.
+![티켓러시 좌석 선택 디자인 프로토타입](docs/images/seat-selection-prototype.png)
 
-혼자 예매 흐름을 연습하는 시뮬레이터가 아닙니다. 여러 사용자가 경합하는 상황에서 데이터가 깨지지 않는다는 걸
-테스트와 부하 수치로 증명하는 데 목적이 있습니다.
+*좌석 선택 디자인 프로토타입 — 화면 구성과 예매 흐름을 설계한 미리보기입니다. [프로토타입 원본](docs/design/gate1-prototype.html)*
 
-## 핵심 아이디어 — 좌석을 지키는 세 겹의 방어
+## 핵심 구현
 
-같은 좌석을 두 사람이 가져가는 사고를 세 겹으로 막습니다.
+- **같은 좌석의 중복 확정 방지.** Redis로 좌석을 5분간 선점하고, MySQL의 `(회차, 좌석)` 기본키로 최종 확정을 제한합니다. 예매 상태·확정 좌석·이벤트 기록은 하나의 트랜잭션으로 묶었습니다. [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **결제 응답을 받지 못했을 때의 재시도.** 예매 상태를 먼저 조회하고 같은 시도의 키를 유지합니다. 결제 거절 뒤 새로 시도할 때는 다른 키를 사용합니다. [재시도 규칙](apps/web/src/lib/confirm-policy.ts) · [테스트](apps/web/src/lib/confirm-policy.test.ts) · [선택 이유](docs/adr/0006-idempotency-key-per-attempt.md)
+- **대기열부터 좌석 선택까지 웹에서 연결.** SSE로 대기 순번과 좌석 상태를 전달하고, Canvas로 좌석을 선택합니다. 선점 후에는 남은 결제 시간을 보여 줍니다. [웹 화면](apps/web/src/app/) · [좌석 계산](packages/seat-map-core/src/) · [대기열 SSE 테스트](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
-| 겹 | 무엇 | 성격 |
-|---|---|---|
-| 1차 | Redis `SET NX EX` 선점 (5분 TTL) | 빠르다. 동시 요청 중 한 명만 통과시킨다. 대신 Redis가 죽으면 사라진다 |
-| 2차 | 도메인 규칙 — 만료된 홀드는 결제를 거부 | 홀드가 먼저 사라져 다른 사람이 좌석을 잡았을 가능성을 걸러낸다 |
-| 최종 | DB `confirmed_seat`의 (회차, 좌석) PK | Redis가 통째로 죽어도 같은 좌석의 두 번째 확정 INSERT는 DB가 물리적으로 거부한다 |
-
-"Redis가 죽은 상황"을 통합 테스트에서 실제로 재현해, 같은 좌석에 홀드가 두 건 생겨도 확정은 정확히 한 건만
-남는 것까지 확인합니다.
-
-## 예매 흐름
+## 현재 구성
 
 ```mermaid
 flowchart LR
-  U["사용자 (웹 / 앱)"] -->|"1. 대기열"| Q["queue"]
-  Q -->|"ZSET, N명씩 입장, JWT"| RD["Redis"]
-  U -->|"2. 좌석 홀드 + JWT"| R["reservation"]
-  R -->|"SET NX EX 5분"| RD
-  R -->|"HELD + outbox, 한 트랜잭션"| DB[("MySQL — confirmed_seat UNIQUE")]
-  DB -->|"3. Outbox 릴레이"| K["Kafka (3단계)"]
-  K --> P["payment (3단계)"]
-  P -->|"승인 / 실패"| K
-  K -->|"4. 멱등 컨슘"| R
-  R -->|"SSE 좌석 상태 (2단계)"| U
+  WEB["Next.js 웹"] -->|"HTTP / SSE"| APP["Spring Boot<br/>공연 조회 · 대기열 · 예매"]
+  APP -->|"대기열 · 좌석 선점"| REDIS[(Redis)]
+  APP -->|"예매 · 확정 좌석 · 이벤트 기록"| DB[(MySQL)]
+  APP -->|"동기 호출"| PAYMENT["모의 결제"]
 ```
 
-대기열에 줄을 서고 → 좌석을 5분간 선점하고 → 결제하면 확정됩니다. 5분 안에 결제하지 않으면 좌석은
-자동으로 풀립니다. 1단계에서 결제는 mock 어댑터의 동기 호출이고, 3단계에서 이벤트 기반으로 바뀝니다 —
-이 교체가 헥사고날 아키텍처를 쓰는 이유이기도 합니다.
+백엔드는 하나의 Spring Boot 애플리케이션 안에 공연 조회(`catalog`), 대기열(`queue`), 예매(`reservation`) 모듈을 두었습니다.
+예매 규칙은 Spring·JPA에 의존하지 않는 Java 객체에 두고, DB와 Redis를 사용하는 코드는 별도로 분리했습니다.
 
-## 로드맵과 진행 상황
+[웹](apps/web/src/app/)에서는 Canvas로 좌석을 선택하고, SSE로 대기 순번과 좌석 상태의 변화를 받습니다.
+남은 선점 시간을 보여 주고 결제 결과에 따라 다음 행동을 안내합니다. 좌석 상태 해석과 좌표 계산은 [공통 패키지](packages/seat-map-core/src/)로 분리했습니다.
 
-| 단계 | 내용 | 상태 | 태그 |
-|---|---|---|---|
-| 1 | 백엔드 뼈대 — 모놀리스 + 헥사고날 (catalog / queue / reservation) | **완료** | `v1-monolith` |
-| 2 | 웹 프론트 — 모바일 웹, Canvas 좌석맵, SSE | **완료** | `v2-web` |
-| 3 | 서비스 분리 + Kafka — Outbox 릴레이, 멱등 컨슈머, 결제 되돌리기 | | `v3-msa` |
-| 4 | 부하 수치 + 가상 경쟁자 데모 | | `v4-bench` |
-| 5 | 모바일 앱 (Expo) | | `v5-app` |
+<p align="center"><img src="docs/demo/booking-flow.gif" width="280" alt="목록 → 대기열 → 좌석 선택 → 결제 → 예매 완료"></p>
 
-### 1단계에서 만든 것
+*실제 구현 화면 — 목록부터 예매 완료까지. Playwright 모바일 에뮬레이션으로 녹화했습니다.*
 
-- **catalog 모듈** — 공연 목록·상세, 좌석 배치(ETag + 불변 캐시), 좌석 상태 비트맵 API.
-  2,000석의 상태를 좌석당 2비트로 압축해 500바이트로 내려줍니다
-- **reservation 모듈** — 상태 전이 규칙은 순수 자바 도메인에, 좌석 홀드(Redis 선점 → DB 기록 →
-  실패 시 되돌리기)·확정(mock 결제 + `confirmed_seat` UNIQUE)·만료 스케줄러·취소는 유스케이스로.
-  이벤트 4종은 Outbox 테이블에 같은 트랜잭션으로 기록
-- **queue 모듈** — ZSET 대기열(재진입해도 자리 유지), 1초마다 N명씩 입장, 10분짜리 JWT 입장권.
-  reservation은 입장권의 서명만 검증해서 queue를 호출하지 않습니다 — 3단계 분리 대비
-- **REST API + 멱등 처리** — 예매 API 4개와 대기열 API 2개. 상태를 바꾸는 요청은
-  Idempotency-Key로 중복 실행을 막습니다(같은 키면 저장된 응답 재생)
-- **동시성 증명** — 1석 100요청 동시 발사 → 성공 정확히 1건(48ms). Redis가 죽어 홀드가 중복된
-  상황에서도 동시 확정의 승자는 1명 — 이중 예매 0건
-- **아키텍처 검증 + CI** — ArchUnit 의존 방향 3규칙과 Spring Modulith 모듈 경계 검사(위반 0건),
-  push마다 GitHub Actions에서 전체 테스트 55개 실행
+**사용 기술:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
+DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vitest·Playwright를 사용합니다.
 
-### 2단계에서 만든 것
+<details>
+<summary>코드와 테스트에서 확인한 동작</summary>
 
-<p align="center"><img src="docs/demo/booking-flow.gif" width="300" alt="공연 목록 → 대기열 → 좌석맵 → 결제 → 완료 (모바일 에뮬레이션)"></p>
+**좌석을 선점한 요청이 여러 건이어도 최종 확정은 하나여야 합니다.**
+[선점 처리](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java)와 [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java)를 나누어 읽을 수 있습니다.
+[동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)는 같은 좌석에 100개 스레드가 선점을 시도했을 때 성공이 1건인지 확인합니다. 선점 키를 삭제해 중복 홀드 10건을 만든 뒤, 동시에 확정해도 확정 좌석과 `CONFIRMED` 예매가 각각 1건인지도 확인합니다.
 
-- **모노레포** — `apps/web`(Next.js App Router) + `packages/api-client`(백엔드 openapi.json에서 타입 생성,
-  손으로 쓴 API 타입 없음) + `packages/seat-map-core`(비트맵 디코딩·좌표·히트 테스트, 렌더러를 모르는 순수 TS)
-- **디자인 시스템 GATE** — 참고 사이트를 분석해 만든 한국식 티켓팅 UI. 딥 인디고 좌석 도트 아트, 그라데이션 없음,
-  토큰 밖 색·그림자·반경 금지 ([디자인 파운데이션](docs/design/design-foundation.md))
-- **대기열 화면** — 순번은 SSE로 받고, 스트림이 끊기면 폴링으로 전환합니다. 입장되면 입장권(JWT)을 들고
-  좌석맵으로 넘어갑니다
-- **좌석맵** — 2,000석을 DOM 없이 Canvas 한 장에 그립니다. 좌석 상태 SSE는 회차당 폴러 하나가 500ms마다
-  비트맵을 읽어 달라진 좌석만 구독자 전원에게 보냅니다 — 구독자가 몇 명이든 DB·Redis 조회는 틱마다 회차당 한 번
-- **결제·완료 화면** — 접수번호(Idempotency-Key)는 결제 시도마다 하나입니다. 결과를 모르면 같은 번호를 유지한 채
-  조회로 먼저 확인하고, 서버가 판정을 주면 번호를 버립니다([ADR 0006](docs/adr/0006-idempotency-key-per-attempt.md)).
-  낙관적 홀드 UI, 홀드 카운트다운, 월렛 패스
-- **E2E + CI** — Playwright(안드로이드 크롬 에뮬레이션)가 목록 → 완료 한 흐름과 응답 유실·거절·뒤로가기
-  시나리오를 실제 백엔드를 상대로 검증합니다. CI는 커밋된 openapi.json이 서버 계약과 같은지도 확인합니다
+**실패의 종류에 따라 예매 상태와 재시도 방식이 달라져야 합니다.**
+[만료된 홀드의 결제 거절](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [결제 거절 시 홀드 유지](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), [같은 키로 재요청했을 때의 응답 재생](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java)을 통합 테스트로 확인합니다.
+[웹의 재시도 정책 테스트](apps/web/src/lib/confirm-policy.test.ts)는 응답 유형에 따라 시도 키를 유지할지 판단하는 규칙을 다룹니다.
+브라우저 단에서는 [Playwright E2E](apps/web/e2e/idempotency.spec.ts)가 응답 유실 두 갈래(서버 미도달·서버 처리 후 유실)와 결제 거절, 뒤로가기 후 홀드 복원을 실행 중인 백엔드를 상대로 확인합니다.
 
-## 기술 스택
+**업무 규칙과 외부 기술의 경계가 코드에서도 유지되어야 합니다.**
+[예매 도메인](backend/src/main/java/com/ticketing/reservation/domain/Reservation.java)에 상태 전이와 만료 규칙을 모았습니다.
+[ArchUnit](backend/src/test/java/com/ticketing/ArchitectureTest.java)과 [Spring Modulith 검사](backend/src/test/java/com/ticketing/ModularityTest.java)는 계층 의존 방향과 모듈 경계를 확인합니다.
 
-Java 21 · Spring Boot 4.0 · Spring Modulith 2.0 · MySQL 8 (Flyway) · Redis 7 · Testcontainers ·
-(3단계부터) Kafka · (2단계부터) Next.js
+동시성 테스트는 Testcontainers의 MySQL·Redis를 사용해 Java 유스케이스를 직접 호출합니다.
+Redis 서버를 중단시키는 대신 홀드 키를 삭제해 데이터 유실 상황을 재현합니다. [CI](.github/workflows/ci.yml)는 `main` push와 PR에서 백엔드 전체 테스트와 웹 검사(타입·단위 테스트·openapi 계약 diff·Playwright E2E)를 실행합니다.
 
-왜 이 조합인지는 [결정 기록](docs/adr/)에 남겨져 있습니다. 예: [NestJS 대신 Java/Spring을 고른 이유](docs/adr/0001-java-spring-over-nestjs.md),
-[경합 테이블에 FK를 걸지 않은 이유](docs/adr/0003-no-fk-on-contention-tables.md).
-
-## 수치 (4단계에서 채웁니다)
-
-| 항목 | 결과 |
-|---|---|
-| 부하 중 중복 예매 | — 건 (목표 0) |
-| 홀드 API p99 (동시 10,000 요청) | — ms |
-| 처리량 | — req/s |
-| 대기열 없음 vs 있음 — DB 에러율 | — % vs — % |
-| `SET NX` vs Redisson vs DB 비관적 락 — p99 | — / — / — ms |
-| Lighthouse 모바일 / LCP / INP | — / — s / — ms |
-| SSE diff 페이로드 (2,000석) | — bytes |
-| 앱 콜드 스타트 (중급 안드로이드) | — s |
+</details>
 
 ## 실행
 
+Java 21과 Docker가 필요합니다. 웹은 Node.js와 저장소의 `packageManager`에 지정된 pnpm을 사용합니다.
+명령은 저장소 루트에서 시작하며, Windows에서는 `./gradlew` 대신 `.\gradlew.bat`를 사용합니다.
+
 ```bash
-docker compose --profile infra up -d      # MySQL(호스트 3307), Redis
+# 개발용 MySQL·Redis와 백엔드
+docker compose --profile infra up -d
 cd backend
-./gradlew test                            # 전체 테스트 (Docker 필요 — Testcontainers)
-./gradlew bootRun                         # http://localhost:8080
+./gradlew bootRun
 ```
 
 ```bash
-curl http://localhost:8080/api/events     # 시드된 공연 목록 확인
+# 저장소 루트의 새 터미널에서 웹 실행
+pnpm install --frozen-lockfile
+pnpm --filter @ticket-rush/web dev
+```
+
+웹은 [localhost:3000](http://localhost:3000), 공연 API는 [localhost:8080/api/events](http://localhost:8080/api/events)에서 확인할 수 있습니다.
+결제는 mock 어댑터로 처리하며 사용자 식별에는 데모용 `X-User-Id`를 사용합니다.
+
+<details>
+<summary>테스트 실행 명령</summary>
+
+```bash
+# 저장소 루트에서 실행. Testcontainers가 별도 MySQL·Redis를 시작합니다.
+cd backend
+./gradlew test --tests '*ReservationConcurrencyTest'
+./gradlew test
 ```
 
 ```bash
-pnpm install                              # 저장소 루트에서
-pnpm -F web dev                           # http://localhost:3000 (백엔드가 떠 있어야 함)
-pnpm -F web test                          # 단위 테스트 (vitest)
-pnpm -F web e2e                           # Playwright E2E — 모바일 에뮬레이션 (백엔드가 떠 있어야 함)
-curl -s localhost:8080/v3/api-docs -o openapi.json   # 서버 계약을 받아 둔다 (반드시 8080에서)
-pnpm gen:api                              # openapi.json → packages/api-client 타입
+# 저장소 루트에서 실행
+pnpm --filter @ticket-rush/seat-map-core test
+pnpm --filter @ticket-rush/web test
+pnpm --filter @ticket-rush/web e2e        # Playwright E2E — 백엔드가 떠 있어야 합니다
 ```
 
-## 문서
+```bash
+# API 계약이 바뀌었을 때 — 반드시 8080의 백엔드에서 받습니다 (servers URL이 요청 주소를 따라감)
+curl -s localhost:8080/v3/api-docs -o openapi.json
+pnpm gen:api
+```
 
-- [설계 문서](docs/ARCHITECTURE.md) — 구성도, 스택, 코드 구조, 도메인, 이벤트, API, 인프라, 면접 포인트, 용어집
-- [디자인 파운데이션](docs/design/design-foundation.md) — 디자인 토큰과 화면 문법, [동작하는 프로토타입](docs/design/gate1-prototype.html) 포함
-- [결정 기록 (ADR)](docs/adr/) · [백로그](docs/backlog.md) · 에이전트 작업 규칙: [CLAUDE.md](CLAUDE.md)
+</details>
+
+## 다음에 다룰 문제
+
+서버의 멱등 처리는 현재 저장된 응답을 재생하는 방식입니다.
+같은 키로 동시에 들어오는 요청의 실행 제어와, 결제 승인 뒤 DB 저장에 실패했을 때의 보상 처리가 남아 있습니다.
+
+HTTP 부하 테스트의 응답시간·처리량은 아직 측정하지 않았습니다.
+실행 환경과 시나리오를 함께 기록해 측정할 계획입니다.
+
+Outbox는 이벤트를 DB에 기록하는 단계까지 구현했습니다. Kafka를 통한 이벤트 전달, 서비스 분리, Expo 앱은 후속 계획이며, 세부 사항은 [백로그](docs/backlog.md)에 정리했습니다.
+
+## 관련 문서
+
+- [설계 문서](docs/ARCHITECTURE.md) — 현재 구조와 후속 단계 설계
+- [결정 기록](docs/adr/) — 대안, 선택 이유, 받아들인 제약
+- [화면 디자인](docs/design/design-foundation.md) — 디자인 토큰과 프로토타입

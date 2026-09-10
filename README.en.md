@@ -1,149 +1,121 @@
-# Ticket Rush — First-Come-First-Served Ticketing System
+# Ticket Rush
 
 [한국어](README.md) | **English**
 
-![CI](https://github.com/YongjaeKwon/ticket-rush/actions/workflows/ci.yml/badge.svg)
+A concert booking service covering queue admission, seat selection, mock payment, and reservation confirmation.
 
-A reservation system built to guarantee **zero double-bookings** even when thousands of users
-grab the same seat at the same time. It starts as a monolith and evolves step by step into
-Kafka-based separated services, with every stage verified by tests and load-test numbers.
+![Ticket Rush seat-selection design prototype](docs/images/seat-selection-prototype.png)
 
-This is not a ticketing practice simulator. The goal is to prove — with tests and metrics —
-that data stays consistent under real multi-user contention.
+*Seat-selection design prototype — a preview used to design the screens and booking flow. [Prototype source](docs/design/gate1-prototype.html)*
 
-## Core idea — three layers of defense for a seat
+## Key features
 
-Three layers prevent two people from walking away with the same seat.
+- **Prevent duplicate seat confirmations.** Redis holds a seat for five minutes; a MySQL primary key on `(schedule, seat)` limits final confirmation. The reservation update, confirmed-seat row, and event record share one transaction. [Confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [Concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **Handle retries when a payment response is missing.** The client queries the reservation first and retains the key for an attempt whose outcome is unknown. A new attempt after a decline gets a new key. [Retry rules](apps/web/src/lib/confirm-policy.ts) · [Tests](apps/web/src/lib/confirm-policy.test.ts) · [Decision record](docs/adr/0006-idempotency-key-per-attempt.en.md)
+- **Connect the queue and seat selection in the web app.** SSE delivers queue positions and seat-status changes; Canvas handles seat selection. The app shows the remaining payment time after a hold. [Web screens](apps/web/src/app/) · [Seat calculations](packages/seat-map-core/src/) · [Queue SSE test](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
-| Layer | What | Character |
-|---|---|---|
-| 1st | Redis `SET NX EX` hold (5-min TTL) | Fast. Lets exactly one of the concurrent requests through. Gone if Redis dies |
-| 2nd | Domain rule — an expired hold cannot be confirmed | Filters out payments that arrive after someone else may have taken the seat |
-| Final | `confirmed_seat` primary key (schedule, seat) in the DB | Even if Redis dies entirely, the database physically rejects a second confirmation INSERT |
-
-An integration test actually recreates the "Redis is dead" scenario and proves that even with
-two holds on the same seat, exactly one confirmation survives.
-
-## Booking flow
+## Current structure
 
 ```mermaid
 flowchart LR
-  U["User (web / app)"] -->|"1. join queue"| Q["queue"]
-  Q -->|"ZSET, admit N per tick, JWT"| RD["Redis"]
-  U -->|"2. hold seat + JWT"| R["reservation"]
-  R -->|"SET NX EX, 5 min"| RD
-  R -->|"HELD + outbox, one transaction"| DB[("MySQL — confirmed_seat UNIQUE")]
-  DB -->|"3. outbox relay"| K["Kafka (stage 3)"]
-  K --> P["payment (stage 3)"]
-  P -->|"approved / failed"| K
-  K -->|"4. idempotent consume"| R
-  R -->|"SSE seat status (stage 2)"| U
+  WEB["Next.js web"] -->|"HTTP / SSE"| APP["Spring Boot<br/>Catalog · Queue · Reservation"]
+  APP -->|"Queue · seat holds"| REDIS[(Redis)]
+  APP -->|"Reservations · confirmed seats · event records"| DB[(MySQL)]
+  APP -->|"Synchronous call"| PAYMENT["Mock payment"]
 ```
 
-Users line up in a queue, hold a seat for 5 minutes, and confirm it by paying. If payment
-does not arrive in time, the seat is released automatically. In stage 1 payment is a
-synchronous mock-adapter call; in stage 3 it becomes event-driven — that swap is one of the
-reasons this project uses hexagonal architecture.
+The backend is a single Spring Boot application with `catalog`, `queue`, and `reservation` modules.
+Reservation rules live in Java objects without Spring or JPA dependencies; database and Redis access are implemented separately.
 
-## Roadmap and progress
+The [web app](apps/web/src/app/) uses Canvas for seat selection and SSE for queue positions and seat-status changes.
+It shows the remaining hold time and guides the user according to the payment result. Seat-state decoding and coordinate calculations live in a [shared package](packages/seat-map-core/src/).
 
-| Stage | What | Status | Tag |
-|---|---|---|---|
-| 1 | Backend skeleton — monolith + hexagonal (catalog / queue / reservation) | **Done** | `v1-monolith` |
-| 2 | Web frontend — mobile web, Canvas seat map, SSE | **Done** | `v2-web` |
-| 3 | Service split + Kafka — outbox relay, idempotent consumers, payment compensation | | `v3-msa` |
-| 4 | Load-test numbers + virtual-competitor demo | | `v4-bench` |
-| 5 | Mobile app (Expo) | | `v5-app` |
+<p align="center"><img src="docs/demo/booking-flow.gif" width="280" alt="event list → queue → seat selection → payment → booking complete"></p>
 
-### What stage 1 delivered
+*The implemented screens — from the event list to a confirmed booking, recorded with Playwright mobile emulation.*
 
-- **catalog module** — event list/detail, seat layout (ETag + immutable cache), and a seat-status
-  bitmap API that compresses the state of 2,000 seats into 500 bytes (2 bits per seat)
-- **reservation module** — state-transition rules live in a pure-Java domain; seat hold
-  (Redis acquire → DB write → rollback on failure), confirmation (mock payment +
-  `confirmed_seat` UNIQUE), an expiry scheduler, and cancellation are use cases.
-  All four domain events are written to an outbox table in the same transaction
-- **queue module** — ZSET waiting line (re-entering keeps your place), N admissions per second,
-  and a 10-minute JWT admission token. The reservation module only verifies the token's
-  signature and never calls the queue module — ready for the stage-3 service split
-- **REST API + idempotency** — four reservation APIs and two queue APIs. State-changing
-  requests carry an Idempotency-Key so a duplicate request replays the stored response
-  instead of running twice
-- **Concurrency proof** — 100 simultaneous requests for one seat → exactly 1 success (48 ms).
-  Even with duplicated holds after a simulated Redis loss, the concurrent-confirmation winner
-  is exactly one — zero double-bookings
-- **Architecture checks + CI** — three ArchUnit dependency rules and Spring Modulith boundary
-  verification (zero violations), plus the full 55-test suite on every push via GitHub Actions
+**Stack:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
+Flyway manages database changes; tests use JUnit, Testcontainers, Vitest, and Playwright.
 
-### What stage 2 delivered
+<details>
+<summary>Behavior covered by the code and tests</summary>
 
-<p align="center"><img src="docs/demo/booking-flow.gif" width="300" alt="event list → queue → seat map → payment → done (mobile emulation)"></p>
+**Several holds for one seat must still lead to a single confirmation.**
+The [hold service](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java) and [confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) handle these steps separately.
+The [concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java) check that 100 threads competing for one seat produce one successful hold. They also delete hold keys to create 10 overlapping holds, then check that concurrent confirmation leaves one confirmed-seat row and one `CONFIRMED` reservation.
 
-- **Monorepo** — `apps/web` (Next.js App Router) + `packages/api-client` (types generated from the
-  backend's openapi.json, no hand-written API types) + `packages/seat-map-core` (bitmap decoding,
-  geometry and hit testing in renderer-agnostic pure TS)
-- **GATE design system** — a Korean-style ticketing UI distilled from reference sites: deep-indigo
-  seat-dot art, no gradients, no colors/shadows/radii outside the token set
-  ([design foundation](docs/design/design-foundation.en.md))
-- **Queue screen** — receives its position over SSE and falls back to polling when the stream drops.
-  On admission it carries the JWT admission token to the seat map
-- **Seat map** — 2,000 seats drawn on a single Canvas, no DOM. The seat-status SSE uses one poller
-  per schedule that reads the bitmap every 500 ms and sends only the changed seats to every
-  subscriber — one DB/Redis read per schedule per tick, regardless of subscriber count
-- **Payment and done screens** — one Idempotency-Key per payment attempt: keep the key and check
-  with a read first when the result is unknown, discard it once the server has ruled
-  ([ADR 0006](docs/adr/0006-idempotency-key-per-attempt.en.md)). Optimistic hold UI, hold
-  countdown, wallet pass
-- **E2E + CI** — Playwright (Android Chrome emulation) runs the list → done flow plus the
-  lost-response, decline and back-navigation scenarios against the real backend. CI also
-  verifies that openapi.json still matches the server
+**Different failures require different state and retry decisions.**
+Integration tests cover [rejecting an expired hold before payment](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [retaining a hold after a payment decline](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), and [replaying a stored response for a repeated key](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java).
+The [web retry-policy tests](apps/web/src/lib/confirm-policy.test.ts) cover whether to retain an attempt's key for each response type.
+In the browser, the [Playwright E2E suite](apps/web/e2e/idempotency.spec.ts) checks both kinds of lost response (never reached the server / processed but the response was lost), a payment decline, and hold restoration after back-navigation, against a running backend.
 
-## Tech stack
+**Business rules and external technology should remain separate in the code.**
+The [reservation domain](backend/src/main/java/com/ticketing/reservation/domain/Reservation.java) contains the state-transition and expiry rules.
+[ArchUnit](backend/src/test/java/com/ticketing/ArchitectureTest.java) and [Spring Modulith checks](backend/src/test/java/com/ticketing/ModularityTest.java) verify dependency direction and module boundaries.
 
-Java 21 · Spring Boot 4.0 · Spring Modulith 2.0 · MySQL 8 (Flyway) · Redis 7 · Testcontainers ·
-Kafka (from stage 3) · Next.js (from stage 2)
+The concurrency tests invoke Java use cases directly against MySQL and Redis in Testcontainers.
+Data loss is simulated by deleting hold keys, rather than stopping the Redis server. [CI](.github/workflows/ci.yml) runs the full backend suite and the web checks (types, unit tests, openapi contract diff, Playwright E2E) on pushes to `main` and on pull requests.
 
-The reasoning behind each choice is recorded as [ADRs](docs/adr/), e.g.
-[why Java/Spring over NestJS](docs/adr/0001-java-spring-over-nestjs.en.md) and
-[why contention tables have no foreign keys](docs/adr/0003-no-fk-on-contention-tables.en.md).
+</details>
 
-## Numbers (to be filled in stage 4)
+## Run locally
 
-| Item | Result |
-|---|---|
-| Double bookings under load | — (target: 0) |
-| Hold API p99 (10,000 concurrent requests) | — ms |
-| Throughput | — req/s |
-| DB error rate, with vs. without queue | — % vs — % |
-| `SET NX` vs Redisson vs DB pessimistic lock — p99 | — / — / — ms |
-| Lighthouse mobile / LCP / INP | — / — s / — ms |
-| SSE diff payload (2,000 seats) | — bytes |
-| App cold start (mid-range Android) | — s |
-
-## Running it
+Requires Java 21 and Docker. The web app also needs Node.js and the pnpm version specified by the repository's `packageManager` field.
+Commands start from the repository root. On Windows, use `.\gradlew.bat` in place of `./gradlew`.
 
 ```bash
-docker compose --profile infra up -d      # MySQL (host port 3307), Redis
+# Development MySQL, Redis, and backend
+docker compose --profile infra up -d
 cd backend
-./gradlew test                            # full test suite (needs Docker — Testcontainers)
-./gradlew bootRun                         # http://localhost:8080
+./gradlew bootRun
 ```
 
 ```bash
-curl http://localhost:8080/api/events     # check the seeded event list
+# Start the web app in a new terminal at the repository root
+pnpm install --frozen-lockfile
+pnpm --filter @ticket-rush/web dev
+```
+
+Open the web app at [localhost:3000](http://localhost:3000) or the event API at [localhost:8080/api/events](http://localhost:8080/api/events).
+Payment uses a mock adapter, and user identity uses a demo `X-User-Id` header.
+
+<details>
+<summary>Test commands</summary>
+
+```bash
+# From the repository root. Testcontainers starts separate MySQL and Redis instances.
+cd backend
+./gradlew test --tests '*ReservationConcurrencyTest'
+./gradlew test
 ```
 
 ```bash
-pnpm install                              # from the repo root
-pnpm -F web dev                           # http://localhost:3000 (backend must be running)
-pnpm -F web test                          # unit tests (vitest)
-pnpm -F web e2e                           # Playwright E2E — mobile emulation (backend must be running)
-curl -s localhost:8080/v3/api-docs -o openapi.json   # pull the contract from the server (always from 8080)
-pnpm gen:api                              # openapi.json → packages/api-client types
+# From the repository root
+pnpm --filter @ticket-rush/seat-map-core test
+pnpm --filter @ticket-rush/web test
+pnpm --filter @ticket-rush/web e2e        # Playwright E2E — the backend must be running
 ```
 
-## Documents
+```bash
+# When the API contract changes — always fetch from a backend on 8080 (the servers URL follows the request address)
+curl -s localhost:8080/v3/api-docs -o openapi.json
+pnpm gen:api
+```
 
-- [Architecture](docs/ARCHITECTURE.en.md) — diagrams, stack, code structure, domain, events, APIs, infra, interview notes, glossary
-- [Design foundation](docs/design/design-foundation.en.md) — design tokens and screen grammar, with a [working prototype](docs/design/gate1-prototype.html)
-- [Decision records (ADR)](docs/adr/) · agent working rules: [CLAUDE.md](CLAUDE.md) (Korean only — single source of truth for agents)
+</details>
+
+## What comes next
+
+The server currently handles idempotency by replaying stored responses.
+Execution control for simultaneous requests with the same key, and compensation when the DB write fails after payment approval, remain open tasks.
+
+HTTP latency and throughput have not yet been measured in a load test.
+That work will record the environment and scenarios alongside the results.
+
+The Outbox currently records events in the database. Kafka delivery, service separation, and an Expo app are future plans; details are in the [backlog](docs/backlog.md) (Korean).
+
+## Related documents
+
+- [Architecture](docs/ARCHITECTURE.en.md) — current structure and designs for later stages
+- [Decision records](docs/adr/) — alternatives, reasoning, and accepted limitations
+- [Visual design](docs/design/design-foundation.en.md) — design tokens and prototype

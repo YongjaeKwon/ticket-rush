@@ -19,7 +19,7 @@
 
 ## 1. 현재 단계
 
-**STAGE = 2**  (사람이 올린다. 에이전트는 바꾸지 않는다. — 2026-08-31 사람 지시로 2로 올림, v1-monolith 태그 완료)
+**STAGE = 3**  (사람이 올린다. 에이전트는 바꾸지 않는다. — 2026-09-10 사람 지시로 3으로 올림, v2-web 태그 완료)
 
 | 단계 | 만드는 것 | 태그 |
 |---|---|---|
@@ -49,14 +49,29 @@
 
 ### STAGE 2 체크리스트 (사람이 체크한다. 위에서부터 순서대로)
 
-- [ ] 백엔드에 springdoc-openapi 추가, `/v3/api-docs`에서 openapi.json 확인
-- [ ] pnpm 모노레포: `apps/web`(Next.js App Router + TS + TanStack Query + Tailwind) + `packages/api-client`(openapi 타입 생성, `pnpm gen:api`) + `packages/seat-map-core` 골격
-- [ ] 공연 목록·상세 화면 — 서버 렌더링(SSR), GATE 디자인 토큰 적용
-- [ ] 대기열 화면 + 백엔드 `GET /schedules/{id}/queue/stream`(SSE) — 폴링 폴백 포함
-- [ ] `seat-map-core`: 비트맵 디코딩·히트 테스트 (렌더러 무관 순수 TS, 단위 테스트)
-- [ ] 좌석맵 화면 — Canvas 렌더링 + `GET /schedules/{id}/seats/stream`(SSE, 변경분만)
-- [ ] 홀드 → 결제 → 완료 화면 — 멱등 키 재시도, 낙관적 UI, 홀드 카운트다운
-- [ ] Playwright E2E(대기열→좌석→결제, 모바일 에뮬레이션) + CI에 웹 테스트 추가, README GIF 후 `git tag v2-web`
+- [x] 백엔드에 springdoc-openapi 추가, `/v3/api-docs`에서 openapi.json 확인
+- [x] pnpm 모노레포: `apps/web`(Next.js App Router + TS + TanStack Query + Tailwind) + `packages/api-client`(openapi 타입 생성, `pnpm gen:api`) + `packages/seat-map-core` 골격
+- [x] 공연 목록·상세 화면 — 서버 렌더링(SSR), GATE 디자인 토큰 적용
+- [x] 대기열 화면 + 백엔드 `GET /schedules/{id}/queue/stream`(SSE) — 폴링 폴백 포함
+- [x] `seat-map-core`: 비트맵 디코딩·히트 테스트 (렌더러 무관 순수 TS, 단위 테스트)
+- [x] 좌석맵 화면 — Canvas 렌더링 + `GET /schedules/{id}/seats/stream`(SSE, 변경분만)
+- [x] 홀드 → 결제 → 완료 화면 — 멱등 키 재시도, 낙관적 UI, 홀드 카운트다운
+- [x] Playwright E2E(대기열→좌석→결제, 모바일 에뮬레이션) + CI에 웹 테스트 추가, README GIF 후 `git tag v2-web`
+
+### STAGE 3 체크리스트 (사람이 체크한다. 위에서부터 순서대로)
+
+- [ ] Compose `stage3` 프로필(Kafka KRaft, Prometheus, Grafana, Tempo) 기동 — 토픽 생성·메시지 왕복 확인
+- [ ] `V4__stage3.sql`(`payment`, `processed_event` — PK `(consumer, event_id)`) + shared에 이벤트 봉투(`{eventId, eventType, version, occurredAt, aggregateId, payload}`)와 토픽 규약(`reservation.events`·`payment.events`·`queue.events`, 파티션 키 = scheduleId) 정의
+- [ ] Outbox 릴레이 — 직접 폴링(1초, 100건, `published_at` 갱신) vs `spring-modulith-events-kafka` 외부화 비교 ADR 후 구현. Kafka Testcontainers로 발행 검증
+- [ ] `payment` 모듈 신설 — 결제 트리거 ADR(확정 요청이 발행하는 `PaymentRequested`를 컨슘하는 안을 기본으로, `ReservationHeld` 직결(홀드 즉시 자동 결제) 안과 비교) 후 구현. mock 승인(지연·실패율) → 거절은 `PaymentDeclined`(HELD 유지, 재시도 가능), 타임아웃·시스템 오류는 `PaymentFailed` 발행. payment 테이블 기록
+- [ ] `reservation` 멱등 컨슈머 — `processed_event` insert를 같은 트랜잭션에, `PaymentApproved` → 확정 / `PaymentFailed` → 홀드 해제 / `PaymentDeclined` → HELD 유지. 같은 이벤트 2번 → 1번 처리 테스트
+- [ ] 확정 API 전환 — `POST /reservations/{id}/confirm`을 202 + 결과는 조회/SSE로. 웹 결제 화면이 결과를 기다리는 방식 대응
+- [ ] 되돌리기 — 결제 타임아웃(응답 없음) → `ExpireHoldUseCase` 경유 홀드 해제 + `EXPIRED`. Resilience4j로 PG 호출 보호(타임아웃·재시도·서킷)
+- [ ] 컨슈머 재시도(backoff 3회) → DLT, 실패 메시지 재처리 절차 문서화
+- [ ] `queue`: `QueueAdmitted`를 Outbox 경유 `queue.events`로 발행 — notification의 입력
+- [ ] `notification` 모듈 골격 — `QueueAdmitted` 컨슘, 푸시 대신 로그(실 푸시는 5단계)
+- [ ] 서비스 분리 — Gradle 서브프로젝트로 `payment`를 별도 실행 단위로(선택: `queue`). 분리 범위·방식은 ADR, ArchUnit·Modulith 검증 유지
+- [ ] 트레이싱 — OpenTelemetry → Tempo, Grafana에서 홀드→확정 한 흐름을 traceId 하나로 확인. README·ARCHITECTURE 갱신 후 `git tag v3-msa`
 
 ## 2. 작업 규칙
 

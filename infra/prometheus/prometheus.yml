@@ -1,0 +1,11 @@
+# 백엔드(호스트에서 실행)의 메트릭을 15초마다 긁는다.
+# 백엔드에 micrometer-registry-prometheus가 붙기 전까지는 이 타깃이 down으로 보인다 — 정상.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: ticketing-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      # 8081: 이 PC에서는 8080을 다른 프로그램(WebSquare Tomcat)이 점유해 백엔드를 8081로도 띄운다
+      - targets: ["host.docker.internal:8080", "host.docker.internal:8081"]

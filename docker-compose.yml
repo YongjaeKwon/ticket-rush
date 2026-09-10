@@ -1,5 +1,5 @@
-# docker compose --profile infra up -d   → MySQL, Redis (1단계)
-# stage3 프로필(Kafka, Prometheus, Grafana, Tempo)은 3단계에서 추가한다.
+# docker compose --profile infra up -d    → MySQL, Redis (1단계)
+# docker compose --profile stage3 up -d   → + Kafka, Prometheus, Grafana, Tempo (3단계)
 
 services:
   mysql:
@@ -35,5 +35,82 @@ services:
       timeout: 3s
       retries: 10
 
+  # ── 3단계: Kafka + 관측 ─────────────────────────────────────────
+  # 백엔드는 호스트에서 돌므로 Kafka는 localhost:9092로 광고한다.
+  # (컨테이너끼리 Kafka에 붙을 일은 아직 없다 — 생기면 내부 리스너를 추가)
+  kafka:
+    image: apache/kafka:3.9.1
+    profiles: ["stage3"]
+    container_name: ticketing-kafka
+    environment:
+      # KRaft 단일 노드 — 브로커 + 컨트롤러 겸임 (ZooKeeper 없음)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      # 이미지 기본값은 /tmp/kafka-logs — 볼륨에 쌓이도록 명시해야 재시작에도 데이터가 남는다
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # 단일 브로커라 내부 토픽 복제도 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # 볼륨을 재사용해도 같은 클러스터로 인식되도록 고정 (UUID의 base64, 22자)
+      CLUSTER_ID: Zxk4AmLzSTgFZ1PamU_lZw
+      TZ: UTC
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: ["stage3"]
+    container_name: ticketing-prometheus
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    profiles: ["stage3"]
+    container_name: ticketing-grafana
+    environment:
+      # 로컬 학습용 — 로그인 없이 바로 본다
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    ports:
+      - "3001:3000" # 3000은 Next.js 개발 서버가 쓴다
+    volumes:
+      - ./infra/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafana-data:/var/lib/grafana
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    profiles: ["stage3"]
+    container_name: ticketing-tempo
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    ports:
+      - "3200:3200" # 조회 API (Grafana가 사용)
+      - "4317:4317" # OTLP gRPC — 백엔드 트레이스 수신
+      - "4318:4318" # OTLP HTTP
+    volumes:
+      - ./infra/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+
 volumes:
   mysql-data:
+  kafka-data:
+  prometheus-data:
+  grafana-data:
+  tempo-data:

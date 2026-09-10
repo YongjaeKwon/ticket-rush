@@ -1,0 +1,25 @@
+# Tempo 단일 노드 — OTLP로 트레이스를 받아 로컬 디스크에 저장한다.
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal
+
+compactor:
+  compaction:
+    # 학습용 — 트레이스는 이틀만 보관
+    block_retention: 48h

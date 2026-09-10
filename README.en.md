@@ -50,7 +50,7 @@ reasons this project uses hexagonal architecture.
 | Stage | What | Status | Tag |
 |---|---|---|---|
 | 1 | Backend skeleton — monolith + hexagonal (catalog / queue / reservation) | **Done** | `v1-monolith` |
-| 2 | Web frontend — mobile web, Canvas seat map, SSE | **In progress**, design prototype done | `v2-web` |
+| 2 | Web frontend — mobile web, Canvas seat map, SSE | **Done** | `v2-web` |
 | 3 | Service split + Kafka — outbox relay, idempotent consumers, payment compensation | | `v3-msa` |
 | 4 | Load-test numbers + virtual-competitor demo | | `v4-bench` |
 | 5 | Mobile app (Expo) | | `v5-app` |
@@ -74,6 +74,29 @@ reasons this project uses hexagonal architecture.
   is exactly one — zero double-bookings
 - **Architecture checks + CI** — three ArchUnit dependency rules and Spring Modulith boundary
   verification (zero violations), plus the full 55-test suite on every push via GitHub Actions
+
+### What stage 2 delivered
+
+<p align="center"><img src="docs/demo/booking-flow.gif" width="300" alt="event list → queue → seat map → payment → done (mobile emulation)"></p>
+
+- **Monorepo** — `apps/web` (Next.js App Router) + `packages/api-client` (types generated from the
+  backend's openapi.json, no hand-written API types) + `packages/seat-map-core` (bitmap decoding,
+  geometry and hit testing in renderer-agnostic pure TS)
+- **GATE design system** — a Korean-style ticketing UI distilled from reference sites: deep-indigo
+  seat-dot art, no gradients, no colors/shadows/radii outside the token set
+  ([design foundation](docs/design/design-foundation.en.md))
+- **Queue screen** — receives its position over SSE and falls back to polling when the stream drops.
+  On admission it carries the JWT admission token to the seat map
+- **Seat map** — 2,000 seats drawn on a single Canvas, no DOM. The seat-status SSE uses one poller
+  per schedule that reads the bitmap every 500 ms and sends only the changed seats to every
+  subscriber — one DB/Redis read per schedule per tick, regardless of subscriber count
+- **Payment and done screens** — one Idempotency-Key per payment attempt: keep the key and check
+  with a read first when the result is unknown, discard it once the server has ruled
+  ([ADR 0006](docs/adr/0006-idempotency-key-per-attempt.en.md)). Optimistic hold UI, hold
+  countdown, wallet pass
+- **E2E + CI** — Playwright (Android Chrome emulation) runs the list → done flow plus the
+  lost-response, decline and back-navigation scenarios against the real backend. CI also
+  verifies that openapi.json still matches the server
 
 ## Tech stack
 
@@ -108,6 +131,15 @@ cd backend
 
 ```bash
 curl http://localhost:8080/api/events     # check the seeded event list
+```
+
+```bash
+pnpm install                              # from the repo root
+pnpm -F web dev                           # http://localhost:3000 (backend must be running)
+pnpm -F web test                          # unit tests (vitest)
+pnpm -F web e2e                           # Playwright E2E — mobile emulation (backend must be running)
+curl -s localhost:8080/v3/api-docs -o openapi.json   # pull the contract from the server (always from 8080)
+pnpm gen:api                              # openapi.json → packages/api-client types
 ```
 
 ## Documents

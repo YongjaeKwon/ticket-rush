@@ -22,3 +22,4 @@
 | React Compiler 린트 규칙(`react-hooks/set-state-in-effect`) 정리 | 데이터 로딩·타이머 효과가 규칙에 걸린다(기존 대기열·좌석맵 화면 포함). CI에 웹 린트를 붙일 때 한 번에 | 2단계 E2E 항목 |
 | 1인 다좌석 홀드 차단 | 서버는 한 사용자의 홀드 수를 제한하지 않는다("1인 1매"는 문구뿐) | 3단계 |
 | GET /reservations/{id}에 결제 승인번호·확정 시각 | 지금은 확정 응답에만 있어 새 탭에서 열면 승인번호가 빠진다 | 3단계 payment 분리 때 |
+| openapi.json의 servers URL 고정 (`OpenAPI` 빈에 `.url("/")`) | 지금은 요청 Host에서 파생돼, 8080이 아닌 곳에서 재생성하면 servers 한 줄 때문에 CI 계약 검사가 깨진다 | 3단계 |

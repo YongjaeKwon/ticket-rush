@@ -48,7 +48,7 @@ flowchart LR
 | 단계 | 내용 | 상태 | 태그 |
 |---|---|---|---|
 | 1 | 백엔드 뼈대 — 모놀리스 + 헥사고날 (catalog / queue / reservation) | **완료** | `v1-monolith` |
-| 2 | 웹 프론트 — 모바일 웹, Canvas 좌석맵, SSE | 디자인 프로토타입 완성 | `v2-web` |
+| 2 | 웹 프론트 — 모바일 웹, Canvas 좌석맵, SSE | **완료** | `v2-web` |
 | 3 | 서비스 분리 + Kafka — Outbox 릴레이, 멱등 컨슈머, 결제 되돌리기 | | `v3-msa` |
 | 4 | 부하 수치 + 가상 경쟁자 데모 | | `v4-bench` |
 | 5 | 모바일 앱 (Expo) | | `v5-app` |
@@ -68,6 +68,24 @@ flowchart LR
   상황에서도 동시 확정의 승자는 1명 — 이중 예매 0건
 - **아키텍처 검증 + CI** — ArchUnit 의존 방향 3규칙과 Spring Modulith 모듈 경계 검사(위반 0건),
   push마다 GitHub Actions에서 전체 테스트 55개 실행
+
+### 2단계에서 만든 것
+
+<p align="center"><img src="docs/demo/booking-flow.gif" width="300" alt="공연 목록 → 대기열 → 좌석맵 → 결제 → 완료 (모바일 에뮬레이션)"></p>
+
+- **모노레포** — `apps/web`(Next.js App Router) + `packages/api-client`(백엔드 openapi.json에서 타입 생성,
+  손으로 쓴 API 타입 없음) + `packages/seat-map-core`(비트맵 디코딩·좌표·히트 테스트, 렌더러를 모르는 순수 TS)
+- **디자인 시스템 GATE** — 참고 사이트를 분석해 만든 한국식 티켓팅 UI. 딥 인디고 좌석 도트 아트, 그라데이션 없음,
+  토큰 밖 색·그림자·반경 금지 ([디자인 파운데이션](docs/design/design-foundation.md))
+- **대기열 화면** — 순번은 SSE로 받고, 스트림이 끊기면 폴링으로 전환합니다. 입장되면 입장권(JWT)을 들고
+  좌석맵으로 넘어갑니다
+- **좌석맵** — 2,000석을 DOM 없이 Canvas 한 장에 그립니다. 좌석 상태 SSE는 회차당 폴러 하나가 500ms마다
+  비트맵을 읽어 달라진 좌석만 구독자 전원에게 보냅니다 — 구독자가 몇 명이든 DB·Redis 조회는 틱마다 회차당 한 번
+- **결제·완료 화면** — 접수번호(Idempotency-Key)는 결제 시도마다 하나입니다. 결과를 모르면 같은 번호를 유지한 채
+  조회로 먼저 확인하고, 서버가 판정을 주면 번호를 버립니다([ADR 0006](docs/adr/0006-idempotency-key-per-attempt.md)).
+  낙관적 홀드 UI, 홀드 카운트다운, 월렛 패스
+- **E2E + CI** — Playwright(안드로이드 크롬 에뮬레이션)가 목록 → 완료 한 흐름과 응답 유실·거절·뒤로가기
+  시나리오를 실제 백엔드를 상대로 검증합니다. CI는 커밋된 openapi.json이 서버 계약과 같은지도 확인합니다
 
 ## 기술 스택
 
@@ -101,6 +119,15 @@ cd backend
 
 ```bash
 curl http://localhost:8080/api/events     # 시드된 공연 목록 확인
+```
+
+```bash
+pnpm install                              # 저장소 루트에서
+pnpm -F web dev                           # http://localhost:3000 (백엔드가 떠 있어야 함)
+pnpm -F web test                          # 단위 테스트 (vitest)
+pnpm -F web e2e                           # Playwright E2E — 모바일 에뮬레이션 (백엔드가 떠 있어야 함)
+curl -s localhost:8080/v3/api-docs -o openapi.json   # 서버 계약을 받아 둔다 (반드시 8080에서)
+pnpm gen:api                              # openapi.json → packages/api-client 타입
 ```
 
 ## 문서

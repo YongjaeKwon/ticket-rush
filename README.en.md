@@ -30,8 +30,12 @@ Reservation rules live in Java objects without Spring or JPA dependencies; datab
 The [web app](apps/web/src/app/) uses Canvas for seat selection and SSE for queue positions and seat-status changes.
 It shows the remaining hold time and guides the user according to the payment result. Seat-state decoding and coordinate calculations live in a [shared package](packages/seat-map-core/src/).
 
+<p align="center"><img src="docs/demo/booking-flow.gif" width="280" alt="event list → queue → seat selection → payment → booking complete"></p>
+
+*The implemented screens — from the event list to a confirmed booking, recorded with Playwright mobile emulation.*
+
 **Stack:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
-Flyway manages database changes; tests use JUnit, Testcontainers, and Vitest.
+Flyway manages database changes; tests use JUnit, Testcontainers, Vitest, and Playwright.
 
 <details>
 <summary>Behavior covered by the code and tests</summary>
@@ -43,13 +47,14 @@ The [concurrency tests](backend/src/test/java/com/ticketing/reservation/Reservat
 **Different failures require different state and retry decisions.**
 Integration tests cover [rejecting an expired hold before payment](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [retaining a hold after a payment decline](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), and [replaying a stored response for a repeated key](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java).
 The [web retry-policy tests](apps/web/src/lib/confirm-policy.test.ts) cover whether to retain an attempt's key for each response type.
+In the browser, the [Playwright E2E suite](apps/web/e2e/idempotency.spec.ts) checks both kinds of lost response (never reached the server / processed but the response was lost), a payment decline, and hold restoration after back-navigation, against a running backend.
 
 **Business rules and external technology should remain separate in the code.**
 The [reservation domain](backend/src/main/java/com/ticketing/reservation/domain/Reservation.java) contains the state-transition and expiry rules.
 [ArchUnit](backend/src/test/java/com/ticketing/ArchitectureTest.java) and [Spring Modulith checks](backend/src/test/java/com/ticketing/ModularityTest.java) verify dependency direction and module boundaries.
 
 The concurrency tests invoke Java use cases directly against MySQL and Redis in Testcontainers.
-Data loss is simulated by deleting hold keys, rather than stopping the Redis server. Backend [CI](.github/workflows/ci.yml) runs the full Gradle suite on pushes to `main` and on pull requests.
+Data loss is simulated by deleting hold keys, rather than stopping the Redis server. [CI](.github/workflows/ci.yml) runs the full backend suite and the web checks (types, unit tests, openapi contract diff, Playwright E2E) on pushes to `main` and on pull requests.
 
 </details>
 
@@ -88,6 +93,13 @@ cd backend
 # From the repository root
 pnpm --filter @ticket-rush/seat-map-core test
 pnpm --filter @ticket-rush/web test
+pnpm --filter @ticket-rush/web e2e        # Playwright E2E — the backend must be running
+```
+
+```bash
+# When the API contract changes — always fetch from a backend on 8080 (the servers URL follows the request address)
+curl -s localhost:8080/v3/api-docs -o openapi.json
+pnpm gen:api
 ```
 
 </details>
@@ -98,7 +110,7 @@ The server currently handles idempotency by replaying stored responses.
 Execution control for simultaneous requests with the same key, and compensation when the DB write fails after payment approval, remain open tasks.
 
 HTTP latency and throughput have not yet been measured in a load test.
-That work will record the environment and scenarios alongside the results. The web booking flow also needs E2E tests and web checks in CI.
+That work will record the environment and scenarios alongside the results.
 
 The Outbox currently records events in the database. Kafka delivery, service separation, and an Expo app are future plans; details are in the [backlog](docs/backlog.md) (Korean).
 

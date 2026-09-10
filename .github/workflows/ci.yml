@@ -22,3 +22,76 @@ jobs:
       - name: 전체 테스트
         working-directory: backend
         run: ./gradlew test
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 의존성 설치
+        run: pnpm install --frozen-lockfile
+
+      - name: 타입 검사·단위 테스트
+        run: |
+          pnpm -F @ticket-rush/web exec tsc --noEmit
+          pnpm -F @ticket-rush/seat-map-core test
+          pnpm -F @ticket-rush/web test
+
+      # E2E는 진짜 백엔드를 상대로 돈다 — MySQL·Redis(compose) + Spring Boot
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: 인프라 기동 (MySQL, Redis)
+        run: docker compose --profile infra up -d --wait
+
+      - name: 백엔드 기동
+        working-directory: backend
+        run: |
+          ./gradlew bootRun > "$GITHUB_WORKSPACE/backend/backend.log" 2>&1 &
+          PID=$!
+          for i in $(seq 1 150); do
+            curl -sf -o /dev/null http://localhost:8080/api/events && exit 0
+            # 컴파일 오류·포트 충돌로 일찍 죽었으면 300초를 기다리지 말고 바로 로그를 보여준다
+            kill -0 $PID 2>/dev/null || { echo "backend exited early"; cat "$GITHUB_WORKSPACE/backend/backend.log"; exit 1; }
+            sleep 2
+          done
+          echo "backend did not start in time"; tail -100 "$GITHUB_WORKSPACE/backend/backend.log"; exit 1
+
+      # 손으로 쓴 API 타입 금지 — 서버의 openapi.json과 생성 타입이 커밋된 것과 같아야 한다
+      - name: API 계약 일치 확인 (openapi.json·생성 타입 = 서버)
+        run: |
+          curl -sf http://localhost:8080/v3/api-docs -o openapi.json
+          pnpm gen:api
+          git diff --exit-code -- openapi.json packages/api-client/src/schema.d.ts
+
+      - name: Playwright 브라우저 설치
+        run: pnpm -F @ticket-rush/web exec playwright install --with-deps chromium
+
+      - name: 웹 빌드
+        run: pnpm -F @ticket-rush/web build
+
+      - name: E2E (모바일 에뮬레이션)
+        run: pnpm -F @ticket-rush/web e2e
+        env:
+          CI: "true"
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+            backend/backend.log
+          retention-days: 7

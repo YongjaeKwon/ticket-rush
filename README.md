@@ -30,8 +30,12 @@ flowchart LR
 [웹](apps/web/src/app/)에서는 Canvas로 좌석을 선택하고, SSE로 대기 순번과 좌석 상태의 변화를 받습니다.
 남은 선점 시간을 보여 주고 결제 결과에 따라 다음 행동을 안내합니다. 좌석 상태 해석과 좌표 계산은 [공통 패키지](packages/seat-map-core/src/)로 분리했습니다.
 
+<p align="center"><img src="docs/demo/booking-flow.gif" width="280" alt="목록 → 대기열 → 좌석 선택 → 결제 → 예매 완료"></p>
+
+*실제 구현 화면 — 목록부터 예매 완료까지. Playwright 모바일 에뮬레이션으로 녹화했습니다.*
+
 **사용 기술:** Java 21 · Spring Boot 4 · MySQL 8.4 · Redis 7 · Next.js · TypeScript.
-DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vitest를 사용합니다.
+DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vitest·Playwright를 사용합니다.
 
 <details>
 <summary>코드와 테스트에서 확인한 동작</summary>
@@ -43,13 +47,14 @@ DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vite
 **실패의 종류에 따라 예매 상태와 재시도 방식이 달라져야 합니다.**
 [만료된 홀드의 결제 거절](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [결제 거절 시 홀드 유지](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), [같은 키로 재요청했을 때의 응답 재생](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java)을 통합 테스트로 확인합니다.
 [웹의 재시도 정책 테스트](apps/web/src/lib/confirm-policy.test.ts)는 응답 유형에 따라 시도 키를 유지할지 판단하는 규칙을 다룹니다.
+브라우저 단에서는 [Playwright E2E](apps/web/e2e/idempotency.spec.ts)가 응답 유실 두 갈래(서버 미도달·서버 처리 후 유실)와 결제 거절, 뒤로가기 후 홀드 복원을 실행 중인 백엔드를 상대로 확인합니다.
 
 **업무 규칙과 외부 기술의 경계가 코드에서도 유지되어야 합니다.**
 [예매 도메인](backend/src/main/java/com/ticketing/reservation/domain/Reservation.java)에 상태 전이와 만료 규칙을 모았습니다.
 [ArchUnit](backend/src/test/java/com/ticketing/ArchitectureTest.java)과 [Spring Modulith 검사](backend/src/test/java/com/ticketing/ModularityTest.java)는 계층 의존 방향과 모듈 경계를 확인합니다.
 
 동시성 테스트는 Testcontainers의 MySQL·Redis를 사용해 Java 유스케이스를 직접 호출합니다.
-Redis 서버를 중단시키는 대신 홀드 키를 삭제해 데이터 유실 상황을 재현합니다. 백엔드 [CI](.github/workflows/ci.yml)는 `main` push와 PR에서 전체 Gradle 테스트를 실행합니다.
+Redis 서버를 중단시키는 대신 홀드 키를 삭제해 데이터 유실 상황을 재현합니다. [CI](.github/workflows/ci.yml)는 `main` push와 PR에서 백엔드 전체 테스트와 웹 검사(타입·단위 테스트·openapi 계약 diff·Playwright E2E)를 실행합니다.
 
 </details>
 
@@ -88,6 +93,13 @@ cd backend
 # 저장소 루트에서 실행
 pnpm --filter @ticket-rush/seat-map-core test
 pnpm --filter @ticket-rush/web test
+pnpm --filter @ticket-rush/web e2e        # Playwright E2E — 백엔드가 떠 있어야 합니다
+```
+
+```bash
+# API 계약이 바뀌었을 때 — 반드시 8080의 백엔드에서 받습니다 (servers URL이 요청 주소를 따라감)
+curl -s localhost:8080/v3/api-docs -o openapi.json
+pnpm gen:api
 ```
 
 </details>
@@ -98,7 +110,7 @@ pnpm --filter @ticket-rush/web test
 같은 키로 동시에 들어오는 요청의 실행 제어와, 결제 승인 뒤 DB 저장에 실패했을 때의 보상 처리가 남아 있습니다.
 
 HTTP 부하 테스트의 응답시간·처리량은 아직 측정하지 않았습니다.
-실행 환경과 시나리오를 함께 기록해 측정하고, 웹의 전체 예매 흐름에 대한 E2E 테스트와 CI 검사도 추가할 계획입니다.
+실행 환경과 시나리오를 함께 기록해 측정할 계획입니다.
 
 Outbox는 이벤트를 DB에 기록하는 단계까지 구현했습니다. Kafka를 통한 이벤트 전달, 서비스 분리, Expo 앱은 후속 계획이며, 세부 사항은 [백로그](docs/backlog.md)에 정리했습니다.
 

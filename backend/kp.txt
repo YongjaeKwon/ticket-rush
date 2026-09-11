@@ -1,0 +1,2285 @@
+Compiled from "KafkaProducer.java"
+public class org.apache.kafka.clients.producer.KafkaProducer<K, V> implements org.apache.kafka.clients.producer.Producer<K, V> {
+  private final org.slf4j.Logger log;
+
+  private static final java.lang.String JMX_PREFIX;
+
+  public static final java.lang.String NETWORK_THREAD_PREFIX;
+
+  public static final java.lang.String PRODUCER_METRIC_GROUP_NAME;
+
+  private final java.lang.String clientId;
+
+  final org.apache.kafka.common.metrics.Metrics metrics;
+
+  private final org.apache.kafka.clients.producer.internals.KafkaProducerMetrics producerMetrics;
+
+  private final org.apache.kafka.common.internals.Plugin<org.apache.kafka.clients.producer.Partitioner> partitionerPlugin;
+
+  private final int maxRequestSize;
+
+  private final long totalMemorySize;
+
+  private final org.apache.kafka.clients.producer.internals.ProducerMetadata metadata;
+
+  private final org.apache.kafka.clients.producer.internals.RecordAccumulator accumulator;
+
+  private final org.apache.kafka.clients.producer.internals.Sender sender;
+
+  private final org.apache.kafka.clients.producer.internals.Sender$SenderThread ioThread;
+
+  private final org.apache.kafka.common.compress.Compression compression;
+
+  private final org.apache.kafka.common.metrics.Sensor errors;
+
+  private final org.apache.kafka.common.utils.Time time;
+
+  private final org.apache.kafka.common.internals.Plugin<org.apache.kafka.common.serialization.Serializer<K>> keySerializerPlugin;
+
+  private final org.apache.kafka.common.internals.Plugin<org.apache.kafka.common.serialization.Serializer<V>> valueSerializerPlugin;
+
+  private final org.apache.kafka.clients.producer.ProducerConfig producerConfig;
+
+  private final long maxBlockTimeMs;
+
+  private final boolean partitionerIgnoreKeys;
+
+  private final org.apache.kafka.clients.producer.internals.ProducerInterceptors<K, V> interceptors;
+
+  private final org.apache.kafka.clients.ApiVersions apiVersions;
+
+  private final org.apache.kafka.clients.producer.internals.TransactionManager transactionManager;
+
+  private java.util.Optional<org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter> clientTelemetryReporter;
+
+  static final boolean $assertionsDisabled;
+
+  public org.apache.kafka.clients.producer.KafkaProducer(java.util.Map<java.lang.String, java.lang.Object>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aconst_null
+       3: aconst_null
+       4: invokespecial #125                // Method "<init>":(Ljava/util/Map;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/common/serialization/Serializer;)V
+       7: return
+
+  public org.apache.kafka.clients.producer.KafkaProducer(java.util.Map<java.lang.String, java.lang.Object>, org.apache.kafka.common.serialization.Serializer<K>, org.apache.kafka.common.serialization.Serializer<V>);
+    Code:
+       0: aload_0
+       1: new           #134                // class org/apache/kafka/clients/producer/ProducerConfig
+       4: dup
+       5: aload_1
+       6: aload_2
+       7: aload_3
+       8: invokestatic  #138                // Method org/apache/kafka/clients/producer/ProducerConfig.appendSerializerToConfig:(Ljava/util/Map;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/common/serialization/Serializer;)Ljava/util/Map;
+      11: invokespecial #140                // Method org/apache/kafka/clients/producer/ProducerConfig."<init>":(Ljava/util/Map;)V
+      14: aload_2
+      15: aload_3
+      16: aconst_null
+      17: aconst_null
+      18: aconst_null
+      19: new           #142                // class org/apache/kafka/clients/ApiVersions
+      22: dup
+      23: invokespecial #145                // Method org/apache/kafka/clients/ApiVersions."<init>":()V
+      26: getstatic     #150                // Field org/apache/kafka/common/utils/Time.SYSTEM:Lorg/apache/kafka/common/utils/Time;
+      29: invokespecial #153                // Method "<init>":(Lorg/apache/kafka/clients/producer/ProducerConfig;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;Lorg/apache/kafka/clients/KafkaClient;Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;Lorg/apache/kafka/clients/ApiVersions;Lorg/apache/kafka/common/utils/Time;)V
+      32: return
+
+  public org.apache.kafka.clients.producer.KafkaProducer(java.util.Properties);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aconst_null
+       3: aconst_null
+       4: invokespecial #162                // Method "<init>":(Ljava/util/Properties;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/common/serialization/Serializer;)V
+       7: return
+
+  public org.apache.kafka.clients.producer.KafkaProducer(java.util.Properties, org.apache.kafka.common.serialization.Serializer<K>, org.apache.kafka.common.serialization.Serializer<V>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokestatic  #171                // Method org/apache/kafka/common/utils/Utils.propsToMap:(Ljava/util/Properties;)Ljava/util/Map;
+       5: aload_2
+       6: aload_3
+       7: invokespecial #125                // Method "<init>":(Ljava/util/Map;Lorg/apache/kafka/common/serialization/Serializer;Lorg/apache/kafka/common/serialization/Serializer;)V
+      10: return
+
+  org.apache.kafka.clients.producer.KafkaProducer(org.apache.kafka.clients.producer.ProducerConfig, org.apache.kafka.common.serialization.Serializer<K>, org.apache.kafka.common.serialization.Serializer<V>, org.apache.kafka.clients.producer.internals.ProducerMetadata, org.apache.kafka.clients.KafkaClient, org.apache.kafka.clients.producer.internals.ProducerInterceptors<K, V>, org.apache.kafka.clients.ApiVersions, org.apache.kafka.common.utils.Time);
+    Code:
+       0: aload_0
+       1: invokespecial #175                // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: invokestatic  #181                // Method java/util/Optional.empty:()Ljava/util/Optional;
+       8: putfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      11: aload_0
+      12: aload_1
+      13: putfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+      16: aload_0
+      17: aload         8
+      19: putfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      22: aload_1
+      23: ldc           #189                // String transactional.id
+      25: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+      28: astore        9
+      30: aload_0
+      31: aload_1
+      32: ldc           #195                // String client.id
+      34: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+      37: putfield      #197                // Field clientId:Ljava/lang/String;
+      40: aload         9
+      42: ifnonnull     73
+      45: new           #199                // class org/apache/kafka/common/utils/LogContext
+      48: dup
+      49: ldc           #201                // String [Producer clientId=%s]
+      51: iconst_1
+      52: anewarray     #5                  // class java/lang/Object
+      55: dup
+      56: iconst_0
+      57: aload_0
+      58: getfield      #197                // Field clientId:Ljava/lang/String;
+      61: aastore
+      62: invokestatic  #207                // Method java/lang/String.format:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      65: invokespecial #210                // Method org/apache/kafka/common/utils/LogContext."<init>":(Ljava/lang/String;)V
+      68: astore        10
+      70: goto          103
+      73: new           #199                // class org/apache/kafka/common/utils/LogContext
+      76: dup
+      77: ldc           #220                // String [Producer clientId=%s, transactionalId=%s]
+      79: iconst_2
+      80: anewarray     #5                  // class java/lang/Object
+      83: dup
+      84: iconst_0
+      85: aload_0
+      86: getfield      #197                // Field clientId:Ljava/lang/String;
+      89: aastore
+      90: dup
+      91: iconst_1
+      92: aload         9
+      94: aastore
+      95: invokestatic  #207                // Method java/lang/String.format:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      98: invokespecial #210                // Method org/apache/kafka/common/utils/LogContext."<init>":(Ljava/lang/String;)V
+     101: astore        10
+     103: aload_0
+     104: aload         10
+     106: ldc           #2                  // class org/apache/kafka/clients/producer/KafkaProducer
+     108: invokevirtual #224                // Method org/apache/kafka/common/utils/LogContext.logger:(Ljava/lang/Class;)Lorg/slf4j/Logger;
+     111: putfield      #226                // Field log:Lorg/slf4j/Logger;
+     114: aload_0
+     115: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     118: ldc           #228                // String Starting the Kafka producer
+     120: invokeinterface #233,  2          // InterfaceMethod org/slf4j/Logger.trace:(Ljava/lang/String;)V
+     125: ldc           #235                // String client-id
+     127: aload_0
+     128: getfield      #197                // Field clientId:Ljava/lang/String;
+     131: invokestatic  #241                // Method java/util/Collections.singletonMap:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;
+     134: astore        11
+     136: new           #243                // class org/apache/kafka/common/metrics/MetricConfig
+     139: dup
+     140: invokespecial #244                // Method org/apache/kafka/common/metrics/MetricConfig."<init>":()V
+     143: aload_1
+     144: ldc           #246                // String metrics.num.samples
+     146: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     149: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     152: invokevirtual #260                // Method org/apache/kafka/common/metrics/MetricConfig.samples:(I)Lorg/apache/kafka/common/metrics/MetricConfig;
+     155: aload_1
+     156: ldc_w         #262                // String metrics.sample.window.ms
+     159: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     162: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     165: getstatic     #278                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+     168: invokevirtual #282                // Method org/apache/kafka/common/metrics/MetricConfig.timeWindow:(JLjava/util/concurrent/TimeUnit;)Lorg/apache/kafka/common/metrics/MetricConfig;
+     171: aload_1
+     172: ldc_w         #284                // String metrics.recording.level
+     175: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+     178: invokestatic  #288                // Method org/apache/kafka/common/metrics/Sensor$RecordingLevel.forName:(Ljava/lang/String;)Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;
+     181: invokevirtual #292                // Method org/apache/kafka/common/metrics/MetricConfig.recordLevel:(Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;)Lorg/apache/kafka/common/metrics/MetricConfig;
+     184: aload         11
+     186: invokevirtual #296                // Method org/apache/kafka/common/metrics/MetricConfig.tags:(Ljava/util/Map;)Lorg/apache/kafka/common/metrics/MetricConfig;
+     189: astore        12
+     191: aload_0
+     192: getfield      #197                // Field clientId:Ljava/lang/String;
+     195: aload_1
+     196: invokestatic  #302                // Method org/apache/kafka/clients/CommonClientConfigs.metricsReporters:(Ljava/lang/String;Lorg/apache/kafka/common/config/AbstractConfig;)Ljava/util/List;
+     199: astore        13
+     201: aload_0
+     202: aload_0
+     203: getfield      #197                // Field clientId:Ljava/lang/String;
+     206: aload_1
+     207: invokestatic  #306                // Method org/apache/kafka/clients/CommonClientConfigs.telemetryReporter:(Ljava/lang/String;Lorg/apache/kafka/common/config/AbstractConfig;)Ljava/util/Optional;
+     210: putfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+     213: aload_0
+     214: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+     217: aload         13
+     219: dup
+     220: invokestatic  #312                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+     223: pop
+     224: invokedynamic #334,  0            // InvokeDynamic #0:accept:(Ljava/util/List;)Ljava/util/function/Consumer;
+     229: invokevirtual #338                // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+     232: new           #340                // class org/apache/kafka/common/metrics/KafkaMetricsContext
+     235: dup
+     236: ldc           #67                 // String kafka.producer
+     238: aload_1
+     239: ldc_w         #342                // String metrics.context.
+     242: invokevirtual #346                // Method org/apache/kafka/clients/producer/ProducerConfig.originalsWithPrefix:(Ljava/lang/String;)Ljava/util/Map;
+     245: invokespecial #349                // Method org/apache/kafka/common/metrics/KafkaMetricsContext."<init>":(Ljava/lang/String;Ljava/util/Map;)V
+     248: astore        14
+     250: aload_0
+     251: new           #351                // class org/apache/kafka/common/metrics/Metrics
+     254: dup
+     255: aload         12
+     257: aload         13
+     259: aload         8
+     261: aload         14
+     263: invokespecial #354                // Method org/apache/kafka/common/metrics/Metrics."<init>":(Lorg/apache/kafka/common/metrics/MetricConfig;Ljava/util/List;Lorg/apache/kafka/common/utils/Time;Lorg/apache/kafka/common/metrics/MetricsContext;)V
+     266: putfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     269: aload_0
+     270: new           #358                // class org/apache/kafka/clients/producer/internals/KafkaProducerMetrics
+     273: dup
+     274: aload_0
+     275: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     278: invokespecial #361                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics."<init>":(Lorg/apache/kafka/common/metrics/Metrics;)V
+     281: putfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+     284: aload_0
+     285: aload_1
+     286: ldc_w         #365                // String partitioner.class
+     289: ldc_w         #367                // class org/apache/kafka/clients/producer/Partitioner
+     292: ldc           #195                // String client.id
+     294: aload_0
+     295: getfield      #197                // Field clientId:Ljava/lang/String;
+     298: invokestatic  #241                // Method java/util/Collections.singletonMap:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;
+     301: invokevirtual #371                // Method org/apache/kafka/clients/producer/ProducerConfig.getConfiguredInstance:(Ljava/lang/String;Ljava/lang/Class;Ljava/util/Map;)Ljava/lang/Object;
+     304: checkcast     #367                // class org/apache/kafka/clients/producer/Partitioner
+     307: aload_0
+     308: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     311: ldc_w         #365                // String partitioner.class
+     314: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+     317: putfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     320: aload_0
+     321: aload_1
+     322: ldc_w         #381                // String partitioner.ignore.keys
+     325: invokevirtual #385                // Method org/apache/kafka/clients/producer/ProducerConfig.getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+     328: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+     331: putfield      #393                // Field partitionerIgnoreKeys:Z
+     334: aload_1
+     335: ldc_w         #395                // String retry.backoff.ms
+     338: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     341: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     344: lstore        15
+     346: aload_1
+     347: ldc_w         #397                // String retry.backoff.max.ms
+     350: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     353: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     356: lstore        17
+     358: aload_2
+     359: ifnonnull     398
+     362: aload_1
+     363: ldc_w         #399                // String key.serializer
+     366: ldc           #212                // class org/apache/kafka/common/serialization/Serializer
+     368: invokevirtual #402                // Method org/apache/kafka/clients/producer/ProducerConfig.getConfiguredInstance:(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+     371: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     374: astore_2
+     375: aload_2
+     376: aload_1
+     377: ldc           #195                // String client.id
+     379: aload_0
+     380: getfield      #197                // Field clientId:Ljava/lang/String;
+     383: invokestatic  #241                // Method java/util/Collections.singletonMap:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;
+     386: invokevirtual #406                // Method org/apache/kafka/clients/producer/ProducerConfig.originals:(Ljava/util/Map;)Ljava/util/Map;
+     389: iconst_1
+     390: invokeinterface #410,  3          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.configure:(Ljava/util/Map;Z)V
+     395: goto          405
+     398: aload_1
+     399: ldc_w         #399                // String key.serializer
+     402: invokevirtual #417                // Method org/apache/kafka/clients/producer/ProducerConfig.ignore:(Ljava/lang/String;)V
+     405: aload_0
+     406: aload_2
+     407: aload_0
+     408: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     411: ldc_w         #399                // String key.serializer
+     414: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+     417: putfield      #419                // Field keySerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     420: aload_3
+     421: ifnonnull     460
+     424: aload_1
+     425: ldc_w         #421                // String value.serializer
+     428: ldc           #212                // class org/apache/kafka/common/serialization/Serializer
+     430: invokevirtual #402                // Method org/apache/kafka/clients/producer/ProducerConfig.getConfiguredInstance:(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+     433: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     436: astore_3
+     437: aload_3
+     438: aload_1
+     439: ldc           #195                // String client.id
+     441: aload_0
+     442: getfield      #197                // Field clientId:Ljava/lang/String;
+     445: invokestatic  #241                // Method java/util/Collections.singletonMap:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;
+     448: invokevirtual #406                // Method org/apache/kafka/clients/producer/ProducerConfig.originals:(Ljava/util/Map;)Ljava/util/Map;
+     451: iconst_0
+     452: invokeinterface #410,  3          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.configure:(Ljava/util/Map;Z)V
+     457: goto          467
+     460: aload_1
+     461: ldc_w         #421                // String value.serializer
+     464: invokevirtual #417                // Method org/apache/kafka/clients/producer/ProducerConfig.ignore:(Ljava/lang/String;)V
+     467: aload_0
+     468: aload_3
+     469: aload_0
+     470: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     473: ldc_w         #421                // String value.serializer
+     476: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+     479: putfield      #423                // Field valueSerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     482: aload_1
+     483: ldc_w         #425                // String interceptor.classes
+     486: ldc_w         #427                // class org/apache/kafka/clients/producer/ProducerInterceptor
+     489: invokestatic  #433                // Method org/apache/kafka/clients/ClientUtils.configuredInterceptors:(Lorg/apache/kafka/common/config/AbstractConfig;Ljava/lang/String;Ljava/lang/Class;)Ljava/util/List;
+     492: astore        19
+     494: aload         6
+     496: ifnull        508
+     499: aload_0
+     500: aload         6
+     502: putfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     505: goto          525
+     508: aload_0
+     509: new           #218                // class org/apache/kafka/clients/producer/internals/ProducerInterceptors
+     512: dup
+     513: aload         19
+     515: aload_0
+     516: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     519: invokespecial #438                // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors."<init>":(Ljava/util/List;Lorg/apache/kafka/common/metrics/Metrics;)V
+     522: putfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     525: iconst_3
+     526: anewarray     #316                // class java/util/List
+     529: dup
+     530: iconst_0
+     531: aload         19
+     533: aastore
+     534: dup
+     535: iconst_1
+     536: aload         13
+     538: aastore
+     539: dup
+     540: iconst_2
+     541: iconst_2
+     542: anewarray     #212                // class org/apache/kafka/common/serialization/Serializer
+     545: dup
+     546: iconst_0
+     547: aload_0
+     548: getfield      #419                // Field keySerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     551: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+     554: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     557: aastore
+     558: dup
+     559: iconst_1
+     560: aload_0
+     561: getfield      #423                // Field valueSerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     564: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+     567: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     570: aastore
+     571: invokestatic  #448                // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
+     574: aastore
+     575: invokestatic  #452                // Method org/apache/kafka/clients/ClientUtils.configureClusterResourceListeners:([Ljava/util/List;)Lorg/apache/kafka/common/internals/ClusterResourceListeners;
+     578: astore        20
+     580: aload_0
+     581: aload_1
+     582: ldc_w         #454                // String max.request.size
+     585: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     588: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     591: putfield      #456                // Field maxRequestSize:I
+     594: aload_0
+     595: aload_1
+     596: ldc_w         #458                // String buffer.memory
+     599: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     602: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     605: putfield      #460                // Field totalMemorySize:J
+     608: aload_0
+     609: aload_1
+     610: invokestatic  #464                // Method configureCompression:(Lorg/apache/kafka/clients/producer/ProducerConfig;)Lorg/apache/kafka/common/compress/Compression;
+     613: putfield      #466                // Field compression:Lorg/apache/kafka/common/compress/Compression;
+     616: aload_0
+     617: aload_1
+     618: ldc_w         #468                // String max.block.ms
+     621: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     624: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     627: putfield      #470                // Field maxBlockTimeMs:J
+     630: aload_1
+     631: aload_0
+     632: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     635: invokestatic  #474                // Method configureDeliveryTimeout:(Lorg/apache/kafka/clients/producer/ProducerConfig;Lorg/slf4j/Logger;)I
+     638: istore        21
+     640: aload_0
+     641: aload         7
+     643: putfield      #476                // Field apiVersions:Lorg/apache/kafka/clients/ApiVersions;
+     646: aload_0
+     647: aload_0
+     648: aload_1
+     649: aload         10
+     651: invokevirtual #480                // Method configureTransactionState:(Lorg/apache/kafka/clients/producer/ProducerConfig;Lorg/apache/kafka/common/utils/LogContext;)Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     654: putfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     657: aload_0
+     658: getfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     661: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+     664: ifnonnull     684
+     667: aload_1
+     668: ldc_w         #484                // String partitioner.adaptive.partitioning.enable
+     671: invokevirtual #385                // Method org/apache/kafka/clients/producer/ProducerConfig.getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+     674: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+     677: ifeq          684
+     680: iconst_1
+     681: goto          685
+     684: iconst_0
+     685: istore        22
+     687: new           #23                 // class org/apache/kafka/clients/producer/internals/RecordAccumulator$PartitionerConfig
+     690: dup
+     691: iload         22
+     693: aload_1
+     694: ldc_w         #488                // String partitioner.availability.timeout.ms
+     697: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     700: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     703: invokespecial #491                // Method org/apache/kafka/clients/producer/internals/RecordAccumulator$PartitionerConfig."<init>":(ZJ)V
+     706: astore        23
+     708: iconst_1
+     709: aload_1
+     710: ldc_w         #493                // String batch.size
+     713: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     716: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     719: invokestatic  #499                // Method java/lang/Math.max:(II)I
+     722: istore        24
+     724: aload_0
+     725: new           #25                 // class org/apache/kafka/clients/producer/internals/RecordAccumulator
+     728: dup
+     729: aload         10
+     731: iload         24
+     733: aload_0
+     734: getfield      #466                // Field compression:Lorg/apache/kafka/common/compress/Compression;
+     737: aload_1
+     738: invokestatic  #503                // Method lingerMs:(Lorg/apache/kafka/clients/producer/ProducerConfig;)I
+     741: lload         15
+     743: lload         17
+     745: iload         21
+     747: aload         23
+     749: aload_0
+     750: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     753: ldc           #73                 // String producer-metrics
+     755: aload         8
+     757: aload_0
+     758: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     761: new           #505                // class org/apache/kafka/clients/producer/internals/BufferPool
+     764: dup
+     765: aload_0
+     766: getfield      #460                // Field totalMemorySize:J
+     769: iload         24
+     771: aload_0
+     772: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     775: aload         8
+     777: ldc           #73                 // String producer-metrics
+     779: invokespecial #508                // Method org/apache/kafka/clients/producer/internals/BufferPool."<init>":(JILorg/apache/kafka/common/metrics/Metrics;Lorg/apache/kafka/common/utils/Time;Ljava/lang/String;)V
+     782: invokespecial #511                // Method org/apache/kafka/clients/producer/internals/RecordAccumulator."<init>":(Lorg/apache/kafka/common/utils/LogContext;ILorg/apache/kafka/common/compress/Compression;IJJILorg/apache/kafka/clients/producer/internals/RecordAccumulator$PartitionerConfig;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;Lorg/apache/kafka/common/utils/Time;Lorg/apache/kafka/clients/producer/internals/TransactionManager;Lorg/apache/kafka/clients/producer/internals/BufferPool;)V
+     785: putfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+     788: aload_1
+     789: invokestatic  #517                // Method org/apache/kafka/clients/ClientUtils.parseAndValidateAddresses:(Lorg/apache/kafka/common/config/AbstractConfig;)Ljava/util/List;
+     792: astore        25
+     794: aload         4
+     796: ifnull        808
+     799: aload_0
+     800: aload         4
+     802: putfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     805: goto          859
+     808: aload_0
+     809: new           #214                // class org/apache/kafka/clients/producer/internals/ProducerMetadata
+     812: dup
+     813: lload         15
+     815: lload         17
+     817: aload_1
+     818: ldc_w         #521                // String metadata.max.age.ms
+     821: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     824: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     827: aload_1
+     828: ldc_w         #523                // String metadata.max.idle.ms
+     831: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     834: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     837: aload         10
+     839: aload         20
+     841: getstatic     #150                // Field org/apache/kafka/common/utils/Time.SYSTEM:Lorg/apache/kafka/common/utils/Time;
+     844: invokespecial #526                // Method org/apache/kafka/clients/producer/internals/ProducerMetadata."<init>":(JJJJLorg/apache/kafka/common/utils/LogContext;Lorg/apache/kafka/common/internals/ClusterResourceListeners;Lorg/apache/kafka/common/utils/Time;)V
+     847: putfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     850: aload_0
+     851: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     854: aload         25
+     856: invokevirtual #530                // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.bootstrap:(Ljava/util/List;)V
+     859: aload_0
+     860: aload_0
+     861: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     864: ldc_w         #531                // String errors
+     867: invokevirtual #535                // Method org/apache/kafka/common/metrics/Metrics.sensor:(Ljava/lang/String;)Lorg/apache/kafka/common/metrics/Sensor;
+     870: putfield      #537                // Field errors:Lorg/apache/kafka/common/metrics/Sensor;
+     873: aload_0
+     874: aload_0
+     875: aload         10
+     877: aload         5
+     879: aload_0
+     880: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     883: invokevirtual #541                // Method newSender:(Lorg/apache/kafka/common/utils/LogContext;Lorg/apache/kafka/clients/KafkaClient;Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;)Lorg/apache/kafka/clients/producer/internals/Sender;
+     886: putfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     889: aload_0
+     890: getfield      #197                // Field clientId:Ljava/lang/String;
+     893: invokedynamic #554,  0            // InvokeDynamic #1:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     898: astore        26
+     900: aload_0
+     901: new           #28                 // class org/apache/kafka/clients/producer/internals/Sender$SenderThread
+     904: dup
+     905: aload         26
+     907: aload_0
+     908: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     911: iconst_1
+     912: invokespecial #557                // Method org/apache/kafka/clients/producer/internals/Sender$SenderThread."<init>":(Ljava/lang/String;Ljava/lang/Runnable;Z)V
+     915: putfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     918: aload_0
+     919: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     922: invokevirtual #562                // Method org/apache/kafka/clients/producer/internals/Sender$SenderThread.start:()V
+     925: aload_1
+     926: invokevirtual #565                // Method org/apache/kafka/clients/producer/ProducerConfig.logUnused:()V
+     929: ldc           #67                 // String kafka.producer
+     931: aload_0
+     932: getfield      #197                // Field clientId:Ljava/lang/String;
+     935: aload_0
+     936: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     939: aload         8
+     941: invokeinterface #568,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.milliseconds:()J
+     946: invokestatic  #574                // Method org/apache/kafka/common/utils/AppInfoParser.registerAppInfo:(Ljava/lang/String;Ljava/lang/String;Lorg/apache/kafka/common/metrics/Metrics;J)V
+     949: aload_0
+     950: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     953: ldc_w         #576                // String Kafka producer started
+     956: invokeinterface #579,  2          // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;)V
+     961: goto          988
+     964: astore        9
+     966: aload_0
+     967: lconst_0
+     968: invokestatic  #585                // Method java/time/Duration.ofMillis:(J)Ljava/time/Duration;
+     971: iconst_1
+     972: invokevirtual #589                // Method close:(Ljava/time/Duration;Z)V
+     975: new           #591                // class org/apache/kafka/common/KafkaException
+     978: dup
+     979: ldc_w         #593                // String Failed to construct kafka producer
+     982: aload         9
+     984: invokespecial #596                // Method org/apache/kafka/common/KafkaException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     987: athrow
+     988: return
+    Exception table:
+       from    to  target type
+          11   961   964   Class java/lang/Throwable
+
+  org.apache.kafka.clients.producer.KafkaProducer(org.apache.kafka.clients.producer.ProducerConfig, org.apache.kafka.common.utils.LogContext, org.apache.kafka.common.metrics.Metrics, org.apache.kafka.common.serialization.Serializer<K>, org.apache.kafka.common.serialization.Serializer<V>, org.apache.kafka.clients.producer.internals.ProducerMetadata, org.apache.kafka.clients.producer.internals.RecordAccumulator, org.apache.kafka.clients.producer.internals.TransactionManager, org.apache.kafka.clients.producer.internals.Sender, org.apache.kafka.clients.producer.internals.ProducerInterceptors<K, V>, org.apache.kafka.clients.producer.Partitioner, org.apache.kafka.common.utils.Time, org.apache.kafka.clients.producer.internals.Sender$SenderThread, java.util.Optional<org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter>);
+    Code:
+       0: aload_0
+       1: invokespecial #175                // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: invokestatic  #181                // Method java/util/Optional.empty:()Ljava/util/Optional;
+       8: putfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      11: aload_0
+      12: aload_1
+      13: putfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+      16: aload_0
+      17: aload         12
+      19: putfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      22: aload_0
+      23: aload_1
+      24: ldc           #195                // String client.id
+      26: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+      29: putfield      #197                // Field clientId:Ljava/lang/String;
+      32: aload_0
+      33: aload_2
+      34: ldc           #2                  // class org/apache/kafka/clients/producer/KafkaProducer
+      36: invokevirtual #224                // Method org/apache/kafka/common/utils/LogContext.logger:(Ljava/lang/Class;)Lorg/slf4j/Logger;
+      39: putfield      #226                // Field log:Lorg/slf4j/Logger;
+      42: aload_0
+      43: aload_3
+      44: putfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+      47: aload_0
+      48: new           #358                // class org/apache/kafka/clients/producer/internals/KafkaProducerMetrics
+      51: dup
+      52: aload_3
+      53: invokespecial #361                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics."<init>":(Lorg/apache/kafka/common/metrics/Metrics;)V
+      56: putfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      59: aload_0
+      60: aload         11
+      62: aload_3
+      63: ldc_w         #365                // String partitioner.class
+      66: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+      69: putfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+      72: aload_0
+      73: aload         4
+      75: aload_3
+      76: ldc_w         #399                // String key.serializer
+      79: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+      82: putfield      #419                // Field keySerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+      85: aload_0
+      86: aload         5
+      88: aload_3
+      89: ldc_w         #421                // String value.serializer
+      92: invokestatic  #377                // Method org/apache/kafka/common/internals/Plugin.wrapInstance:(Ljava/lang/Object;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;)Lorg/apache/kafka/common/internals/Plugin;
+      95: putfield      #423                // Field valueSerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+      98: aload_0
+      99: aload         10
+     101: putfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     104: aload_0
+     105: aload_1
+     106: ldc_w         #454                // String max.request.size
+     109: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     112: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     115: putfield      #456                // Field maxRequestSize:I
+     118: aload_0
+     119: aload_1
+     120: ldc_w         #458                // String buffer.memory
+     123: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     126: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     129: putfield      #460                // Field totalMemorySize:J
+     132: aload_0
+     133: aload_1
+     134: invokestatic  #464                // Method configureCompression:(Lorg/apache/kafka/clients/producer/ProducerConfig;)Lorg/apache/kafka/common/compress/Compression;
+     137: putfield      #466                // Field compression:Lorg/apache/kafka/common/compress/Compression;
+     140: aload_0
+     141: aload_1
+     142: ldc_w         #468                // String max.block.ms
+     145: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     148: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     151: putfield      #470                // Field maxBlockTimeMs:J
+     154: aload_0
+     155: aload_1
+     156: ldc_w         #381                // String partitioner.ignore.keys
+     159: invokevirtual #385                // Method org/apache/kafka/clients/producer/ProducerConfig.getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+     162: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+     165: putfield      #393                // Field partitionerIgnoreKeys:Z
+     168: aload_0
+     169: new           #142                // class org/apache/kafka/clients/ApiVersions
+     172: dup
+     173: invokespecial #145                // Method org/apache/kafka/clients/ApiVersions."<init>":()V
+     176: putfield      #476                // Field apiVersions:Lorg/apache/kafka/clients/ApiVersions;
+     179: aload_0
+     180: aload         8
+     182: putfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     185: aload_0
+     186: aload         7
+     188: putfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+     191: aload_0
+     192: aload_0
+     193: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     196: ldc_w         #531                // String errors
+     199: invokevirtual #535                // Method org/apache/kafka/common/metrics/Metrics.sensor:(Ljava/lang/String;)Lorg/apache/kafka/common/metrics/Sensor;
+     202: putfield      #537                // Field errors:Lorg/apache/kafka/common/metrics/Sensor;
+     205: aload_0
+     206: aload         6
+     208: putfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     211: aload_0
+     212: aload         9
+     214: putfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     217: aload_0
+     218: aload         13
+     220: putfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     223: aload_0
+     224: aload         14
+     226: putfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+     229: return
+
+  org.apache.kafka.clients.producer.internals.Sender newSender(org.apache.kafka.common.utils.LogContext, org.apache.kafka.clients.KafkaClient, org.apache.kafka.clients.producer.internals.ProducerMetadata);
+    Code:
+       0: aload_0
+       1: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+       4: ldc_w         #633                // String max.in.flight.requests.per.connection
+       7: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      10: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      13: istore        4
+      15: aload_0
+      16: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+      19: ldc_w         #635                // String request.timeout.ms
+      22: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      25: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      28: istore        5
+      30: new           #637                // class org/apache/kafka/clients/producer/internals/ProducerMetrics
+      33: dup
+      34: aload_0
+      35: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+      38: invokespecial #638                // Method org/apache/kafka/clients/producer/internals/ProducerMetrics."<init>":(Lorg/apache/kafka/common/metrics/Metrics;)V
+      41: astore        6
+      43: aload         6
+      45: getfield      #642                // Field org/apache/kafka/clients/producer/internals/ProducerMetrics.senderMetrics:Lorg/apache/kafka/clients/producer/internals/SenderMetricsRegistry;
+      48: invokestatic  #646                // Method org/apache/kafka/clients/producer/internals/Sender.throttleTimeSensor:(Lorg/apache/kafka/clients/producer/internals/SenderMetricsRegistry;)Lorg/apache/kafka/common/metrics/Sensor;
+      51: astore        7
+      53: aload_2
+      54: ifnull        61
+      57: aload_2
+      58: goto          108
+      61: aload_0
+      62: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+      65: aload_0
+      66: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+      69: ldc_w         #648                // String producer
+      72: aload_1
+      73: aload_0
+      74: getfield      #476                // Field apiVersions:Lorg/apache/kafka/clients/ApiVersions;
+      77: aload_0
+      78: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      81: iload         4
+      83: aload_3
+      84: aload         7
+      86: aload_0
+      87: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      90: invokedynamic #662,  0            // InvokeDynamic #2:apply:()Ljava/util/function/Function;
+      95: invokevirtual #666                // Method java/util/Optional.map:(Ljava/util/function/Function;)Ljava/util/Optional;
+      98: aconst_null
+      99: invokevirtual #669                // Method java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+     102: checkcast     #671                // class org/apache/kafka/common/telemetry/internals/ClientTelemetrySender
+     105: invokestatic  #675                // Method org/apache/kafka/clients/ClientUtils.createNetworkClient:(Lorg/apache/kafka/common/config/AbstractConfig;Lorg/apache/kafka/common/metrics/Metrics;Ljava/lang/String;Lorg/apache/kafka/common/utils/LogContext;Lorg/apache/kafka/clients/ApiVersions;Lorg/apache/kafka/common/utils/Time;ILorg/apache/kafka/clients/Metadata;Lorg/apache/kafka/common/metrics/Sensor;Lorg/apache/kafka/common/telemetry/internals/ClientTelemetrySender;)Lorg/apache/kafka/clients/NetworkClient;
+     108: astore        8
+     110: aload_0
+     111: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     114: ldc_w         #677                // String acks
+     117: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+     120: invokestatic  #683                // Method java/lang/Short.parseShort:(Ljava/lang/String;)S
+     123: istore        9
+     125: new           #30                 // class org/apache/kafka/clients/producer/internals/Sender
+     128: dup
+     129: aload_1
+     130: aload         8
+     132: aload_3
+     133: aload_0
+     134: getfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+     137: iload         4
+     139: iconst_1
+     140: if_icmpne     147
+     143: iconst_1
+     144: goto          148
+     147: iconst_0
+     148: aload_0
+     149: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     152: ldc_w         #454                // String max.request.size
+     155: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     158: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     161: iload         9
+     163: aload_0
+     164: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     167: ldc_w         #685                // String retries
+     170: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     173: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     176: aload         6
+     178: getfield      #642                // Field org/apache/kafka/clients/producer/internals/ProducerMetrics.senderMetrics:Lorg/apache/kafka/clients/producer/internals/SenderMetricsRegistry;
+     181: aload_0
+     182: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+     185: iload         5
+     187: aload_0
+     188: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     191: ldc_w         #395                // String retry.backoff.ms
+     194: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+     197: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     200: aload_0
+     201: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     204: invokespecial #688                // Method org/apache/kafka/clients/producer/internals/Sender."<init>":(Lorg/apache/kafka/common/utils/LogContext;Lorg/apache/kafka/clients/KafkaClient;Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;ZISILorg/apache/kafka/clients/producer/internals/SenderMetricsRegistry;Lorg/apache/kafka/common/utils/Time;IJLorg/apache/kafka/clients/producer/internals/TransactionManager;)V
+     207: areturn
+
+  private static org.apache.kafka.common.compress.Compression configureCompression(org.apache.kafka.clients.producer.ProducerConfig);
+    Code:
+       0: aload_0
+       1: ldc_w         #696                // String compression.type
+       4: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+       7: invokestatic  #701                // Method org/apache/kafka/common/record/CompressionType.forName:(Ljava/lang/String;)Lorg/apache/kafka/common/record/CompressionType;
+      10: astore_1
+      11: getstatic     #705                // Field org/apache/kafka/clients/producer/KafkaProducer$1.$SwitchMap$org$apache$kafka$common$record$CompressionType:[I
+      14: aload_1
+      15: invokevirtual #708                // Method org/apache/kafka/common/record/CompressionType.ordinal:()I
+      18: iaload
+      19: tableswitch   { // 1 to 3
+                     1: 44
+                     2: 64
+                     3: 84
+               default: 104
+          }
+      44: invokestatic  #712                // InterfaceMethod org/apache/kafka/common/compress/Compression.gzip:()Lorg/apache/kafka/common/compress/GzipCompression$Builder;
+      47: aload_0
+      48: ldc_w         #714                // String compression.gzip.level
+      51: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      54: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      57: invokevirtual #718                // Method org/apache/kafka/common/compress/GzipCompression$Builder.level:(I)Lorg/apache/kafka/common/compress/GzipCompression$Builder;
+      60: invokevirtual #722                // Method org/apache/kafka/common/compress/GzipCompression$Builder.build:()Lorg/apache/kafka/common/compress/GzipCompression;
+      63: areturn
+      64: invokestatic  #726                // InterfaceMethod org/apache/kafka/common/compress/Compression.lz4:()Lorg/apache/kafka/common/compress/Lz4Compression$Builder;
+      67: aload_0
+      68: ldc_w         #728                // String compression.lz4.level
+      71: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      74: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      77: invokevirtual #731                // Method org/apache/kafka/common/compress/Lz4Compression$Builder.level:(I)Lorg/apache/kafka/common/compress/Lz4Compression$Builder;
+      80: invokevirtual #734                // Method org/apache/kafka/common/compress/Lz4Compression$Builder.build:()Lorg/apache/kafka/common/compress/Lz4Compression;
+      83: areturn
+      84: invokestatic  #738                // InterfaceMethod org/apache/kafka/common/compress/Compression.zstd:()Lorg/apache/kafka/common/compress/ZstdCompression$Builder;
+      87: aload_0
+      88: ldc_w         #740                // String compression.zstd.level
+      91: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      94: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      97: invokevirtual #743                // Method org/apache/kafka/common/compress/ZstdCompression$Builder.level:(I)Lorg/apache/kafka/common/compress/ZstdCompression$Builder;
+     100: invokevirtual #746                // Method org/apache/kafka/common/compress/ZstdCompression$Builder.build:()Lorg/apache/kafka/common/compress/ZstdCompression;
+     103: areturn
+     104: aload_1
+     105: invokestatic  #750                // InterfaceMethod org/apache/kafka/common/compress/Compression.of:(Lorg/apache/kafka/common/record/CompressionType;)Lorg/apache/kafka/common/compress/Compression$Builder;
+     108: invokeinterface #753,  1          // InterfaceMethod org/apache/kafka/common/compress/Compression$Builder.build:()Lorg/apache/kafka/common/compress/Compression;
+     113: areturn
+
+  private static int lingerMs(org.apache.kafka.clients.producer.ProducerConfig);
+    Code:
+       0: aload_0
+       1: ldc_w         #757                // String linger.ms
+       4: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+       7: invokevirtual #272                // Method java/lang/Long.longValue:()J
+      10: ldc2_w        #758                // long 2147483647l
+      13: invokestatic  #763                // Method java/lang/Math.min:(JJ)J
+      16: l2i
+      17: ireturn
+
+  private static int configureDeliveryTimeout(org.apache.kafka.clients.producer.ProducerConfig, org.slf4j.Logger);
+    Code:
+       0: aload_0
+       1: ldc_w         #765                // String delivery.timeout.ms
+       4: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+       7: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      10: istore_2
+      11: aload_0
+      12: invokestatic  #503                // Method lingerMs:(Lorg/apache/kafka/clients/producer/ProducerConfig;)I
+      15: istore_3
+      16: aload_0
+      17: ldc_w         #635                // String request.timeout.ms
+      20: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      23: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      26: istore        4
+      28: iload_3
+      29: i2l
+      30: iload         4
+      32: i2l
+      33: ladd
+      34: ldc2_w        #758                // long 2147483647l
+      37: invokestatic  #763                // Method java/lang/Math.min:(JJ)J
+      40: l2i
+      41: istore        5
+      43: iload_2
+      44: iload         5
+      46: if_icmpge     116
+      49: aload_0
+      50: invokevirtual #768                // Method org/apache/kafka/clients/producer/ProducerConfig.originals:()Ljava/util/Map;
+      53: ldc_w         #765                // String delivery.timeout.ms
+      56: invokeinterface #771,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      61: ifeq          75
+      64: new           #773                // class org/apache/kafka/common/config/ConfigException
+      67: dup
+      68: ldc_w         #775                // String delivery.timeout.ms should be equal to or larger than linger.ms + request.timeout.ms
+      71: invokespecial #776                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+      74: athrow
+      75: iload         5
+      77: istore_2
+      78: aload_1
+      79: ldc_w         #778                // String {} should be equal to or larger than {} + {}. Setting it to {}.
+      82: iconst_4
+      83: anewarray     #5                  // class java/lang/Object
+      86: dup
+      87: iconst_0
+      88: ldc_w         #765                // String delivery.timeout.ms
+      91: aastore
+      92: dup
+      93: iconst_1
+      94: ldc_w         #757                // String linger.ms
+      97: aastore
+      98: dup
+      99: iconst_2
+     100: ldc_w         #635                // String request.timeout.ms
+     103: aastore
+     104: dup
+     105: iconst_3
+     106: iload_2
+     107: invokestatic  #782                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     110: aastore
+     111: invokeinterface #786,  3          // InterfaceMethod org/slf4j/Logger.warn:(Ljava/lang/String;[Ljava/lang/Object;)V
+     116: iload_2
+     117: ireturn
+
+  private org.apache.kafka.clients.producer.internals.TransactionManager configureTransactionState(org.apache.kafka.clients.producer.ProducerConfig, org.apache.kafka.common.utils.LogContext);
+    Code:
+       0: aconst_null
+       1: astore_3
+       2: aload_1
+       3: ldc_w         #789                // String enable.idempotence
+       6: invokevirtual #385                // Method org/apache/kafka/clients/producer/ProducerConfig.getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+       9: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+      12: ifeq          117
+      15: aload_1
+      16: ldc           #189                // String transactional.id
+      18: invokevirtual #193                // Method org/apache/kafka/clients/producer/ProducerConfig.getString:(Ljava/lang/String;)Ljava/lang/String;
+      21: astore        4
+      23: aload_1
+      24: ldc_w         #791                // String transaction.two.phase.commit.enable
+      27: invokevirtual #385                // Method org/apache/kafka/clients/producer/ProducerConfig.getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+      30: invokevirtual #391                // Method java/lang/Boolean.booleanValue:()Z
+      33: istore        5
+      35: aload_1
+      36: ldc_w         #793                // String transaction.timeout.ms
+      39: invokevirtual #250                // Method org/apache/kafka/clients/producer/ProducerConfig.getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      42: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      45: istore        6
+      47: aload_1
+      48: ldc_w         #395                // String retry.backoff.ms
+      51: invokevirtual #266                // Method org/apache/kafka/clients/producer/ProducerConfig.getLong:(Ljava/lang/String;)Ljava/lang/Long;
+      54: invokevirtual #272                // Method java/lang/Long.longValue:()J
+      57: lstore        7
+      59: new           #795                // class org/apache/kafka/clients/producer/internals/TransactionManager
+      62: dup
+      63: aload_2
+      64: aload         4
+      66: iload         6
+      68: lload         7
+      70: aload_0
+      71: getfield      #476                // Field apiVersions:Lorg/apache/kafka/clients/ApiVersions;
+      74: iload         5
+      76: invokespecial #798                // Method org/apache/kafka/clients/producer/internals/TransactionManager."<init>":(Lorg/apache/kafka/common/utils/LogContext;Ljava/lang/String;IJLorg/apache/kafka/clients/ApiVersions;Z)V
+      79: astore_3
+      80: aload_3
+      81: invokevirtual #801                // Method org/apache/kafka/clients/producer/internals/TransactionManager.isTransactional:()Z
+      84: ifeq          102
+      87: aload_0
+      88: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      91: ldc_w         #803                // String Instantiated a transactional producer.
+      94: invokeinterface #806,  2          // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;)V
+      99: goto          114
+     102: aload_0
+     103: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     106: ldc_w         #808                // String Instantiated an idempotent producer.
+     109: invokeinterface #806,  2          // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;)V
+     114: goto          124
+     117: aload_1
+     118: ldc_w         #793                // String transaction.timeout.ms
+     121: invokevirtual #417                // Method org/apache/kafka/clients/producer/ProducerConfig.ignore:(Ljava/lang/String;)V
+     124: aload_3
+     125: areturn
+
+  public void initTransactions();
+    Code:
+       0: aload_0
+       1: invokevirtual #814                // Method throwIfNoTransactionManager:()V
+       4: aload_0
+       5: invokevirtual #817                // Method throwIfProducerClosed:()V
+       8: aload_0
+       9: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      12: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      17: lstore_1
+      18: aload_0
+      19: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      22: iconst_0
+      23: invokevirtual #824                // Method org/apache/kafka/clients/producer/internals/TransactionManager.initializeTransactions:(Z)Lorg/apache/kafka/clients/producer/internals/TransactionalRequestResult;
+      26: astore_3
+      27: aload_0
+      28: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      31: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+      34: aload_3
+      35: aload_0
+      36: getfield      #470                // Field maxBlockTimeMs:J
+      39: getstatic     #278                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+      42: invokevirtual #833                // Method org/apache/kafka/clients/producer/internals/TransactionalRequestResult.await:(JLjava/util/concurrent/TimeUnit;)V
+      45: aload_0
+      46: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      49: aload_0
+      50: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      53: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      58: lload_1
+      59: lsub
+      60: invokevirtual #837                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordInit:(J)V
+      63: aload_0
+      64: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      67: iconst_1
+      68: invokevirtual #841                // Method org/apache/kafka/clients/producer/internals/TransactionManager.maybeUpdateTransactionV2Enabled:(Z)V
+      71: return
+
+  public void beginTransaction() throws org.apache.kafka.common.errors.ProducerFencedException;
+    Code:
+       0: aload_0
+       1: invokevirtual #814                // Method throwIfNoTransactionManager:()V
+       4: aload_0
+       5: invokevirtual #817                // Method throwIfProducerClosed:()V
+       8: aload_0
+       9: invokevirtual #850                // Method throwIfInPreparedState:()V
+      12: aload_0
+      13: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      16: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      21: lstore_1
+      22: aload_0
+      23: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      26: invokevirtual #852                // Method org/apache/kafka/clients/producer/internals/TransactionManager.beginTransaction:()V
+      29: aload_0
+      30: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      33: aload_0
+      34: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      37: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      42: lload_1
+      43: lsub
+      44: invokevirtual #855                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordBeginTxn:(J)V
+      47: return
+
+  public void sendOffsetsToTransaction(java.util.Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata>, org.apache.kafka.clients.consumer.ConsumerGroupMetadata) throws org.apache.kafka.common.errors.ProducerFencedException;
+    Code:
+       0: aload_0
+       1: aload_2
+       2: invokevirtual #862                // Method throwIfInvalidGroupMetadata:(Lorg/apache/kafka/clients/consumer/ConsumerGroupMetadata;)V
+       5: aload_0
+       6: invokevirtual #814                // Method throwIfNoTransactionManager:()V
+       9: aload_0
+      10: invokevirtual #817                // Method throwIfProducerClosed:()V
+      13: aload_1
+      14: invokeinterface #865,  1          // InterfaceMethod java/util/Map.isEmpty:()Z
+      19: ifne          80
+      22: aload_0
+      23: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      26: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      31: lstore_3
+      32: aload_0
+      33: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      36: aload_1
+      37: aload_2
+      38: invokevirtual #868                // Method org/apache/kafka/clients/producer/internals/TransactionManager.sendOffsetsToTransaction:(Ljava/util/Map;Lorg/apache/kafka/clients/consumer/ConsumerGroupMetadata;)Lorg/apache/kafka/clients/producer/internals/TransactionalRequestResult;
+      41: astore        5
+      43: aload_0
+      44: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      47: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+      50: aload         5
+      52: aload_0
+      53: getfield      #470                // Field maxBlockTimeMs:J
+      56: getstatic     #278                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+      59: invokevirtual #833                // Method org/apache/kafka/clients/producer/internals/TransactionalRequestResult.await:(JLjava/util/concurrent/TimeUnit;)V
+      62: aload_0
+      63: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      66: aload_0
+      67: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      70: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      75: lload_3
+      76: lsub
+      77: invokevirtual #871                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordSendOffsets:(J)V
+      80: return
+
+  public void commitTransaction() throws org.apache.kafka.common.errors.ProducerFencedException;
+    Code:
+       0: aload_0
+       1: invokevirtual #814                // Method throwIfNoTransactionManager:()V
+       4: aload_0
+       5: invokevirtual #817                // Method throwIfProducerClosed:()V
+       8: aload_0
+       9: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      12: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      17: lstore_1
+      18: aload_0
+      19: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      22: invokevirtual #880                // Method org/apache/kafka/clients/producer/internals/TransactionManager.beginCommit:()Lorg/apache/kafka/clients/producer/internals/TransactionalRequestResult;
+      25: astore_3
+      26: aload_0
+      27: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      30: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+      33: aload_3
+      34: aload_0
+      35: getfield      #470                // Field maxBlockTimeMs:J
+      38: getstatic     #278                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+      41: invokevirtual #833                // Method org/apache/kafka/clients/producer/internals/TransactionalRequestResult.await:(JLjava/util/concurrent/TimeUnit;)V
+      44: aload_0
+      45: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      48: aload_0
+      49: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      52: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      57: lload_1
+      58: lsub
+      59: invokevirtual #883                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordCommitTxn:(J)V
+      62: return
+
+  public void abortTransaction() throws org.apache.kafka.common.errors.ProducerFencedException;
+    Code:
+       0: aload_0
+       1: invokevirtual #814                // Method throwIfNoTransactionManager:()V
+       4: aload_0
+       5: invokevirtual #817                // Method throwIfProducerClosed:()V
+       8: aload_0
+       9: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      12: ldc_w         #887                // String Aborting incomplete transaction
+      15: invokeinterface #806,  2          // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;)V
+      20: aload_0
+      21: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      24: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      29: lstore_1
+      30: aload_0
+      31: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      34: invokevirtual #890                // Method org/apache/kafka/clients/producer/internals/TransactionManager.beginAbort:()Lorg/apache/kafka/clients/producer/internals/TransactionalRequestResult;
+      37: astore_3
+      38: aload_0
+      39: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      42: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+      45: aload_3
+      46: aload_0
+      47: getfield      #470                // Field maxBlockTimeMs:J
+      50: getstatic     #278                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+      53: invokevirtual #833                // Method org/apache/kafka/clients/producer/internals/TransactionalRequestResult.await:(JLjava/util/concurrent/TimeUnit;)V
+      56: aload_0
+      57: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      60: aload_0
+      61: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      64: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      69: lload_1
+      70: lsub
+      71: invokevirtual #893                // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordAbortTxn:(J)V
+      74: return
+
+  public java.util.concurrent.Future<org.apache.kafka.clients.producer.RecordMetadata> send(org.apache.kafka.clients.producer.ProducerRecord<K, V>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aconst_null
+       3: invokevirtual #900                // Method send:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/clients/producer/Callback;)Ljava/util/concurrent/Future;
+       6: areturn
+
+  public java.util.concurrent.Future<org.apache.kafka.clients.producer.RecordMetadata> send(org.apache.kafka.clients.producer.ProducerRecord<K, V>, org.apache.kafka.clients.producer.Callback);
+    Code:
+       0: aload_0
+       1: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+       4: aload_1
+       5: invokevirtual #908                // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors.onSend:(Lorg/apache/kafka/clients/producer/ProducerRecord;)Lorg/apache/kafka/clients/producer/ProducerRecord;
+       8: astore_3
+       9: aload_0
+      10: aload_3
+      11: aload_2
+      12: invokevirtual #911                // Method doSend:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/clients/producer/Callback;)Ljava/util/concurrent/Future;
+      15: areturn
+
+  private void throwIfProducerClosed();
+    Code:
+       0: aload_0
+       1: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+       4: ifnull        17
+       7: aload_0
+       8: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      11: invokevirtual #917                // Method org/apache/kafka/clients/producer/internals/Sender.isRunning:()Z
+      14: ifne          28
+      17: new           #919                // class java/lang/IllegalStateException
+      20: dup
+      21: ldc_w         #921                // String Cannot perform operation after producer has been closed
+      24: invokespecial #922                // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      27: athrow
+      28: return
+
+  private void throwIfInPreparedState();
+    Code:
+       0: aload_0
+       1: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+       4: ifnull        38
+       7: aload_0
+       8: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      11: invokevirtual #801                // Method org/apache/kafka/clients/producer/internals/TransactionManager.isTransactional:()Z
+      14: ifeq          38
+      17: aload_0
+      18: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+      21: invokevirtual #925                // Method org/apache/kafka/clients/producer/internals/TransactionManager.isPrepared:()Z
+      24: ifeq          38
+      27: new           #919                // class java/lang/IllegalStateException
+      30: dup
+      31: ldc_w         #927                // String Cannot perform operation while the transaction is in a prepared state. Only commitTransaction(), abortTransaction(), or completeTransaction() are permitted.
+      34: invokespecial #922                // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      37: athrow
+      38: return
+
+  private java.util.concurrent.Future<org.apache.kafka.clients.producer.RecordMetadata> doSend(org.apache.kafka.clients.producer.ProducerRecord<K, V>, org.apache.kafka.clients.producer.Callback);
+    Code:
+       0: new           #12                 // class org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks
+       3: dup
+       4: aload_0
+       5: aload_2
+       6: aload_0
+       7: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+      10: aload_1
+      11: invokespecial #938                // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks."<init>":(Lorg/apache/kafka/clients/producer/KafkaProducer;Lorg/apache/kafka/clients/producer/Callback;Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;Lorg/apache/kafka/clients/producer/ProducerRecord;)V
+      14: astore_3
+      15: aload_0
+      16: invokevirtual #817                // Method throwIfProducerClosed:()V
+      19: aload_0
+      20: invokevirtual #850                // Method throwIfInPreparedState:()V
+      23: aload_0
+      24: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      27: invokeinterface #568,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.milliseconds:()J
+      32: lstore        4
+      34: aload_0
+      35: aload_1
+      36: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+      39: aload_1
+      40: invokevirtual #948                // Method org/apache/kafka/clients/producer/ProducerRecord.partition:()Ljava/lang/Integer;
+      43: lload         4
+      45: aload_0
+      46: getfield      #470                // Field maxBlockTimeMs:J
+      49: invokevirtual #952                // Method waitOnMetadata:(Ljava/lang/String;Ljava/lang/Integer;JJ)Lorg/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime;
+      52: astore        6
+      54: goto          85
+      57: astore        7
+      59: aload_0
+      60: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+      63: invokevirtual #957                // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.isClosed:()Z
+      66: ifeq          82
+      69: new           #591                // class org/apache/kafka/common/KafkaException
+      72: dup
+      73: ldc_w         #959                // String Producer closed while send in progress
+      76: aload         7
+      78: invokespecial #596                // Method org/apache/kafka/common/KafkaException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+      81: athrow
+      82: aload         7
+      84: athrow
+      85: lload         4
+      87: aload         6
+      89: getfield      #962                // Field org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime.waitedOnMetadataMs:J
+      92: ladd
+      93: lstore        4
+      95: lconst_0
+      96: aload_0
+      97: getfield      #470                // Field maxBlockTimeMs:J
+     100: aload         6
+     102: getfield      #962                // Field org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime.waitedOnMetadataMs:J
+     105: lsub
+     106: invokestatic  #964                // Method java/lang/Math.max:(JJ)J
+     109: lstore        7
+     111: aload         6
+     113: getfield      #968                // Field org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime.cluster:Lorg/apache/kafka/common/Cluster;
+     116: astore        9
+     118: aload_0
+     119: getfield      #419                // Field keySerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     122: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+     125: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     128: aload_1
+     129: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+     132: aload_1
+     133: invokevirtual #972                // Method org/apache/kafka/clients/producer/ProducerRecord.headers:()Lorg/apache/kafka/common/header/Headers;
+     136: aload_1
+     137: invokevirtual #975                // Method org/apache/kafka/clients/producer/ProducerRecord.key:()Ljava/lang/Object;
+     140: invokeinterface #979,  4          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.serialize:(Ljava/lang/String;Lorg/apache/kafka/common/header/Headers;Ljava/lang/Object;)[B
+     145: astore        10
+     147: goto          190
+     150: astore        11
+     152: new           #983                // class org/apache/kafka/common/errors/SerializationException
+     155: dup
+     156: aload_1
+     157: invokevirtual #975                // Method org/apache/kafka/clients/producer/ProducerRecord.key:()Ljava/lang/Object;
+     160: invokevirtual #987                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+     163: invokevirtual #992                // Method java/lang/Class.getName:()Ljava/lang/String;
+     166: aload_0
+     167: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     170: ldc_w         #399                // String key.serializer
+     173: invokevirtual #995                // Method org/apache/kafka/clients/producer/ProducerConfig.getClass:(Ljava/lang/String;)Ljava/lang/Class;
+     176: invokevirtual #992                // Method java/lang/Class.getName:()Ljava/lang/String;
+     179: invokedynamic #1000,  0           // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+     184: aload         11
+     186: invokespecial #1001               // Method org/apache/kafka/common/errors/SerializationException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     189: athrow
+     190: aload_0
+     191: getfield      #423                // Field valueSerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     194: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+     197: checkcast     #212                // class org/apache/kafka/common/serialization/Serializer
+     200: aload_1
+     201: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+     204: aload_1
+     205: invokevirtual #972                // Method org/apache/kafka/clients/producer/ProducerRecord.headers:()Lorg/apache/kafka/common/header/Headers;
+     208: aload_1
+     209: invokevirtual #1006               // Method org/apache/kafka/clients/producer/ProducerRecord.value:()Ljava/lang/Object;
+     212: invokeinterface #979,  4          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.serialize:(Ljava/lang/String;Lorg/apache/kafka/common/header/Headers;Ljava/lang/Object;)[B
+     217: astore        11
+     219: goto          262
+     222: astore        12
+     224: new           #983                // class org/apache/kafka/common/errors/SerializationException
+     227: dup
+     228: aload_1
+     229: invokevirtual #1006               // Method org/apache/kafka/clients/producer/ProducerRecord.value:()Ljava/lang/Object;
+     232: invokevirtual #987                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+     235: invokevirtual #992                // Method java/lang/Class.getName:()Ljava/lang/String;
+     238: aload_0
+     239: getfield      #185                // Field producerConfig:Lorg/apache/kafka/clients/producer/ProducerConfig;
+     242: ldc_w         #421                // String value.serializer
+     245: invokevirtual #995                // Method org/apache/kafka/clients/producer/ProducerConfig.getClass:(Ljava/lang/String;)Ljava/lang/Class;
+     248: invokevirtual #992                // Method java/lang/Class.getName:()Ljava/lang/String;
+     251: invokedynamic #1009,  0           // InvokeDynamic #4:makeConcatWithConstants:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+     256: aload         12
+     258: invokespecial #1001               // Method org/apache/kafka/common/errors/SerializationException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     261: athrow
+     262: aload_0
+     263: aload_1
+     264: aload         10
+     266: aload         11
+     268: aload         9
+     270: invokevirtual #1012               // Method partition:(Lorg/apache/kafka/clients/producer/ProducerRecord;[B[BLorg/apache/kafka/common/Cluster;)I
+     273: istore        12
+     275: aload_0
+     276: aload_1
+     277: invokevirtual #972                // Method org/apache/kafka/clients/producer/ProducerRecord.headers:()Lorg/apache/kafka/common/header/Headers;
+     280: invokevirtual #1016               // Method setReadOnly:(Lorg/apache/kafka/common/header/Headers;)V
+     283: aload_1
+     284: invokevirtual #972                // Method org/apache/kafka/clients/producer/ProducerRecord.headers:()Lorg/apache/kafka/common/header/Headers;
+     287: invokeinterface #1022,  1         // InterfaceMethod org/apache/kafka/common/header/Headers.toArray:()[Lorg/apache/kafka/common/header/Header;
+     292: astore        13
+     294: iconst_2
+     295: aload_0
+     296: getfield      #466                // Field compression:Lorg/apache/kafka/common/compress/Compression;
+     299: invokeinterface #1025,  1         // InterfaceMethod org/apache/kafka/common/compress/Compression.type:()Lorg/apache/kafka/common/record/CompressionType;
+     304: aload         10
+     306: aload         11
+     308: aload         13
+     310: invokestatic  #1031               // Method org/apache/kafka/common/record/AbstractRecords.estimateSizeInBytesUpperBound:(BLorg/apache/kafka/common/record/CompressionType;[B[B[Lorg/apache/kafka/common/header/Header;)I
+     313: istore        14
+     315: aload_0
+     316: iload         14
+     318: invokevirtual #1035               // Method ensureValidRecordSize:(I)V
+     321: aload_1
+     322: invokevirtual #1039               // Method org/apache/kafka/clients/producer/ProducerRecord.timestamp:()Ljava/lang/Long;
+     325: ifnonnull     333
+     328: lload         4
+     330: goto          340
+     333: aload_1
+     334: invokevirtual #1039               // Method org/apache/kafka/clients/producer/ProducerRecord.timestamp:()Ljava/lang/Long;
+     337: invokevirtual #272                // Method java/lang/Long.longValue:()J
+     340: lstore        15
+     342: aload_0
+     343: getfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+     346: aload_1
+     347: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+     350: iload         12
+     352: lload         15
+     354: aload         10
+     356: aload         11
+     358: aload         13
+     360: aload_3
+     361: lload         7
+     363: lload         4
+     365: aload         9
+     367: invokevirtual #1045               // Method org/apache/kafka/clients/producer/internals/RecordAccumulator.append:(Ljava/lang/String;IJ[B[B[Lorg/apache/kafka/common/header/Header;Lorg/apache/kafka/clients/producer/internals/RecordAccumulator$AppendCallbacks;JJLorg/apache/kafka/common/Cluster;)Lorg/apache/kafka/clients/producer/internals/RecordAccumulator$RecordAppendResult;
+     370: astore        17
+     372: getstatic     #1047               // Field $assertionsDisabled:Z
+     375: ifne          394
+     378: aload_3
+     379: invokevirtual #1050               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.getPartition:()I
+     382: iconst_m1
+     383: if_icmpne     394
+     386: new           #1052               // class java/lang/AssertionError
+     389: dup
+     390: invokespecial #1053               // Method java/lang/AssertionError."<init>":()V
+     393: athrow
+     394: aload_0
+     395: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     398: ifnull        412
+     401: aload_0
+     402: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     405: aload_3
+     406: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     409: invokevirtual #1061               // Method org/apache/kafka/clients/producer/internals/TransactionManager.maybeAddPartition:(Lorg/apache/kafka/common/TopicPartition;)V
+     412: aload         17
+     414: getfield      #1064               // Field org/apache/kafka/clients/producer/internals/RecordAccumulator$RecordAppendResult.batchIsFull:Z
+     417: ifne          428
+     420: aload         17
+     422: getfield      #1067               // Field org/apache/kafka/clients/producer/internals/RecordAccumulator$RecordAppendResult.newBatchCreated:Z
+     425: ifeq          458
+     428: aload_0
+     429: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     432: ldc_w         #1069               // String Waking up the sender since topic {} partition {} is either full or getting a new batch
+     435: aload_1
+     436: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+     439: aload_3
+     440: invokevirtual #1050               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.getPartition:()I
+     443: invokestatic  #782                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     446: invokeinterface #1072,  4         // InterfaceMethod org/slf4j/Logger.trace:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     451: aload_0
+     452: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     455: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+     458: aload         17
+     460: getfield      #1076               // Field org/apache/kafka/clients/producer/internals/RecordAccumulator$RecordAppendResult.future:Lorg/apache/kafka/clients/producer/internals/FutureRecordMetadata;
+     463: areturn
+     464: astore        4
+     466: aload_0
+     467: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     470: ldc_w         #1078               // String Exception occurred during message send:
+     473: aload         4
+     475: invokeinterface #1080,  3         // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Throwable;)V
+     480: aload_2
+     481: ifnull        520
+     484: aload_3
+     485: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     488: astore        5
+     490: new           #1082               // class org/apache/kafka/clients/producer/RecordMetadata
+     493: dup
+     494: aload         5
+     496: ldc2_w        #1083               // long -1l
+     499: iconst_m1
+     500: ldc2_w        #1083               // long -1l
+     503: iconst_m1
+     504: iconst_m1
+     505: invokespecial #1087               // Method org/apache/kafka/clients/producer/RecordMetadata."<init>":(Lorg/apache/kafka/common/TopicPartition;JIJII)V
+     508: astore        6
+     510: aload_2
+     511: aload         6
+     513: aload         4
+     515: invokeinterface #1091,  3         // InterfaceMethod org/apache/kafka/clients/producer/Callback.onCompletion:(Lorg/apache/kafka/clients/producer/RecordMetadata;Ljava/lang/Exception;)V
+     520: aload_0
+     521: getfield      #537                // Field errors:Lorg/apache/kafka/common/metrics/Sensor;
+     524: invokevirtual #1093               // Method org/apache/kafka/common/metrics/Sensor.record:()V
+     527: aload_0
+     528: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     531: aload_1
+     532: aload_3
+     533: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     536: aload         4
+     538: invokevirtual #1097               // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors.onSendError:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/common/TopicPartition;Ljava/lang/Exception;)V
+     541: aload_0
+     542: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     545: ifnull        557
+     548: aload_0
+     549: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+     552: aload         4
+     554: invokevirtual #1101               // Method org/apache/kafka/clients/producer/internals/TransactionManager.maybeTransitionToErrorState:(Ljava/lang/RuntimeException;)V
+     557: new           #14                 // class org/apache/kafka/clients/producer/KafkaProducer$FutureFailure
+     560: dup
+     561: aload         4
+     563: invokespecial #1104               // Method org/apache/kafka/clients/producer/KafkaProducer$FutureFailure."<init>":(Ljava/lang/Exception;)V
+     566: areturn
+     567: astore        4
+     569: aload_0
+     570: getfield      #537                // Field errors:Lorg/apache/kafka/common/metrics/Sensor;
+     573: invokevirtual #1093               // Method org/apache/kafka/common/metrics/Sensor.record:()V
+     576: aload_0
+     577: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     580: aload_1
+     581: aload_3
+     582: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     585: aload         4
+     587: invokevirtual #1097               // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors.onSendError:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/common/TopicPartition;Ljava/lang/Exception;)V
+     590: new           #1106               // class org/apache/kafka/common/errors/InterruptException
+     593: dup
+     594: aload         4
+     596: invokespecial #1109               // Method org/apache/kafka/common/errors/InterruptException."<init>":(Ljava/lang/InterruptedException;)V
+     599: athrow
+     600: astore        4
+     602: aload_0
+     603: getfield      #537                // Field errors:Lorg/apache/kafka/common/metrics/Sensor;
+     606: invokevirtual #1093               // Method org/apache/kafka/common/metrics/Sensor.record:()V
+     609: aload_0
+     610: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     613: aload_1
+     614: aload_3
+     615: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     618: aload         4
+     620: invokevirtual #1097               // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors.onSendError:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/common/TopicPartition;Ljava/lang/Exception;)V
+     623: aload         4
+     625: athrow
+     626: astore        4
+     628: aload_0
+     629: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     632: aload_1
+     633: aload_3
+     634: invokevirtual #1057               // Method org/apache/kafka/clients/producer/KafkaProducer$AppendCallbacks.topicPartition:()Lorg/apache/kafka/common/TopicPartition;
+     637: aload         4
+     639: invokevirtual #1097               // Method org/apache/kafka/clients/producer/internals/ProducerInterceptors.onSendError:(Lorg/apache/kafka/clients/producer/ProducerRecord;Lorg/apache/kafka/common/TopicPartition;Ljava/lang/Exception;)V
+     642: aload         4
+     644: athrow
+    Exception table:
+       from    to  target type
+          34    54    57   Class org/apache/kafka/common/KafkaException
+         118   147   150   Class java/lang/ClassCastException
+         190   219   222   Class java/lang/ClassCastException
+          15   463   464   Class org/apache/kafka/common/errors/ApiException
+          15   463   567   Class java/lang/InterruptedException
+          15   463   600   Class org/apache/kafka/common/KafkaException
+          15   463   626   Class java/lang/Exception
+
+  private void setReadOnly(org.apache.kafka.common.header.Headers);
+    Code:
+       0: aload_1
+       1: instanceof    #1133               // class org/apache/kafka/common/header/internals/RecordHeaders
+       4: ifeq          14
+       7: aload_1
+       8: checkcast     #1133               // class org/apache/kafka/common/header/internals/RecordHeaders
+      11: invokevirtual #1135               // Method org/apache/kafka/common/header/internals/RecordHeaders.setReadOnly:()V
+      14: return
+
+  private org.apache.kafka.clients.producer.KafkaProducer$ClusterAndWaitTime waitOnMetadata(java.lang.String, java.lang.Integer, long, long) throws java.lang.InterruptedException;
+    Code:
+       0: aload_0
+       1: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+       4: invokevirtual #1142               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.fetch:()Lorg/apache/kafka/common/Cluster;
+       7: astore        7
+       9: aload         7
+      11: invokevirtual #1146               // Method org/apache/kafka/common/Cluster.invalidTopics:()Ljava/util/Set;
+      14: aload_1
+      15: invokeinterface #1151,  2         // InterfaceMethod java/util/Set.contains:(Ljava/lang/Object;)Z
+      20: ifeq          32
+      23: new           #1153               // class org/apache/kafka/common/errors/InvalidTopicException
+      26: dup
+      27: aload_1
+      28: invokespecial #1154               // Method org/apache/kafka/common/errors/InvalidTopicException."<init>":(Ljava/lang/String;)V
+      31: athrow
+      32: aload_0
+      33: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+      36: aload_1
+      37: lload_3
+      38: invokevirtual #1157               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.add:(Ljava/lang/String;J)V
+      41: aload         7
+      43: aload_1
+      44: invokevirtual #1160               // Method org/apache/kafka/common/Cluster.partitionCountForTopic:(Ljava/lang/String;)Ljava/lang/Integer;
+      47: astore        8
+      49: aload         8
+      51: ifnull        81
+      54: aload_2
+      55: ifnull        70
+      58: aload_2
+      59: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      62: aload         8
+      64: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      67: if_icmpge     81
+      70: new           #16                 // class org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime
+      73: dup
+      74: aload         7
+      76: lconst_0
+      77: invokespecial #1163               // Method org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime."<init>":(Lorg/apache/kafka/common/Cluster;J)V
+      80: areturn
+      81: lload         5
+      83: lstore        9
+      85: lconst_0
+      86: lstore        11
+      88: aload_0
+      89: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      92: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      97: lstore        13
+      99: aload_2
+     100: ifnull        120
+     103: aload_0
+     104: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     107: ldc_w         #1165               // String Requesting metadata update for partition {} of topic {}.
+     110: aload_2
+     111: aload_1
+     112: invokeinterface #1072,  4         // InterfaceMethod org/slf4j/Logger.trace:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     117: goto          133
+     120: aload_0
+     121: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     124: ldc_w         #1167               // String Requesting metadata update for topic {}.
+     127: aload_1
+     128: invokeinterface #1170,  3         // InterfaceMethod org/slf4j/Logger.trace:(Ljava/lang/String;Ljava/lang/Object;)V
+     133: aload_0
+     134: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     137: aload_1
+     138: lload_3
+     139: lload         11
+     141: ladd
+     142: invokevirtual #1157               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.add:(Ljava/lang/String;J)V
+     145: aload_0
+     146: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     149: aload_1
+     150: invokevirtual #1174               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.requestUpdateForTopic:(Ljava/lang/String;)I
+     153: istore        15
+     155: aload_0
+     156: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     159: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+     162: aload_0
+     163: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     166: iload         15
+     168: lload         9
+     170: invokevirtual #1178               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.awaitUpdate:(IJ)V
+     173: goto          232
+     176: astore        16
+     178: aload_0
+     179: aload         8
+     181: aload_1
+     182: aload_2
+     183: lload         5
+     185: invokevirtual #1182               // Method getErrorMessage:(Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Integer;J)Ljava/lang/String;
+     188: astore        17
+     190: aload_0
+     191: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     194: aload_1
+     195: invokevirtual #1186               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.getError:(Ljava/lang/String;)Lorg/apache/kafka/common/protocol/Errors;
+     198: ifnull        222
+     201: new           #1138               // class org/apache/kafka/common/errors/TimeoutException
+     204: dup
+     205: aload         17
+     207: aload_0
+     208: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     211: aload_1
+     212: invokevirtual #1186               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.getError:(Ljava/lang/String;)Lorg/apache/kafka/common/protocol/Errors;
+     215: invokevirtual #1192               // Method org/apache/kafka/common/protocol/Errors.exception:()Lorg/apache/kafka/common/errors/ApiException;
+     218: invokespecial #1193               // Method org/apache/kafka/common/errors/TimeoutException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     221: athrow
+     222: new           #1138               // class org/apache/kafka/common/errors/TimeoutException
+     225: dup
+     226: aload         17
+     228: invokespecial #1194               // Method org/apache/kafka/common/errors/TimeoutException."<init>":(Ljava/lang/String;)V
+     231: athrow
+     232: aload_0
+     233: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     236: invokevirtual #1142               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.fetch:()Lorg/apache/kafka/common/Cluster;
+     239: astore        7
+     241: aload_0
+     242: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+     245: invokeinterface #568,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.milliseconds:()J
+     250: lload_3
+     251: lsub
+     252: lstore        11
+     254: lload         11
+     256: lload         5
+     258: lcmp
+     259: iflt          333
+     262: aload_0
+     263: aload         8
+     265: aload_1
+     266: aload_2
+     267: lload         5
+     269: invokevirtual #1182               // Method getErrorMessage:(Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Integer;J)Ljava/lang/String;
+     272: astore        16
+     274: aload_0
+     275: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     278: aload_1
+     279: invokevirtual #1186               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.getError:(Ljava/lang/String;)Lorg/apache/kafka/common/protocol/Errors;
+     282: ifnull        323
+     285: aload_0
+     286: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     289: aload_1
+     290: invokevirtual #1186               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.getError:(Ljava/lang/String;)Lorg/apache/kafka/common/protocol/Errors;
+     293: invokevirtual #1192               // Method org/apache/kafka/common/protocol/Errors.exception:()Lorg/apache/kafka/common/errors/ApiException;
+     296: instanceof    #1196               // class org/apache/kafka/common/errors/RetriableException
+     299: ifeq          323
+     302: new           #1138               // class org/apache/kafka/common/errors/TimeoutException
+     305: dup
+     306: aload         16
+     308: aload_0
+     309: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     312: aload_1
+     313: invokevirtual #1186               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.getError:(Ljava/lang/String;)Lorg/apache/kafka/common/protocol/Errors;
+     316: invokevirtual #1192               // Method org/apache/kafka/common/protocol/Errors.exception:()Lorg/apache/kafka/common/errors/ApiException;
+     319: invokespecial #1193               // Method org/apache/kafka/common/errors/TimeoutException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     322: athrow
+     323: new           #1138               // class org/apache/kafka/common/errors/TimeoutException
+     326: dup
+     327: aload         16
+     329: invokespecial #1194               // Method org/apache/kafka/common/errors/TimeoutException."<init>":(Ljava/lang/String;)V
+     332: athrow
+     333: aload_0
+     334: getfield      #519                // Field metadata:Lorg/apache/kafka/clients/producer/internals/ProducerMetadata;
+     337: aload_1
+     338: invokevirtual #1199               // Method org/apache/kafka/clients/producer/internals/ProducerMetadata.maybeThrowExceptionForTopic:(Ljava/lang/String;)V
+     341: lload         5
+     343: lload         11
+     345: lsub
+     346: lstore        9
+     348: aload         7
+     350: aload_1
+     351: invokevirtual #1160               // Method org/apache/kafka/common/Cluster.partitionCountForTopic:(Ljava/lang/String;)Ljava/lang/Integer;
+     354: astore        8
+     356: aload         8
+     358: ifnull        99
+     361: aload_2
+     362: ifnull        377
+     365: aload_2
+     366: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     369: aload         8
+     371: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+     374: if_icmpge     99
+     377: aload_0
+     378: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+     381: aload_0
+     382: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+     385: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+     390: lload         13
+     392: lsub
+     393: invokevirtual #1202               // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordMetadataWait:(J)V
+     396: new           #16                 // class org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime
+     399: dup
+     400: aload         7
+     402: lload         11
+     404: invokespecial #1163               // Method org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime."<init>":(Lorg/apache/kafka/common/Cluster;J)V
+     407: areturn
+    Exception table:
+       from    to  target type
+         162   173   176   Class org/apache/kafka/common/errors/TimeoutException
+
+  private java.lang.String getErrorMessage(java.lang.Integer, java.lang.String, java.lang.Integer, long);
+    Code:
+       0: aload_1
+       1: ifnonnull     29
+       4: ldc_w         #1213               // String Topic %s not present in metadata after %d ms.
+       7: iconst_2
+       8: anewarray     #5                  // class java/lang/Object
+      11: dup
+      12: iconst_0
+      13: aload_2
+      14: aastore
+      15: dup
+      16: iconst_1
+      17: lload         4
+      19: invokestatic  #1216               // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+      22: aastore
+      23: invokestatic  #207                // Method java/lang/String.format:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      26: goto          59
+      29: ldc_w         #1218               // String Partition %d of topic %s with partition count %d is not present in metadata after %d ms.
+      32: iconst_4
+      33: anewarray     #5                  // class java/lang/Object
+      36: dup
+      37: iconst_0
+      38: aload_3
+      39: aastore
+      40: dup
+      41: iconst_1
+      42: aload_2
+      43: aastore
+      44: dup
+      45: iconst_2
+      46: aload_1
+      47: aastore
+      48: dup
+      49: iconst_3
+      50: lload         4
+      52: invokestatic  #1216               // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+      55: aastore
+      56: invokestatic  #207                // Method java/lang/String.format:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      59: areturn
+
+  private void ensureValidRecordSize(int);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #456                // Field maxRequestSize:I
+       5: if_icmple     26
+       8: new           #1220               // class org/apache/kafka/common/errors/RecordTooLargeException
+      11: dup
+      12: iload_1
+      13: aload_0
+      14: getfield      #456                // Field maxRequestSize:I
+      17: invokedynamic #1225,  0           // InvokeDynamic #5:makeConcatWithConstants:(II)Ljava/lang/String;
+      22: invokespecial #1226               // Method org/apache/kafka/common/errors/RecordTooLargeException."<init>":(Ljava/lang/String;)V
+      25: athrow
+      26: iload_1
+      27: i2l
+      28: aload_0
+      29: getfield      #460                // Field totalMemorySize:J
+      32: lcmp
+      33: ifle          50
+      36: new           #1220               // class org/apache/kafka/common/errors/RecordTooLargeException
+      39: dup
+      40: iload_1
+      41: invokedynamic #1231,  0           // InvokeDynamic #6:makeConcatWithConstants:(I)Ljava/lang/String;
+      46: invokespecial #1226               // Method org/apache/kafka/common/errors/RecordTooLargeException."<init>":(Ljava/lang/String;)V
+      49: athrow
+      50: return
+
+  public void flush();
+    Code:
+       0: invokestatic  #1239               // Method java/lang/Thread.currentThread:()Ljava/lang/Thread;
+       3: aload_0
+       4: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+       7: if_acmpne     33
+      10: aload_0
+      11: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      14: ldc_w         #1241               // String KafkaProducer.flush() invocation inside a callback is not permitted because it may lead to deadlock.
+      17: invokeinterface #1244,  2         // InterfaceMethod org/slf4j/Logger.error:(Ljava/lang/String;)V
+      22: new           #591                // class org/apache/kafka/common/KafkaException
+      25: dup
+      26: ldc_w         #1241               // String KafkaProducer.flush() invocation inside a callback is not permitted because it may lead to deadlock.
+      29: invokespecial #1245               // Method org/apache/kafka/common/KafkaException."<init>":(Ljava/lang/String;)V
+      32: athrow
+      33: aload_0
+      34: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      37: ldc_w         #1247               // String Flushing accumulated records in producer.
+      40: invokeinterface #233,  2          // InterfaceMethod org/slf4j/Logger.trace:(Ljava/lang/String;)V
+      45: aload_0
+      46: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      49: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      54: lstore_1
+      55: aload_0
+      56: getfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+      59: invokevirtual #1250               // Method org/apache/kafka/clients/producer/internals/RecordAccumulator.beginFlush:()V
+      62: aload_0
+      63: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+      66: invokevirtual #827                // Method org/apache/kafka/clients/producer/internals/Sender.wakeup:()V
+      69: aload_0
+      70: getfield      #513                // Field accumulator:Lorg/apache/kafka/clients/producer/internals/RecordAccumulator;
+      73: invokevirtual #1253               // Method org/apache/kafka/clients/producer/internals/RecordAccumulator.awaitFlushCompletion:()V
+      76: aload_0
+      77: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+      80: aload_0
+      81: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      84: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+      89: lload_1
+      90: lsub
+      91: invokevirtual #1256               // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordFlush:(J)V
+      94: goto          133
+      97: astore_3
+      98: new           #1106               // class org/apache/kafka/common/errors/InterruptException
+     101: dup
+     102: ldc_w         #1258               // String Flush interrupted.
+     105: aload_3
+     106: invokespecial #1261               // Method org/apache/kafka/common/errors/InterruptException."<init>":(Ljava/lang/String;Ljava/lang/InterruptedException;)V
+     109: athrow
+     110: astore        4
+     112: aload_0
+     113: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+     116: aload_0
+     117: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+     120: invokeinterface #820,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.nanoseconds:()J
+     125: lload_1
+     126: lsub
+     127: invokevirtual #1256               // Method org/apache/kafka/clients/producer/internals/KafkaProducerMetrics.recordFlush:(J)V
+     130: aload         4
+     132: athrow
+     133: return
+    Exception table:
+       from    to  target type
+          69    76    97   Class java/lang/InterruptedException
+          69    76   110   any
+          97   112   110   any
+
+  public java.util.List<org.apache.kafka.common.PartitionInfo> partitionsFor(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc_w         #1266               // String topic cannot be null
+       4: invokestatic  #1269               // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+       7: pop
+       8: aload_0
+       9: aload_1
+      10: aconst_null
+      11: aload_0
+      12: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      15: invokeinterface #568,  1          // InterfaceMethod org/apache/kafka/common/utils/Time.milliseconds:()J
+      20: aload_0
+      21: getfield      #470                // Field maxBlockTimeMs:J
+      24: invokevirtual #952                // Method waitOnMetadata:(Ljava/lang/String;Ljava/lang/Integer;JJ)Lorg/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime;
+      27: getfield      #968                // Field org/apache/kafka/clients/producer/KafkaProducer$ClusterAndWaitTime.cluster:Lorg/apache/kafka/common/Cluster;
+      30: aload_1
+      31: invokevirtual #1272               // Method org/apache/kafka/common/Cluster.partitionsForTopic:(Ljava/lang/String;)Ljava/util/List;
+      34: areturn
+      35: astore_2
+      36: new           #1106               // class org/apache/kafka/common/errors/InterruptException
+      39: dup
+      40: aload_2
+      41: invokespecial #1109               // Method org/apache/kafka/common/errors/InterruptException."<init>":(Ljava/lang/InterruptedException;)V
+      44: athrow
+    Exception table:
+       from    to  target type
+           8    34    35   Class java/lang/InterruptedException
+
+  public java.util.Map<org.apache.kafka.common.MetricName, ? extends org.apache.kafka.common.Metric> metrics();
+    Code:
+       0: aload_0
+       1: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+       4: invokevirtual #1275               // Method org/apache/kafka/common/metrics/Metrics.metrics:()Ljava/util/Map;
+       7: invokestatic  #1278               // Method java/util/Collections.unmodifiableMap:(Ljava/util/Map;)Ljava/util/Map;
+      10: areturn
+
+  public void registerMetricForSubscription(org.apache.kafka.common.metrics.KafkaMetric);
+    Code:
+       0: aload_0
+       1: invokevirtual #1281               // Method metrics:()Ljava/util/Map;
+       4: aload_1
+       5: invokevirtual #1287               // Method org/apache/kafka/common/metrics/KafkaMetric.metricName:()Lorg/apache/kafka/common/MetricName;
+       8: invokeinterface #771,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      13: ifne          32
+      16: aload_0
+      17: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      20: aload_1
+      21: invokedynamic #1295,  0           // InvokeDynamic #7:accept:(Lorg/apache/kafka/common/metrics/KafkaMetric;)Ljava/util/function/Consumer;
+      26: invokevirtual #338                // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+      29: goto          48
+      32: aload_0
+      33: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      36: ldc_w         #1297               // String Skipping registration for metric {}. Existing producer metrics cannot be overwritten.
+      39: aload_1
+      40: invokevirtual #1287               // Method org/apache/kafka/common/metrics/KafkaMetric.metricName:()Lorg/apache/kafka/common/MetricName;
+      43: invokeinterface #1299,  3         // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Object;)V
+      48: return
+
+  public void unregisterMetricFromSubscription(org.apache.kafka.common.metrics.KafkaMetric);
+    Code:
+       0: aload_0
+       1: invokevirtual #1281               // Method metrics:()Ljava/util/Map;
+       4: aload_1
+       5: invokevirtual #1287               // Method org/apache/kafka/common/metrics/KafkaMetric.metricName:()Lorg/apache/kafka/common/MetricName;
+       8: invokeinterface #771,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      13: ifne          32
+      16: aload_0
+      17: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      20: aload_1
+      21: invokedynamic #1307,  0           // InvokeDynamic #8:accept:(Lorg/apache/kafka/common/metrics/KafkaMetric;)Ljava/util/function/Consumer;
+      26: invokevirtual #338                // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+      29: goto          48
+      32: aload_0
+      33: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      36: ldc_w         #1309               // String Skipping unregistration for metric {}. Existing producer metrics cannot be removed.
+      39: aload_1
+      40: invokevirtual #1287               // Method org/apache/kafka/common/metrics/KafkaMetric.metricName:()Lorg/apache/kafka/common/MetricName;
+      43: invokeinterface #1299,  3         // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;Ljava/lang/Object;)V
+      48: return
+
+  public org.apache.kafka.common.Uuid clientInstanceId(java.time.Duration);
+    Code:
+       0: aload_0
+       1: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+       4: invokevirtual #1312               // Method java/util/Optional.isEmpty:()Z
+       7: ifeq          21
+      10: new           #919                // class java/lang/IllegalStateException
+      13: dup
+      14: ldc_w         #1314               // String Telemetry is not enabled. Set config `enable.metrics.push` to `true`.
+      17: invokespecial #922                // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      20: athrow
+      21: aload_0
+      22: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+      25: invokevirtual #1315               // Method java/util/Optional.get:()Ljava/lang/Object;
+      28: checkcast     #651                // class org/apache/kafka/common/telemetry/internals/ClientTelemetryReporter
+      31: aload_1
+      32: invokestatic  #1321               // Method org/apache/kafka/common/telemetry/internals/ClientTelemetryUtils.fetchClientInstanceId:(Lorg/apache/kafka/common/telemetry/internals/ClientTelemetryReporter;Ljava/time/Duration;)Lorg/apache/kafka/common/Uuid;
+      35: areturn
+
+  public void close();
+    Code:
+       0: aload_0
+       1: ldc2_w        #1324               // long 9223372036854775807l
+       4: invokestatic  #585                // Method java/time/Duration.ofMillis:(J)Ljava/time/Duration;
+       7: invokevirtual #1328               // Method close:(Ljava/time/Duration;)V
+      10: return
+
+  public void close(java.time.Duration);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iconst_0
+       3: invokevirtual #589                // Method close:(Ljava/time/Duration;Z)V
+       6: return
+
+  private void close(java.time.Duration, boolean);
+    Code:
+       0: aload_1
+       1: invokevirtual #1331               // Method java/time/Duration.toMillis:()J
+       4: lstore_3
+       5: lload_3
+       6: lconst_0
+       7: lcmp
+       8: ifge          22
+      11: new           #1333               // class java/lang/IllegalArgumentException
+      14: dup
+      15: ldc_w         #1335               // String The timeout cannot be negative.
+      18: invokespecial #1336               // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      21: athrow
+      22: aload_0
+      23: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      26: ldc_w         #1338               // String Closing the Kafka producer with timeoutMillis = {} ms.
+      29: lload_3
+      30: invokestatic  #1216               // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+      33: invokeinterface #1340,  3         // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;)V
+      38: new           #1342               // class java/util/concurrent/atomic/AtomicReference
+      41: dup
+      42: invokespecial #1343               // Method java/util/concurrent/atomic/AtomicReference."<init>":()V
+      45: astore        5
+      47: invokestatic  #1239               // Method java/lang/Thread.currentThread:()Ljava/lang/Thread;
+      50: aload_0
+      51: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+      54: if_acmpne     61
+      57: iconst_1
+      58: goto          62
+      61: iconst_0
+      62: istore        6
+      64: lload_3
+      65: lconst_0
+      66: lcmp
+      67: ifle          219
+      70: iload         6
+      72: ifeq          94
+      75: aload_0
+      76: getfield      #226                // Field log:Lorg/slf4j/Logger;
+      79: ldc_w         #1345               // String Overriding close timeout {} ms to 0 ms in order to prevent useless blocking due to self-join. This means you have incorrectly invoked close with a non-zero timeout from the producer call-back.
+      82: lload_3
+      83: invokestatic  #1216               // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+      86: invokeinterface #1347,  3         // InterfaceMethod org/slf4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Object;)V
+      91: goto          219
+      94: aload_0
+      95: getfield      #187                // Field time:Lorg/apache/kafka/common/utils/Time;
+      98: aload_1
+      99: invokeinterface #1351,  2         // InterfaceMethod org/apache/kafka/common/utils/Time.timer:(Ljava/time/Duration;)Lorg/apache/kafka/common/utils/Timer;
+     104: astore        7
+     106: aload_0
+     107: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+     110: invokedynamic #1358,  0           // InvokeDynamic #9:accept:()Ljava/util/function/Consumer;
+     115: invokevirtual #338                // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+     118: aload         7
+     120: invokevirtual #1363               // Method org/apache/kafka/common/utils/Timer.update:()V
+     123: aload_0
+     124: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     127: ifnull        142
+     130: aload_0
+     131: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     134: invokevirtual #1364               // Method org/apache/kafka/clients/producer/internals/Sender.initiateClose:()V
+     137: aload         7
+     139: invokevirtual #1363               // Method org/apache/kafka/common/utils/Timer.update:()V
+     142: aload_0
+     143: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     146: ifnull        219
+     149: aload_0
+     150: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     153: aload         7
+     155: invokevirtual #1367               // Method org/apache/kafka/common/utils/Timer.remainingMs:()J
+     158: invokevirtual #1370               // Method org/apache/kafka/clients/producer/internals/Sender$SenderThread.join:(J)V
+     161: aload         7
+     163: invokevirtual #1363               // Method org/apache/kafka/common/utils/Timer.update:()V
+     166: goto          219
+     169: astore        8
+     171: aload         5
+     173: aconst_null
+     174: new           #1106               // class org/apache/kafka/common/errors/InterruptException
+     177: dup
+     178: aload         8
+     180: invokespecial #1109               // Method org/apache/kafka/common/errors/InterruptException."<init>":(Ljava/lang/InterruptedException;)V
+     183: invokevirtual #1374               // Method java/util/concurrent/atomic/AtomicReference.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     186: pop
+     187: aload_0
+     188: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     191: ldc_w         #1376               // String Interrupted while joining ioThread
+     194: aload         8
+     196: invokeinterface #1378,  3         // InterfaceMethod org/slf4j/Logger.error:(Ljava/lang/String;Ljava/lang/Throwable;)V
+     201: aload         7
+     203: invokevirtual #1363               // Method org/apache/kafka/common/utils/Timer.update:()V
+     206: goto          219
+     209: astore        9
+     211: aload         7
+     213: invokevirtual #1363               // Method org/apache/kafka/common/utils/Timer.update:()V
+     216: aload         9
+     218: athrow
+     219: aload_0
+     220: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     223: ifnull        299
+     226: aload_0
+     227: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     230: ifnull        299
+     233: aload_0
+     234: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     237: invokevirtual #1381               // Method org/apache/kafka/clients/producer/internals/Sender$SenderThread.isAlive:()Z
+     240: ifeq          299
+     243: aload_0
+     244: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     247: ldc_w         #1383               // String Proceeding to force close the producer since pending requests could not be completed within timeout {} ms.
+     250: lload_3
+     251: invokestatic  #1216               // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     254: invokeinterface #1340,  3         // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;)V
+     259: aload_0
+     260: getfield      #543                // Field sender:Lorg/apache/kafka/clients/producer/internals/Sender;
+     263: invokevirtual #1386               // Method org/apache/kafka/clients/producer/internals/Sender.forceClose:()V
+     266: iload         6
+     268: ifne          299
+     271: aload_0
+     272: getfield      #559                // Field ioThread:Lorg/apache/kafka/clients/producer/internals/Sender$SenderThread;
+     275: invokevirtual #1388               // Method org/apache/kafka/clients/producer/internals/Sender$SenderThread.join:()V
+     278: goto          299
+     281: astore        7
+     283: aload         5
+     285: aconst_null
+     286: new           #1106               // class org/apache/kafka/common/errors/InterruptException
+     289: dup
+     290: aload         7
+     292: invokespecial #1109               // Method org/apache/kafka/common/errors/InterruptException."<init>":(Ljava/lang/InterruptedException;)V
+     295: invokevirtual #1374               // Method java/util/concurrent/atomic/AtomicReference.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     298: pop
+     299: aload_0
+     300: getfield      #435                // Field interceptors:Lorg/apache/kafka/clients/producer/internals/ProducerInterceptors;
+     303: ldc_w         #1390               // String producer interceptors
+     306: aload         5
+     308: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     311: aload_0
+     312: getfield      #363                // Field producerMetrics:Lorg/apache/kafka/clients/producer/internals/KafkaProducerMetrics;
+     315: ldc_w         #1396               // String producer metrics wrapper
+     318: aload         5
+     320: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     323: aload_0
+     324: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     327: ldc_w         #1398               // String producer metrics
+     330: aload         5
+     332: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     335: aload_0
+     336: getfield      #419                // Field keySerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     339: ldc_w         #1400               // String producer keySerializer
+     342: aload         5
+     344: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     347: aload_0
+     348: getfield      #423                // Field valueSerializerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     351: ldc_w         #1402               // String producer valueSerializer
+     354: aload         5
+     356: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     359: aload_0
+     360: getfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+     363: ldc_w         #1404               // String producer partitioner
+     366: aload         5
+     368: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+     371: aload_0
+     372: getfield      #183                // Field clientTelemetryReporter:Ljava/util/Optional;
+     375: aload         5
+     377: invokedynamic #1412,  0           // InvokeDynamic #10:accept:(Ljava/util/concurrent/atomic/AtomicReference;)Ljava/util/function/Consumer;
+     382: invokevirtual #338                // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+     385: ldc           #67                 // String kafka.producer
+     387: aload_0
+     388: getfield      #197                // Field clientId:Ljava/lang/String;
+     391: aload_0
+     392: getfield      #356                // Field metrics:Lorg/apache/kafka/common/metrics/Metrics;
+     395: invokestatic  #1416               // Method org/apache/kafka/common/utils/AppInfoParser.unregisterAppInfo:(Ljava/lang/String;Ljava/lang/String;Lorg/apache/kafka/common/metrics/Metrics;)V
+     398: aload         5
+     400: invokevirtual #1417               // Method java/util/concurrent/atomic/AtomicReference.get:()Ljava/lang/Object;
+     403: checkcast     #174                // class java/lang/Throwable
+     406: astore        7
+     408: aload         7
+     410: ifnull        444
+     413: iload_2
+     414: ifne          444
+     417: aload         7
+     419: instanceof    #1106               // class org/apache/kafka/common/errors/InterruptException
+     422: ifeq          431
+     425: aload         7
+     427: checkcast     #1106               // class org/apache/kafka/common/errors/InterruptException
+     430: athrow
+     431: new           #591                // class org/apache/kafka/common/KafkaException
+     434: dup
+     435: ldc_w         #1419               // String Failed to close kafka producer
+     438: aload         7
+     440: invokespecial #596                // Method org/apache/kafka/common/KafkaException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     443: athrow
+     444: aload_0
+     445: getfield      #226                // Field log:Lorg/slf4j/Logger;
+     448: ldc_w         #1421               // String Kafka producer has been closed
+     451: invokeinterface #579,  2          // InterfaceMethod org/slf4j/Logger.debug:(Ljava/lang/String;)V
+     456: return
+    Exception table:
+       from    to  target type
+         149   161   169   Class java/lang/InterruptedException
+         149   161   209   any
+         169   201   209   any
+         209   211   209   any
+         271   278   281   Class java/lang/InterruptedException
+
+  private int partition(org.apache.kafka.clients.producer.ProducerRecord<K, V>, byte[], byte[], org.apache.kafka.common.Cluster);
+    Code:
+       0: aload_1
+       1: invokevirtual #948                // Method org/apache/kafka/clients/producer/ProducerRecord.partition:()Ljava/lang/Integer;
+       4: ifnull        15
+       7: aload_1
+       8: invokevirtual #948                // Method org/apache/kafka/clients/producer/ProducerRecord.partition:()Ljava/lang/Integer;
+      11: invokevirtual #256                // Method java/lang/Integer.intValue:()I
+      14: ireturn
+      15: aload_0
+      16: getfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+      19: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+      22: ifnull        92
+      25: aload_0
+      26: getfield      #379                // Field partitionerPlugin:Lorg/apache/kafka/common/internals/Plugin;
+      29: invokevirtual #442                // Method org/apache/kafka/common/internals/Plugin.get:()Ljava/lang/Object;
+      32: checkcast     #367                // class org/apache/kafka/clients/producer/Partitioner
+      35: aload_1
+      36: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+      39: aload_1
+      40: invokevirtual #975                // Method org/apache/kafka/clients/producer/ProducerRecord.key:()Ljava/lang/Object;
+      43: aload_2
+      44: aload_1
+      45: invokevirtual #1006               // Method org/apache/kafka/clients/producer/ProducerRecord.value:()Ljava/lang/Object;
+      48: aload_3
+      49: aload         4
+      51: invokeinterface #1433,  7         // InterfaceMethod org/apache/kafka/clients/producer/Partitioner.partition:(Ljava/lang/String;Ljava/lang/Object;[BLjava/lang/Object;[BLorg/apache/kafka/common/Cluster;)I
+      56: istore        5
+      58: iload         5
+      60: ifge          89
+      63: new           #1333               // class java/lang/IllegalArgumentException
+      66: dup
+      67: ldc_w         #1435               // String The partitioner generated an invalid partition number: %d. Partition number should always be non-negative.
+      70: iconst_1
+      71: anewarray     #5                  // class java/lang/Object
+      74: dup
+      75: iconst_0
+      76: iload         5
+      78: invokestatic  #782                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      81: aastore
+      82: invokestatic  #207                // Method java/lang/String.format:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      85: invokespecial #1336               // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      88: athrow
+      89: iload         5
+      91: ireturn
+      92: aload_2
+      93: ifnull        122
+      96: aload_0
+      97: getfield      #393                // Field partitionerIgnoreKeys:Z
+     100: ifne          122
+     103: aload_2
+     104: aload         4
+     106: aload_1
+     107: invokevirtual #944                // Method org/apache/kafka/clients/producer/ProducerRecord.topic:()Ljava/lang/String;
+     110: invokevirtual #1272               // Method org/apache/kafka/common/Cluster.partitionsForTopic:(Ljava/lang/String;)Ljava/util/List;
+     113: invokeinterface #1437,  1         // InterfaceMethod java/util/List.size:()I
+     118: invokestatic  #1443               // Method org/apache/kafka/clients/producer/internals/BuiltInPartitioner.partitionForKey:([BI)I
+     121: ireturn
+     122: iconst_m1
+     123: ireturn
+
+  private void throwIfInvalidGroupMetadata(org.apache.kafka.clients.consumer.ConsumerGroupMetadata);
+    Code:
+       0: aload_1
+       1: ifnonnull     15
+       4: new           #1333               // class java/lang/IllegalArgumentException
+       7: dup
+       8: ldc_w         #1446               // String Consumer group metadata could not be null
+      11: invokespecial #1336               // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      14: athrow
+      15: aload_1
+      16: invokevirtual #1451               // Method org/apache/kafka/clients/consumer/ConsumerGroupMetadata.generationId:()I
+      19: ifle          52
+      22: ldc_w         #1453               // String
+      25: aload_1
+      26: invokevirtual #1456               // Method org/apache/kafka/clients/consumer/ConsumerGroupMetadata.memberId:()Ljava/lang/String;
+      29: invokevirtual #1459               // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      32: ifeq          52
+      35: new           #1333               // class java/lang/IllegalArgumentException
+      38: dup
+      39: aload_1
+      40: invokestatic  #1462               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      43: invokedynamic #1465,  0           // InvokeDynamic #11:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      48: invokespecial #1336               // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      51: athrow
+      52: return
+
+  private void throwIfNoTransactionManager();
+    Code:
+       0: aload_0
+       1: getfield      #482                // Field transactionManager:Lorg/apache/kafka/clients/producer/internals/TransactionManager;
+       4: ifnonnull     18
+       7: new           #919                // class java/lang/IllegalStateException
+      10: dup
+      11: ldc_w         #1467               // String Cannot use transactional methods without enabling transactions by setting the transactional.id configuration property
+      14: invokespecial #922                // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      17: athrow
+      18: return
+
+  java.lang.String getClientId();
+    Code:
+       0: aload_0
+       1: getfield      #197                // Field clientId:Ljava/lang/String;
+       4: areturn
+
+  private static void lambda$close$2(java.util.concurrent.atomic.AtomicReference, org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter);
+    Code:
+       0: aload_1
+       1: ldc_w         #1470               // String producer telemetry reporter
+       4: aload_0
+       5: invokestatic  #1394               // Method org/apache/kafka/common/utils/Utils.closeQuietly:(Ljava/lang/AutoCloseable;Ljava/lang/String;Ljava/util/concurrent/atomic/AtomicReference;)V
+       8: return
+
+  private static void lambda$unregisterMetricFromSubscription$1(org.apache.kafka.common.metrics.KafkaMetric, org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter);
+    Code:
+       0: aload_1
+       1: aload_0
+       2: invokevirtual #1475               // Method org/apache/kafka/common/telemetry/internals/ClientTelemetryReporter.metricRemoval:(Lorg/apache/kafka/common/metrics/KafkaMetric;)V
+       5: return
+
+  private static void lambda$registerMetricForSubscription$0(org.apache.kafka.common.metrics.KafkaMetric, org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter);
+    Code:
+       0: aload_1
+       1: aload_0
+       2: invokevirtual #1478               // Method org/apache/kafka/common/telemetry/internals/ClientTelemetryReporter.metricChange:(Lorg/apache/kafka/common/metrics/KafkaMetric;)V
+       5: return
+
+  static {};
+    Code:
+       0: ldc           #2                  // class org/apache/kafka/clients/producer/KafkaProducer
+       2: invokevirtual #1482               // Method java/lang/Class.desiredAssertionStatus:()Z
+       5: ifne          12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: putstatic     #1047               // Field $assertionsDisabled:Z
+      16: return
+}

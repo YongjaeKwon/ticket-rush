@@ -39,6 +39,10 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     // 이벤트 로그(event_publication)는 JDBC 레지스트리 — 공식 DDL을 Flyway로 관리 (V3)
     implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+    // Outbox 릴레이가 Kafka로 발행한다 (ADR 0007).
+    // Boot 4 모듈화로 Kafka 자동 설정·@ServiceConnection 팩토리는 spring-boot-kafka에 있다
+    implementation("org.springframework.boot:spring-boot-kafka")
+    implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("org.flywaydb:flyway-mysql")
@@ -50,6 +54,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     testImplementation("org.testcontainers:mysql")
+    testImplementation("org.testcontainers:kafka")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

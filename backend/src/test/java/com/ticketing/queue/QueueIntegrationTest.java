@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"queue.admission.enabled=false", "queue.admission.batch-size=2",
-                "hold-expiry.enabled=false"})
+                "hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @AutoConfigureTestRestTemplate
 @Testcontainers
 class QueueIntegrationTest {

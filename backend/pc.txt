@@ -1,0 +1,942 @@
+Compiled from "ProducerConfig.java"
+public class org.apache.kafka.clients.producer.ProducerConfig extends org.apache.kafka.common.config.AbstractConfig {
+  private static final org.slf4j.Logger log;
+
+  private static final org.apache.kafka.common.config.ConfigDef CONFIG;
+
+  public static final java.lang.String BOOTSTRAP_SERVERS_CONFIG;
+
+  public static final java.lang.String CLIENT_DNS_LOOKUP_CONFIG;
+
+  public static final java.lang.String METADATA_MAX_AGE_CONFIG;
+
+  private static final java.lang.String METADATA_MAX_AGE_DOC;
+
+  public static final java.lang.String METADATA_MAX_IDLE_CONFIG;
+
+  private static final java.lang.String METADATA_MAX_IDLE_DOC;
+
+  public static final java.lang.String BATCH_SIZE_CONFIG;
+
+  private static final java.lang.String BATCH_SIZE_DOC;
+
+  public static final java.lang.String PARTITIONER_ADPATIVE_PARTITIONING_ENABLE_CONFIG;
+
+  private static final java.lang.String PARTITIONER_ADPATIVE_PARTITIONING_ENABLE_DOC;
+
+  public static final java.lang.String PARTITIONER_AVAILABILITY_TIMEOUT_MS_CONFIG;
+
+  private static final java.lang.String PARTITIONER_AVAILABILITY_TIMEOUT_MS_DOC;
+
+  public static final java.lang.String PARTITIONER_IGNORE_KEYS_CONFIG;
+
+  private static final java.lang.String PARTITIONER_IGNORE_KEYS_DOC;
+
+  public static final java.lang.String ACKS_CONFIG;
+
+  private static final java.lang.String ACKS_DOC;
+
+  public static final java.lang.String LINGER_MS_CONFIG;
+
+  private static final java.lang.String LINGER_MS_DOC;
+
+  public static final java.lang.String REQUEST_TIMEOUT_MS_CONFIG;
+
+  private static final java.lang.String REQUEST_TIMEOUT_MS_DOC;
+
+  public static final java.lang.String DELIVERY_TIMEOUT_MS_CONFIG;
+
+  private static final java.lang.String DELIVERY_TIMEOUT_MS_DOC;
+
+  public static final java.lang.String CLIENT_ID_CONFIG;
+
+  public static final java.lang.String SEND_BUFFER_CONFIG;
+
+  public static final java.lang.String RECEIVE_BUFFER_CONFIG;
+
+  public static final java.lang.String MAX_REQUEST_SIZE_CONFIG;
+
+  private static final java.lang.String MAX_REQUEST_SIZE_DOC;
+
+  public static final java.lang.String RECONNECT_BACKOFF_MS_CONFIG;
+
+  public static final java.lang.String RECONNECT_BACKOFF_MAX_MS_CONFIG;
+
+  public static final java.lang.String MAX_BLOCK_MS_CONFIG;
+
+  private static final java.lang.String MAX_BLOCK_MS_DOC;
+
+  public static final java.lang.String BUFFER_MEMORY_CONFIG;
+
+  private static final java.lang.String BUFFER_MEMORY_DOC;
+
+  public static final java.lang.String RETRY_BACKOFF_MS_CONFIG;
+
+  public static final java.lang.String RETRY_BACKOFF_MAX_MS_CONFIG;
+
+  public static final java.lang.String ENABLE_METRICS_PUSH_CONFIG;
+
+  public static final java.lang.String ENABLE_METRICS_PUSH_DOC;
+
+  public static final java.lang.String COMPRESSION_TYPE_CONFIG;
+
+  private static final java.lang.String COMPRESSION_TYPE_DOC;
+
+  public static final java.lang.String COMPRESSION_GZIP_LEVEL_CONFIG;
+
+  private static final java.lang.String COMPRESSION_GZIP_LEVEL_DOC;
+
+  public static final java.lang.String COMPRESSION_LZ4_LEVEL_CONFIG;
+
+  private static final java.lang.String COMPRESSION_LZ4_LEVEL_DOC;
+
+  public static final java.lang.String COMPRESSION_ZSTD_LEVEL_CONFIG;
+
+  private static final java.lang.String COMPRESSION_ZSTD_LEVEL_DOC;
+
+  public static final java.lang.String METRICS_SAMPLE_WINDOW_MS_CONFIG;
+
+  public static final java.lang.String METRICS_NUM_SAMPLES_CONFIG;
+
+  public static final java.lang.String METRICS_RECORDING_LEVEL_CONFIG;
+
+  public static final java.lang.String METRIC_REPORTER_CLASSES_CONFIG;
+
+  private static final int MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION_FOR_IDEMPOTENCE;
+
+  public static final java.lang.String MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION;
+
+  private static final java.lang.String MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION_DOC;
+
+  public static final java.lang.String RETRIES_CONFIG;
+
+  private static final java.lang.String RETRIES_DOC;
+
+  public static final java.lang.String KEY_SERIALIZER_CLASS_CONFIG;
+
+  public static final java.lang.String KEY_SERIALIZER_CLASS_DOC;
+
+  public static final java.lang.String VALUE_SERIALIZER_CLASS_CONFIG;
+
+  public static final java.lang.String VALUE_SERIALIZER_CLASS_DOC;
+
+  public static final java.lang.String SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG;
+
+  public static final java.lang.String SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG;
+
+  public static final java.lang.String CONNECTIONS_MAX_IDLE_MS_CONFIG;
+
+  public static final java.lang.String PARTITIONER_CLASS_CONFIG;
+
+  private static final java.lang.String PARTITIONER_CLASS_DOC;
+
+  public static final java.lang.String INTERCEPTOR_CLASSES_CONFIG;
+
+  public static final java.lang.String INTERCEPTOR_CLASSES_DOC;
+
+  public static final java.lang.String ENABLE_IDEMPOTENCE_CONFIG;
+
+  public static final java.lang.String ENABLE_IDEMPOTENCE_DOC;
+
+  public static final java.lang.String TRANSACTION_TIMEOUT_CONFIG;
+
+  public static final java.lang.String TRANSACTION_TIMEOUT_DOC;
+
+  public static final java.lang.String TRANSACTIONAL_ID_CONFIG;
+
+  public static final java.lang.String TRANSACTIONAL_ID_DOC;
+
+  public static final java.lang.String TRANSACTION_TWO_PHASE_COMMIT_ENABLE_CONFIG;
+
+  private static final java.lang.String TRANSACTION_TWO_PHASE_COMMIT_ENABLE_DOC;
+
+  public static final java.lang.String SECURITY_PROVIDERS_CONFIG;
+
+  private static final java.lang.String SECURITY_PROVIDERS_DOC;
+
+  private static final java.util.concurrent.atomic.AtomicInteger PRODUCER_CLIENT_ID_SEQUENCE;
+
+  protected java.util.Map<java.lang.String, java.lang.Object> postProcessParsedConfig(java.util.Map<java.lang.String, java.lang.Object>);
+    Code:
+       0: aload_0
+       1: invokestatic  #282                // Method org/apache/kafka/clients/CommonClientConfigs.postValidateSaslMechanismConfig:(Lorg/apache/kafka/common/config/AbstractConfig;)V
+       4: aload_0
+       5: invokestatic  #285                // Method org/apache/kafka/clients/CommonClientConfigs.warnDisablingExponentialBackoff:(Lorg/apache/kafka/common/config/AbstractConfig;)V
+       8: aload_0
+       9: aload_1
+      10: invokestatic  #289                // Method org/apache/kafka/clients/CommonClientConfigs.postProcessReconnectBackoffConfigs:(Lorg/apache/kafka/common/config/AbstractConfig;Ljava/util/Map;)Ljava/util/Map;
+      13: astore_2
+      14: aload_0
+      15: aload_2
+      16: invokevirtual #293                // Method postProcessAndValidateIdempotenceConfigs:(Ljava/util/Map;)V
+      19: aload_0
+      20: aload_2
+      21: invokevirtual #296                // Method maybeOverrideClientId:(Ljava/util/Map;)V
+      24: aload_2
+      25: areturn
+
+  private void maybeOverrideClientId(java.util.Map<java.lang.String, java.lang.Object>);
+    Code:
+       0: aload_0
+       1: invokevirtual #307                // Method originals:()Ljava/util/Map;
+       4: ldc           #115                // String client.id
+       6: invokeinterface #313,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      11: istore_3
+      12: iload_3
+      13: ifeq          26
+      16: aload_0
+      17: ldc           #115                // String client.id
+      19: invokevirtual #317                // Method getString:(Ljava/lang/String;)Ljava/lang/String;
+      22: astore_2
+      23: goto          63
+      26: aload_0
+      27: ldc_w         #256                // String transactional.id
+      30: invokevirtual #317                // Method getString:(Ljava/lang/String;)Ljava/lang/String;
+      33: astore        4
+      35: aload         4
+      37: ifnull        45
+      40: aload         4
+      42: goto          54
+      45: getstatic     #321                // Field PRODUCER_CLIENT_ID_SEQUENCE:Ljava/util/concurrent/atomic/AtomicInteger;
+      48: invokevirtual #327                // Method java/util/concurrent/atomic/AtomicInteger.getAndIncrement:()I
+      51: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      54: invokestatic  #338                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      57: invokedynamic #349,  0            // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      62: astore_2
+      63: aload_1
+      64: ldc           #115                // String client.id
+      66: aload_2
+      67: invokeinterface #353,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      72: pop
+      73: return
+
+  private void postProcessAndValidateIdempotenceConfigs(java.util.Map<java.lang.String, java.lang.Object>);
+    Code:
+       0: aload_0
+       1: invokevirtual #307                // Method originals:()Ljava/util/Map;
+       4: astore_2
+       5: aload_0
+       6: ldc           #91                 // String acks
+       8: invokevirtual #317                // Method getString:(Ljava/lang/String;)Ljava/lang/String;
+      11: invokestatic  #361                // Method parseAcks:(Ljava/lang/String;)Ljava/lang/String;
+      14: astore_3
+      15: aload_1
+      16: ldc           #91                 // String acks
+      18: aload_3
+      19: invokeinterface #353,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      24: pop
+      25: aload_0
+      26: invokevirtual #307                // Method originals:()Ljava/util/Map;
+      29: ldc           #244                // String enable.idempotence
+      31: invokeinterface #313,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      36: istore        4
+      38: aload_0
+      39: ldc           #244                // String enable.idempotence
+      41: invokevirtual #365                // Method getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+      44: invokevirtual #371                // Method java/lang/Boolean.booleanValue:()Z
+      47: istore        5
+      49: iconst_0
+      50: istore        6
+      52: iload         5
+      54: ifeq          186
+      57: aload_0
+      58: ldc           #205                // String retries
+      60: invokevirtual #375                // Method getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+      63: invokevirtual #378                // Method java/lang/Integer.intValue:()I
+      66: istore        7
+      68: iload         7
+      70: ifne          105
+      73: iload         4
+      75: ifeq          89
+      78: new           #380                // class org/apache/kafka/common/config/ConfigException
+      81: dup
+      82: ldc_w         #382                // String Must set retries to non-zero when using the idempotent producer.
+      85: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+      88: athrow
+      89: getstatic     #388                // Field log:Lorg/slf4j/Logger;
+      92: ldc_w         #390                // String Idempotence will be disabled because {} is set to 0.
+      95: ldc           #205                // String retries
+      97: invokeinterface #396,  3          // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;)V
+     102: iconst_1
+     103: istore        6
+     105: aload_3
+     106: invokestatic  #402                // Method java/lang/Short.parseShort:(Ljava/lang/String;)S
+     109: istore        8
+     111: iload         8
+     113: iconst_m1
+     114: if_icmpeq     154
+     117: iload         4
+     119: ifeq          133
+     122: new           #380                // class org/apache/kafka/common/config/ConfigException
+     125: dup
+     126: ldc_w         #404                // String Must set acks to all in order to use the idempotent producer. Otherwise we cannot guarantee idempotence.
+     129: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+     132: athrow
+     133: getstatic     #388                // Field log:Lorg/slf4j/Logger;
+     136: ldc_w         #406                // String Idempotence will be disabled because {} is set to {}, not set to \'all\'.
+     139: ldc           #91                 // String acks
+     141: iload         8
+     143: invokestatic  #409                // Method java/lang/Short.valueOf:(S)Ljava/lang/Short;
+     146: invokeinterface #412,  4          // InterfaceMethod org/slf4j/Logger.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     151: iconst_1
+     152: istore        6
+     154: aload_0
+     155: ldc           #199                // String max.in.flight.requests.per.connection
+     157: invokevirtual #375                // Method getInt:(Ljava/lang/String;)Ljava/lang/Integer;
+     160: invokevirtual #378                // Method java/lang/Integer.intValue:()I
+     163: istore        9
+     165: iconst_5
+     166: iload         9
+     168: if_icmpge     186
+     171: new           #380                // class org/apache/kafka/common/config/ConfigException
+     174: dup
+     175: iload         9
+     177: invokedynamic #417,  0            // InvokeDynamic #1:makeConcatWithConstants:(I)Ljava/lang/String;
+     182: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+     185: athrow
+     186: iload         6
+     188: ifeq          207
+     191: aload_1
+     192: ldc           #244                // String enable.idempotence
+     194: iconst_0
+     195: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     198: invokeinterface #353,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     203: pop
+     204: iconst_0
+     205: istore        5
+     207: aload_2
+     208: ldc_w         #256                // String transactional.id
+     211: invokeinterface #313,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+     216: istore        7
+     218: iload         5
+     220: ifne          239
+     223: iload         7
+     225: ifeq          239
+     228: new           #380                // class org/apache/kafka/common/config/ConfigException
+     231: dup
+     232: ldc_w         #422                // String Cannot set a transactional.id without also enabling idempotence.
+     235: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+     238: athrow
+     239: aload_0
+     240: ldc_w         #262                // String transaction.two.phase.commit.enable
+     243: invokevirtual #365                // Method getBoolean:(Ljava/lang/String;)Ljava/lang/Boolean;
+     246: invokevirtual #371                // Method java/lang/Boolean.booleanValue:()Z
+     249: istore        8
+     251: aload_2
+     252: ldc           #250                // String transaction.timeout.ms
+     254: invokeinterface #313,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+     259: istore        9
+     261: iload         8
+     263: ifeq          282
+     266: iload         9
+     268: ifeq          282
+     271: new           #380                // class org/apache/kafka/common/config/ConfigException
+     274: dup
+     275: ldc_w         #424                // String Cannot set transaction.timeout.ms when transaction.two.phase.commit.enable is set to true. Transactions will not expire with two-phase commit enabled.
+     278: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+     281: athrow
+     282: return
+
+  private static java.lang.String parseAcks(java.lang.String);
+    Code:
+       0: aload_0
+       1: invokevirtual #440                // Method java/lang/String.trim:()Ljava/lang/String;
+       4: ldc_w         #442                // String all
+       7: invokevirtual #446                // Method java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z
+      10: ifeq          19
+      13: ldc_w         #448                // String -1
+      16: goto          31
+      19: aload_0
+      20: invokevirtual #440                // Method java/lang/String.trim:()Ljava/lang/String;
+      23: invokestatic  #402                // Method java/lang/Short.parseShort:(Ljava/lang/String;)S
+      26: invokedynamic #453,  0            // InvokeDynamic #2:makeConcatWithConstants:(S)Ljava/lang/String;
+      31: areturn
+      32: astore_1
+      33: new           #380                // class org/apache/kafka/common/config/ConfigException
+      36: dup
+      37: aload_0
+      38: invokedynamic #456,  0            // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      43: invokespecial #386                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;)V
+      46: athrow
+    Exception table:
+       from    to  target type
+           0    31    32   Class java/lang/NumberFormatException
+
+  static java.util.Map<java.lang.String, java.lang.Object> appendSerializerToConfig(java.util.Map<java.lang.String, java.lang.Object>, org.apache.kafka.common.serialization.Serializer<?>, org.apache.kafka.common.serialization.Serializer<?>);
+    Code:
+       0: new           #464                // class java/util/HashMap
+       3: dup
+       4: aload_0
+       5: invokespecial #466                // Method java/util/HashMap."<init>":(Ljava/util/Map;)V
+       8: astore_3
+       9: aload_1
+      10: ifnull        31
+      13: aload_3
+      14: ldc           #211                // String key.serializer
+      16: aload_1
+      17: invokeinterface #472,  1          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.getClass:()Ljava/lang/Class;
+      22: invokeinterface #353,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      27: pop
+      28: goto          56
+      31: aload_3
+      32: ldc           #211                // String key.serializer
+      34: invokeinterface #476,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      39: ifnonnull     56
+      42: new           #380                // class org/apache/kafka/common/config/ConfigException
+      45: dup
+      46: ldc           #211                // String key.serializer
+      48: aconst_null
+      49: ldc_w         #478                // String must be non-null.
+      52: invokespecial #481                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;)V
+      55: athrow
+      56: aload_2
+      57: ifnull        78
+      60: aload_3
+      61: ldc           #217                // String value.serializer
+      63: aload_2
+      64: invokeinterface #472,  1          // InterfaceMethod org/apache/kafka/common/serialization/Serializer.getClass:()Ljava/lang/Class;
+      69: invokeinterface #353,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      74: pop
+      75: goto          103
+      78: aload_3
+      79: ldc           #217                // String value.serializer
+      81: invokeinterface #476,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      86: ifnonnull     103
+      89: new           #380                // class org/apache/kafka/common/config/ConfigException
+      92: dup
+      93: ldc           #217                // String value.serializer
+      95: aconst_null
+      96: ldc_w         #478                // String must be non-null.
+      99: invokespecial #481                // Method org/apache/kafka/common/config/ConfigException."<init>":(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;)V
+     102: athrow
+     103: aload_3
+     104: areturn
+
+  public org.apache.kafka.clients.producer.ProducerConfig(java.util.Properties);
+    Code:
+       0: aload_0
+       1: getstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+       4: aload_1
+       5: invokespecial #492                // Method org/apache/kafka/common/config/AbstractConfig."<init>":(Lorg/apache/kafka/common/config/ConfigDef;Ljava/util/Map;)V
+       8: return
+
+  public org.apache.kafka.clients.producer.ProducerConfig(java.util.Map<java.lang.String, java.lang.Object>);
+    Code:
+       0: aload_0
+       1: getstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+       4: aload_1
+       5: invokespecial #492                // Method org/apache/kafka/common/config/AbstractConfig."<init>":(Lorg/apache/kafka/common/config/ConfigDef;Ljava/util/Map;)V
+       8: return
+
+  public static java.util.Set<java.lang.String> configNames();
+    Code:
+       0: getstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+       3: invokevirtual #500                // Method org/apache/kafka/common/config/ConfigDef.names:()Ljava/util/Set;
+       6: areturn
+
+  public static org.apache.kafka.common.config.ConfigDef configDef();
+    Code:
+       0: new           #9                  // class org/apache/kafka/common/config/ConfigDef
+       3: dup
+       4: getstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+       7: invokespecial #505                // Method org/apache/kafka/common/config/ConfigDef."<init>":(Lorg/apache/kafka/common/config/ConfigDef;)V
+      10: areturn
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: getstatic     #513                // Field java/lang/System.out:Ljava/io/PrintStream;
+       3: getstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+       6: iconst_4
+       7: invokedynamic #530,  0            // InvokeDynamic #4:apply:()Ljava/util/function/Function;
+      12: invokevirtual #534                // Method org/apache/kafka/common/config/ConfigDef.toHtml:(ILjava/util/function/Function;)Ljava/lang/String;
+      15: invokevirtual #539                // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      18: return
+
+  private static java.lang.String lambda$main$0(java.lang.String);
+    Code:
+       0: aload_0
+       1: invokedynamic #544,  0            // InvokeDynamic #5:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+       6: areturn
+
+  static {};
+    Code:
+       0: ldc           #2                  // class org/apache/kafka/clients/producer/ProducerConfig
+       2: invokestatic  #553                // Method org/slf4j/LoggerFactory.getLogger:(Ljava/lang/Class;)Lorg/slf4j/Logger;
+       5: putstatic     #388                // Field log:Lorg/slf4j/Logger;
+       8: new           #323                // class java/util/concurrent/atomic/AtomicInteger
+      11: dup
+      12: iconst_1
+      13: invokespecial #556                // Method java/util/concurrent/atomic/AtomicInteger."<init>":(I)V
+      16: putstatic     #321                // Field PRODUCER_CLIENT_ID_SEQUENCE:Ljava/util/concurrent/atomic/AtomicInteger;
+      19: new           #9                  // class org/apache/kafka/common/config/ConfigDef
+      22: dup
+      23: invokespecial #558                // Method org/apache/kafka/common/config/ConfigDef."<init>":()V
+      26: ldc           #49                 // String bootstrap.servers
+      28: getstatic     #562                // Field org/apache/kafka/common/config/ConfigDef$Type.LIST:Lorg/apache/kafka/common/config/ConfigDef$Type;
+      31: invokestatic  #568                // Method java/util/Collections.emptyList:()Ljava/util/List;
+      34: new           #12                 // class org/apache/kafka/common/config/ConfigDef$NonNullValidator
+      37: dup
+      38: invokespecial #569                // Method org/apache/kafka/common/config/ConfigDef$NonNullValidator."<init>":()V
+      41: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+      44: ldc_w         #575                // String A list of host/port pairs used to establish the initial connection to the Kafka cluster. Clients use this list to bootstrap and discover the full set of Kafka brokers. While the order of servers in the list does not matter, we recommend including more than one server to ensure resilience if any servers are down. This list does not need to contain the entire set of brokers, as Kafka clients automatically manage and update connections to the cluster efficiently. This list must be in the form <code>host1:port1,host2:port2,...</code>.
+      47: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+      50: ldc           #52                 // String client.dns.lookup
+      52: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+      55: getstatic     #588                // Field org/apache/kafka/clients/ClientDnsLookup.USE_ALL_DNS_IPS:Lorg/apache/kafka/clients/ClientDnsLookup;
+      58: invokevirtual #591                // Method org/apache/kafka/clients/ClientDnsLookup.toString:()Ljava/lang/String;
+      61: iconst_2
+      62: anewarray     #319                // class java/lang/String
+      65: dup
+      66: iconst_0
+      67: getstatic     #588                // Field org/apache/kafka/clients/ClientDnsLookup.USE_ALL_DNS_IPS:Lorg/apache/kafka/clients/ClientDnsLookup;
+      70: invokevirtual #591                // Method org/apache/kafka/clients/ClientDnsLookup.toString:()Ljava/lang/String;
+      73: aastore
+      74: dup
+      75: iconst_1
+      76: getstatic     #594                // Field org/apache/kafka/clients/ClientDnsLookup.RESOLVE_CANONICAL_BOOTSTRAP_SERVERS_ONLY:Lorg/apache/kafka/clients/ClientDnsLookup;
+      79: invokevirtual #591                // Method org/apache/kafka/clients/ClientDnsLookup.toString:()Ljava/lang/String;
+      82: aastore
+      83: invokestatic  #598                // Method org/apache/kafka/common/config/ConfigDef$ValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$ValidString;
+      86: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+      89: ldc_w         #603                // String Controls how the client uses DNS lookups. If set to <code>use_all_dns_ips</code>, connect to each returned IP address in sequence until a successful connection is established. After a disconnection, the next IP is used. Once all IPs have been used once, the client resolves the IP(s) from the hostname again (both the JVM and the OS cache DNS name lookups, however). If set to <code>resolve_canonical_bootstrap_servers_only</code>, resolve each bootstrap address into a list of canonical names. After the bootstrap phase, this behaves the same as <code>use_all_dns_ips</code>.
+      92: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+      95: ldc           #142                // String buffer.memory
+      97: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     100: ldc2_w        #607                // long 33554432l
+     103: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     106: lconst_0
+     107: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     110: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     113: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     116: ldc           #145                // String The total bytes of memory the producer can use to buffer records waiting to be sent to the server. If records are sent faster than they can be delivered to the server the producer will block for <code>max.block.ms</code> after which it will fail with an exception.<p>This setting should correspond roughly to the total memory the producer will use, but is not a hard bound since not all memory the producer uses is used for buffering. Some additional memory will be used for compression (if compression is enabled) as well as for maintaining in-flight requests.
+     118: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     121: ldc           #205                // String retries
+     123: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     126: ldc_w         #621                // int 2147483647
+     129: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     132: iconst_0
+     133: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     136: ldc_w         #621                // int 2147483647
+     139: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     142: invokestatic  #625                // Method org/apache/kafka/common/config/ConfigDef$Range.between:(Ljava/lang/Number;Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     145: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     148: ldc           #208                // String Number of times to retry a request that fails with a transient error. Setting a value greater than zero will cause the client to resend any record whose send fails with a potentially transient error.  Requests will be retried this many times until they succeed, fail with a non-transient error, or the <code>delivery.timeout.ms</code> expires. Note that this automatic retry will simply resend the same record upon receiving the error. Setting a value of zero will disable this automatic retry behaviour, so that the transient errors will be propagated to the application to be handled. Users should generally prefer to leave this config unset and instead use <code>delivery.timeout.ms</code> to control retry behavior.<p>Enabling idempotence requires this config value to be greater than 0. If conflicting configurations are set and idempotence is not explicitly enabled, idempotence is disabled.<p>Allowing retries while setting <code>enable.idempotence</code> to <code>false</code> and <code>max.in.flight.requests.per.connection</code> to greater than 1 will potentially change the ordering of records because if two batches are sent to a single partition, and the first fails and is retried but the second succeeds, then the records in the second batch may appear first.
+     150: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     153: ldc           #91                 // String acks
+     155: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     158: ldc_w         #442                // String all
+     161: iconst_4
+     162: anewarray     #319                // class java/lang/String
+     165: dup
+     166: iconst_0
+     167: ldc_w         #442                // String all
+     170: aastore
+     171: dup
+     172: iconst_1
+     173: ldc_w         #448                // String -1
+     176: aastore
+     177: dup
+     178: iconst_2
+     179: ldc_w         #627                // String 0
+     182: aastore
+     183: dup
+     184: iconst_3
+     185: ldc_w         #629                // String 1
+     188: aastore
+     189: invokestatic  #598                // Method org/apache/kafka/common/config/ConfigDef$ValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$ValidString;
+     192: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     195: ldc           #94                 // String The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the  durability of records that are sent. The following settings are allowed:  <ul> <li><code>acks=0</code> If set to zero then the producer will not wait for any acknowledgment from the server at all. The record will be immediately added to the socket buffer and considered sent. No guarantee can be made that the server has received the record in this case, and the <code>retries</code> configuration will not take effect (as the client won\'t generally know of any failures). The offset given back for each record will always be set to <code>-1</code>. <li><code>acks=1</code> This will mean the leader will write the record to its local log but will respond without awaiting full acknowledgement from all followers. In this case should the leader fail immediately after acknowledging the record but before the followers have replicated it then the record will be lost. <li><code>acks=all</code> This means the leader will wait for the full set of in-sync replicas to acknowledge the record. This guarantees that the record will not be lost as long as at least one in-sync replica remains alive. This is the strongest available guarantee. This is equivalent to the acks=-1 setting.</ul><p>Note that enabling idempotence requires this config value to be \'all\'. If conflicting configurations are set and idempotence is not explicitly enabled, idempotence is disabled.
+     197: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     200: ldc           #160                // String compression.type
+     202: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     205: getstatic     #638                // Field org/apache/kafka/common/record/CompressionType.NONE:Lorg/apache/kafka/common/record/CompressionType;
+     208: getfield      #641                // Field org/apache/kafka/common/record/CompressionType.name:Ljava/lang/String;
+     211: ldc_w         #634                // class org/apache/kafka/common/record/CompressionType
+     214: invokestatic  #647                // Method org/apache/kafka/common/utils/Utils.enumOptions:(Ljava/lang/Class;)[Ljava/lang/String;
+     217: invokestatic  #598                // Method org/apache/kafka/common/config/ConfigDef$ValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$ValidString;
+     220: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     223: ldc           #163                // String The compression type for all data generated by the producer. The default is none (i.e. no compression). Valid  values are <code>none</code>, <code>gzip</code>, <code>snappy</code>, <code>lz4</code>, or <code>zstd</code>. Compression is of full batches of data, so the efficacy of batching will also impact the compression ratio (more batching means better compression).
+     225: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     228: ldc           #166                // String compression.gzip.level
+     230: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     233: getstatic     #650                // Field org/apache/kafka/common/record/CompressionType.GZIP:Lorg/apache/kafka/common/record/CompressionType;
+     236: invokevirtual #653                // Method org/apache/kafka/common/record/CompressionType.defaultLevel:()I
+     239: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     242: getstatic     #650                // Field org/apache/kafka/common/record/CompressionType.GZIP:Lorg/apache/kafka/common/record/CompressionType;
+     245: invokevirtual #657                // Method org/apache/kafka/common/record/CompressionType.levelValidator:()Lorg/apache/kafka/common/config/ConfigDef$Validator;
+     248: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     251: ldc           #169                // String The compression level to use if compression.type is set to <code>gzip</code>.
+     253: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     256: ldc           #172                // String compression.lz4.level
+     258: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     261: getstatic     #660                // Field org/apache/kafka/common/record/CompressionType.LZ4:Lorg/apache/kafka/common/record/CompressionType;
+     264: invokevirtual #653                // Method org/apache/kafka/common/record/CompressionType.defaultLevel:()I
+     267: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     270: getstatic     #660                // Field org/apache/kafka/common/record/CompressionType.LZ4:Lorg/apache/kafka/common/record/CompressionType;
+     273: invokevirtual #657                // Method org/apache/kafka/common/record/CompressionType.levelValidator:()Lorg/apache/kafka/common/config/ConfigDef$Validator;
+     276: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     279: ldc           #175                // String The compression level to use if compression.type is set to <code>lz4</code>.
+     281: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     284: ldc           #178                // String compression.zstd.level
+     286: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     289: getstatic     #663                // Field org/apache/kafka/common/record/CompressionType.ZSTD:Lorg/apache/kafka/common/record/CompressionType;
+     292: invokevirtual #653                // Method org/apache/kafka/common/record/CompressionType.defaultLevel:()I
+     295: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     298: getstatic     #663                // Field org/apache/kafka/common/record/CompressionType.ZSTD:Lorg/apache/kafka/common/record/CompressionType;
+     301: invokevirtual #657                // Method org/apache/kafka/common/record/CompressionType.levelValidator:()Lorg/apache/kafka/common/config/ConfigDef$Validator;
+     304: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     307: ldc           #181                // String The compression level to use if compression.type is set to <code>zstd</code>.
+     309: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     312: ldc           #67                 // String batch.size
+     314: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     317: sipush        16384
+     320: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     323: iconst_0
+     324: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     327: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     330: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     333: ldc           #70                 // String The producer will attempt to batch records together into fewer requests whenever multiple records are being sent to the same partition. This helps performance on both the client and the server. This configuration controls the default batch size in bytes. <p>No attempt will be made to batch records larger than this size. <p>Requests sent to brokers will contain multiple batches, one for each partition with data available to be sent. <p>A small batch size will make batching less common and may reduce throughput (a batch size of zero will disable batching entirely). A very large batch size may use memory a bit more wastefully as we will always allocate a buffer of the specified batch size in anticipation of additional records.<p>Note: This setting gives the upper bound of the batch size to be sent. If we have fewer than this many bytes accumulated for this partition, we will \'linger\' for the <code>linger.ms</code> time waiting for more records to show up. This <code>linger.ms</code> setting defaults to 5, which means the producer will wait for 5ms or until the record batch is of <code>batch.size</code> (whichever happens first) before sending the record batch. Note that broker backpressure can  result in a higher effective linger time than this setting. The default changed from 0 to 5 in Apache Kafka 4.0 as the efficiency gains from larger batches typically result in similar or lower producer latency despite the increased linger.
+     335: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     338: ldc           #73                 // String partitioner.adaptive.partitioning.enable
+     340: getstatic     #666                // Field org/apache/kafka/common/config/ConfigDef$Type.BOOLEAN:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     343: iconst_1
+     344: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     347: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     350: ldc           #76                 // String When set to \'true\', the producer will try to adapt to broker performance and produce more messages to partitions hosted on faster brokers. If \'false\', the producer will try to distribute messages uniformly. Note: this setting has no effect if a custom partitioner is used.
+     352: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     355: ldc           #79                 // String partitioner.availability.timeout.ms
+     357: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     360: iconst_0
+     361: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     364: iconst_0
+     365: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     368: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     371: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     374: ldc           #82                 // String If a broker cannot process produce requests from a partition for <code>partitioner.availability.timeout.ms</code> time, the partitioner treats that partition as not available.  If the value is 0, this logic is disabled. Note: this setting has no effect if a custom partitioner is used or <code>partitioner.adaptive.partitioning.enable</code> is set to \'false\'.
+     376: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     379: ldc           #85                 // String partitioner.ignore.keys
+     381: getstatic     #666                // Field org/apache/kafka/common/config/ConfigDef$Type.BOOLEAN:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     384: iconst_0
+     385: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     388: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     391: ldc           #88                 // String When set to \'true\' the producer won\'t use record keys to choose a partition. If \'false\', producer would choose a partition based on a hash of the key when a key is present. Note: this setting has no effect if a custom partitioner is used.
+     393: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     396: ldc           #97                 // String linger.ms
+     398: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     401: iconst_5
+     402: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     405: iconst_0
+     406: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     409: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     412: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     415: ldc           #100                // String The producer groups together any records that arrive in between request transmissions into a single batched request. Normally this occurs only under load when records arrive faster than they can be sent out. However in some circumstances the client may want to reduce the number of requests even under moderate load. This setting accomplishes this by adding a small amount of artificial delay&mdash;that is, rather than immediately sending out a record, the producer will wait for up to the given delay to allow other records to be sent so that the sends can be batched together. This can be thought of as analogous to Nagle\'s algorithm in TCP. This setting gives the upper bound on the delay for batching: once we get <code>batch.size</code> worth of records for a partition it will be sent immediately regardless of this setting, however if we have fewer than this many bytes accumulated for this partition we will \'linger\' for the specified time waiting for more records to show up. This setting defaults to 5 (i.e. 5ms delay). Increasing <code>linger.ms=50</code>, for example, would have the effect of reducing the number of requests sent but would add up to 50ms of latency to records sent in the absence of load.The default changed from 0 to 5 in Apache Kafka 4.0 as the efficiency gains from larger batches typically result in similar or lower producer latency despite the increased linger.
+     417: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     420: ldc           #109                // String delivery.timeout.ms
+     422: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     425: ldc_w         #670                // int 120000
+     428: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     431: iconst_0
+     432: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     435: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     438: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     441: ldc           #112                // String An upper bound on the time to report success or failure after a call to <code>send()</code> returns. This limits the total time that a record will be delayed prior to sending, the time to await acknowledgement from the broker (if expected), and the time allowed for retriable send failures. The producer may report failure to send a record earlier than this config if either an unrecoverable error is encountered, the retries have been exhausted, or the record is added to a batch which reached an earlier delivery expiration deadline. The value of this config should be greater than or equal to the sum of <code>request.timeout.ms</code> and <code>linger.ms</code>.
+     443: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     446: ldc           #115                // String client.id
+     448: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     451: ldc_w         #672                // String
+     454: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     457: ldc_w         #674                // String An id string to pass to the server when making requests. The purpose of this is to be able to track the source of requests beyond just ip/port by allowing a logical application name to be included in server-side request logging.
+     460: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     463: ldc           #118                // String send.buffer.bytes
+     465: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     468: ldc_w         #675                // int 131072
+     471: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     474: iconst_m1
+     475: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     478: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     481: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     484: ldc_w         #677                // String The size of the TCP send buffer (SO_SNDBUF) to use when sending data. If the value is -1, the OS default will be used.
+     487: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     490: ldc           #121                // String receive.buffer.bytes
+     492: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     495: ldc_w         #678                // int 32768
+     498: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     501: iconst_m1
+     502: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     505: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     508: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     511: ldc_w         #680                // String The size of the TCP receive buffer (SO_RCVBUF) to use when reading data. If the value is -1, the OS default will be used.
+     514: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     517: ldc           #124                // String max.request.size
+     519: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     522: ldc_w         #681                // int 1048576
+     525: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     528: iconst_0
+     529: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     532: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     535: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     538: ldc           #127                // String The maximum size of a request in bytes. This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests. This is also effectively a cap on the maximum uncompressed record batch size. Note that the server has its own cap on the record batch size (after compression if compression is enabled) which may be different from this.
+     540: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     543: ldc           #130                // String reconnect.backoff.ms
+     545: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     548: ldc2_w        #682                // long 50l
+     551: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     554: lconst_0
+     555: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     558: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     561: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     564: ldc_w         #685                // String The base amount of time to wait before attempting to reconnect to a given host. This avoids repeatedly connecting to a host in a tight loop. This backoff applies to all connection attempts by the client to a broker. This value is the initial backoff value and will increase exponentially for each consecutive connection failure, up to the <code>reconnect.backoff.max.ms</code> value.
+     567: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     570: ldc           #133                // String reconnect.backoff.max.ms
+     572: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     575: ldc2_w        #686                // long 1000l
+     578: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     581: lconst_0
+     582: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     585: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     588: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     591: ldc_w         #689                // String The maximum amount of time in milliseconds to wait when reconnecting to a broker that has repeatedly failed to connect. If provided, the backoff per host will increase exponentially for each consecutive connection failure, up to this maximum. After calculating the backoff increase, 20% random jitter is added to avoid connection storms.
+     594: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     597: ldc           #148                // String retry.backoff.ms
+     599: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     602: getstatic     #693                // Field org/apache/kafka/clients/CommonClientConfigs.DEFAULT_RETRY_BACKOFF_MS:Ljava/lang/Long;
+     605: lconst_0
+     606: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     609: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     612: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     615: ldc_w         #695                // String The amount of time to wait before attempting to retry a failed request to a given topic partition. This avoids repeatedly sending requests in a tight loop under some failure scenarios. This value is the initial backoff value and will increase exponentially for each failed request, up to the <code>retry.backoff.max.ms</code> value.
+     618: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     621: ldc           #151                // String retry.backoff.max.ms
+     623: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     626: getstatic     #698                // Field org/apache/kafka/clients/CommonClientConfigs.DEFAULT_RETRY_BACKOFF_MAX_MS:Ljava/lang/Long;
+     629: lconst_0
+     630: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     633: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     636: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     639: ldc_w         #700                // String The maximum amount of time in milliseconds to wait when retrying a request to the broker that has repeatedly failed. If provided, the backoff per client will increase exponentially for each failed request, up to this maximum. To prevent all clients from being synchronized upon retry, a randomized jitter with a factor of 0.2 will be applied to the backoff, resulting in the backoff falling within a range between 20% below and 20% above the computed value. If <code>retry.backoff.ms</code> is set to be higher than <code>retry.backoff.max.ms</code>, then <code>retry.backoff.max.ms</code> will be used as a constant backoff from the beginning without any exponential increase
+     642: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     645: ldc           #154                // String enable.metrics.push
+     647: getstatic     #666                // Field org/apache/kafka/common/config/ConfigDef$Type.BOOLEAN:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     650: iconst_1
+     651: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     654: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     657: ldc           #157                // String Whether to enable pushing of client metrics to the cluster, if the cluster has a client metrics subscription which matches this client.
+     659: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     662: ldc           #136                // String max.block.ms
+     664: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     667: ldc_w         #701                // int 60000
+     670: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     673: iconst_0
+     674: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     677: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     680: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     683: ldc           #139                // String The configuration controls how long the <code>KafkaProducer</code>\'s <code>send()</code>, <code>partitionsFor()</code>, <code>initTransactions()</code>, <code>sendOffsetsToTransaction()</code>, <code>commitTransaction()</code> and <code>abortTransaction()</code> methods will block. For <code>send()</code> this timeout bounds the total time waiting for both metadata fetch and buffer allocation (blocking in the user-supplied serializers or partitioner is not counted against this timeout). For <code>partitionsFor()</code> this timeout bounds the time spent waiting for metadata if it is unavailable. The transaction-related methods always block, but may timeout if the transaction coordinator could not be discovered or did not respond within the timeout.
+     685: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     688: ldc           #103                // String request.timeout.ms
+     690: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     693: sipush        30000
+     696: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     699: iconst_0
+     700: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     703: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     706: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     709: ldc           #106                // String The configuration controls the maximum amount of time the client will wait for the response of a request. If the response is not received before the timeout elapses the client will resend the request if necessary or fail the request if retries are exhausted. This should be larger than <code>replica.lag.time.max.ms</code> (a broker configuration) to reduce the possibility of message duplication due to unnecessary producer retries.
+     711: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     714: ldc           #55                 // String metadata.max.age.ms
+     716: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     719: ldc_w         #702                // int 300000
+     722: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     725: iconst_0
+     726: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     729: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     732: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     735: ldc           #58                 // String The period of time in milliseconds after which we force a refresh of metadata even if we haven\'t seen any partition leadership changes to proactively discover any new brokers or partitions.
+     737: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     740: ldc           #61                 // String metadata.max.idle.ms
+     742: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     745: ldc_w         #702                // int 300000
+     748: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     751: sipush        5000
+     754: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     757: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     760: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     763: ldc           #64                 // String Controls how long the producer will cache metadata for a topic that\'s idle. If the elapsed time since a topic was last produced to exceeds the metadata idle duration, then the topic\'s metadata is forgotten and the next access to it will force a metadata fetch request.
+     765: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     768: ldc           #184                // String metrics.sample.window.ms
+     770: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     773: sipush        30000
+     776: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     779: iconst_0
+     780: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     783: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     786: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     789: ldc_w         #704                // String The window of time a metrics sample is computed over.
+     792: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     795: ldc           #187                // String metrics.num.samples
+     797: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     800: iconst_2
+     801: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     804: iconst_1
+     805: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     808: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     811: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     814: ldc_w         #706                // String The number of samples maintained to compute metrics.
+     817: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     820: ldc           #190                // String metrics.recording.level
+     822: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     825: getstatic     #710                // Field org/apache/kafka/common/metrics/Sensor$RecordingLevel.INFO:Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;
+     828: invokevirtual #711                // Method org/apache/kafka/common/metrics/Sensor$RecordingLevel.toString:()Ljava/lang/String;
+     831: iconst_3
+     832: anewarray     #319                // class java/lang/String
+     835: dup
+     836: iconst_0
+     837: getstatic     #710                // Field org/apache/kafka/common/metrics/Sensor$RecordingLevel.INFO:Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;
+     840: invokevirtual #711                // Method org/apache/kafka/common/metrics/Sensor$RecordingLevel.toString:()Ljava/lang/String;
+     843: aastore
+     844: dup
+     845: iconst_1
+     846: getstatic     #714                // Field org/apache/kafka/common/metrics/Sensor$RecordingLevel.DEBUG:Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;
+     849: invokevirtual #711                // Method org/apache/kafka/common/metrics/Sensor$RecordingLevel.toString:()Ljava/lang/String;
+     852: aastore
+     853: dup
+     854: iconst_2
+     855: getstatic     #717                // Field org/apache/kafka/common/metrics/Sensor$RecordingLevel.TRACE:Lorg/apache/kafka/common/metrics/Sensor$RecordingLevel;
+     858: invokevirtual #711                // Method org/apache/kafka/common/metrics/Sensor$RecordingLevel.toString:()Ljava/lang/String;
+     861: aastore
+     862: invokestatic  #598                // Method org/apache/kafka/common/config/ConfigDef$ValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$ValidString;
+     865: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     868: ldc_w         #719                // String The highest recording level for metrics. It has three levels for recording metrics - info, debug, and trace.\n \nINFO level records only essential metrics necessary for monitoring system performance and health. It collects vital data without gathering too much detail, making it suitable for production environments where minimal overhead is desired.\n\nDEBUG level records most metrics, providing more detailed information about the system\'s operation. It\'s useful for development and testing environments where you need deeper insights to debug and fine-tune the application.\n\nTRACE level records all possible metrics, capturing every detail about the system\'s performance and operation. It\'s best for controlled environments where in-depth analysis is required, though it can introduce significant overhead.
+     871: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     874: ldc           #193                // String metric.reporters
+     876: getstatic     #562                // Field org/apache/kafka/common/config/ConfigDef$Type.LIST:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     879: ldc_w         #721                // class org/apache/kafka/common/metrics/JmxReporter
+     882: invokevirtual #726                // Method java/lang/Class.getName:()Ljava/lang/String;
+     885: new           #12                 // class org/apache/kafka/common/config/ConfigDef$NonNullValidator
+     888: dup
+     889: invokespecial #569                // Method org/apache/kafka/common/config/ConfigDef$NonNullValidator."<init>":()V
+     892: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     895: ldc_w         #728                // String A list of classes to use as metrics reporters. Implementing the <code>org.apache.kafka.common.metrics.MetricsReporter</code> interface allows plugging in classes that will be notified of new metric creation. When custom reporters are set and <code>org.apache.kafka.common.metrics.JmxReporter</code> is needed, it has to be explicitly added to the list.
+     898: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     901: ldc           #199                // String max.in.flight.requests.per.connection
+     903: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     906: iconst_5
+     907: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     910: iconst_1
+     911: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     914: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+     917: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     920: ldc           #202                // String The maximum number of unacknowledged requests the client will send on a single connection before blocking. Note that if this configuration is set to be greater than 1 and <code>enable.idempotence</code> is set to false, there is a risk of message reordering after a failed send due to retries (i.e., if retries are enabled);  if retries are disabled or if <code>enable.idempotence</code> is set to true, ordering will be preserved. Additionally, enabling idempotence requires the value of this configuration to be less than or equal to 5, because broker only retains at most 5 batches for each producer. If the value is more than 5, previous batches may be removed on broker side.
+     922: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     925: ldc           #211                // String key.serializer
+     927: getstatic     #731                // Field org/apache/kafka/common/config/ConfigDef$Type.CLASS:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     930: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     933: ldc           #214                // String Serializer class for key that implements the <code>org.apache.kafka.common.serialization.Serializer</code> interface.
+     935: invokevirtual #734                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     938: ldc           #217                // String value.serializer
+     940: getstatic     #731                // Field org/apache/kafka/common/config/ConfigDef$Type.CLASS:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     943: getstatic     #573                // Field org/apache/kafka/common/config/ConfigDef$Importance.HIGH:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     946: ldc           #220                // String Serializer class for value that implements the <code>org.apache.kafka.common.serialization.Serializer</code> interface.
+     948: invokevirtual #734                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     951: ldc           #223                // String socket.connection.setup.timeout.ms
+     953: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     956: getstatic     #737                // Field org/apache/kafka/clients/CommonClientConfigs.DEFAULT_SOCKET_CONNECTION_SETUP_TIMEOUT_MS:Ljava/lang/Long;
+     959: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     962: ldc_w         #739                // String The amount of time the client will wait for the socket connection to be established. If the connection is not built before the timeout elapses, clients will close the socket channel. This value is the initial backoff value and will increase exponentially for each consecutive connection failure, up to the <code>socket.connection.setup.timeout.max.ms</code> value.
+     965: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     968: ldc           #226                // String socket.connection.setup.timeout.max.ms
+     970: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     973: getstatic     #742                // Field org/apache/kafka/clients/CommonClientConfigs.DEFAULT_SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS:Ljava/lang/Long;
+     976: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     979: ldc_w         #744                // String The maximum amount of time the client will wait for the socket connection to be established. The connection setup timeout will increase exponentially for each consecutive connection failure up to this maximum. To avoid connection storms, a randomization factor of 0.2 will be applied to the timeout resulting in a random range between 20% below and 20% above the computed value.
+     982: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+     985: ldc           #229                // String connections.max.idle.ms
+     987: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+     990: ldc_w         #745                // int 540000
+     993: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     996: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+     999: ldc_w         #747                // String Close idle connections after the number of milliseconds specified by this config.
+    1002: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1005: ldc           #232                // String partitioner.class
+    1007: getstatic     #731                // Field org/apache/kafka/common/config/ConfigDef$Type.CLASS:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1010: aconst_null
+    1011: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1014: ldc           #235                // String Determines which partition to send a record to when records are produced. Available options are:<ul><li>If not set, the default partitioning logic is used. This strategy send records to a partition until at least batch.size bytes is produced to the partition. It works with the strategy:<ol><li>If no partition is specified but a key is present, choose a partition based on a hash of the key.</li><li>If no partition or key is present, choose the sticky partition that changes when at least batch.size bytes are produced to the partition.</li></ol></li><li><code>org.apache.kafka.clients.producer.RoundRobinPartitioner</code>: A partitioning strategy where each record in a series of consecutive records is sent to a different partition, regardless of whether the \'key\' is provided or not, until partitions run out and the process starts over again. Note: There\'s a known issue that will cause uneven distribution when a new batch is created. See KAFKA-9965 for more detail.</li></ul><p>Implementing the <code>org.apache.kafka.clients.producer.Partitioner</code> interface allows you to plug in a custom partitioner.
+    1016: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1019: ldc           #238                // String interceptor.classes
+    1021: getstatic     #562                // Field org/apache/kafka/common/config/ConfigDef$Type.LIST:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1024: invokestatic  #568                // Method java/util/Collections.emptyList:()Ljava/util/List;
+    1027: new           #12                 // class org/apache/kafka/common/config/ConfigDef$NonNullValidator
+    1030: dup
+    1031: invokespecial #569                // Method org/apache/kafka/common/config/ConfigDef$NonNullValidator."<init>":()V
+    1034: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1037: ldc           #241                // String A list of classes to use as interceptors. Implementing the <code>org.apache.kafka.clients.producer.ProducerInterceptor</code> interface allows you to intercept (and possibly mutate) the records received by the producer before they are published to the Kafka cluster. By default, there are no interceptors.
+    1039: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1042: ldc_w         #749                // String security.protocol
+    1045: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1048: ldc_w         #751                // String PLAINTEXT
+    1051: ldc_w         #753                // class org/apache/kafka/common/security/auth/SecurityProtocol
+    1054: invokestatic  #647                // Method org/apache/kafka/common/utils/Utils.enumOptions:(Ljava/lang/Class;)[Ljava/lang/String;
+    1057: invokestatic  #756                // Method org/apache/kafka/common/config/ConfigDef$CaseInsensitiveValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$CaseInsensitiveValidString;
+    1060: getstatic     #601                // Field org/apache/kafka/common/config/ConfigDef$Importance.MEDIUM:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1063: ldc_w         #758                // String Protocol used to communicate with brokers.
+    1066: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1069: ldc_w         #268                // String security.providers
+    1072: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1075: aconst_null
+    1076: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1079: ldc_w         #271                // String A list of configurable creator classes each returning a provider implementing security algorithms. These classes should implement the <code>org.apache.kafka.common.security.auth.SecurityProviderCreator</code> interface.
+    1082: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1085: invokevirtual #761                // Method org/apache/kafka/common/config/ConfigDef.withClientSslSupport:()Lorg/apache/kafka/common/config/ConfigDef;
+    1088: invokevirtual #764                // Method org/apache/kafka/common/config/ConfigDef.withClientSaslSupport:()Lorg/apache/kafka/common/config/ConfigDef;
+    1091: ldc           #244                // String enable.idempotence
+    1093: getstatic     #666                // Field org/apache/kafka/common/config/ConfigDef$Type.BOOLEAN:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1096: iconst_1
+    1097: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    1100: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1103: ldc           #247                // String When set to \'true\', the producer will ensure that exactly one copy of each message is written in the stream. If \'false\', producer retries due to broker failures, etc., may write duplicates of the retried message in the stream. Note that enabling idempotence requires <code>max.in.flight.requests.per.connection</code> to be less than or equal to 5 (with message ordering preserved for any allowable value), <code>retries</code> to be greater than 0, and <code>acks</code> must be \'all\'. <p>Idempotence is enabled by default if no conflicting configurations are set. If conflicting configurations are set and idempotence is not explicitly enabled, idempotence is disabled. If idempotence is explicitly enabled and conflicting configurations are set, a <code>ConfigException</code> is thrown.
+    1105: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1108: ldc           #250                // String transaction.timeout.ms
+    1110: getstatic     #620                // Field org/apache/kafka/common/config/ConfigDef$Type.INT:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1113: ldc_w         #701                // int 60000
+    1116: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1119: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1122: ldc           #253                // String The maximum amount of time in milliseconds that a transaction will remain open before the coordinator proactively aborts it. The start of the transaction is set at the time that the first partition is added to it. If this value is larger than the <code>transaction.max.timeout.ms</code> setting in the broker, the request will fail with a <code>InvalidTxnTimeoutException</code> error.
+    1124: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1127: ldc_w         #256                // String transactional.id
+    1130: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1133: aconst_null
+    1134: new           #35                 // class org/apache/kafka/common/config/ConfigDef$NonEmptyString
+    1137: dup
+    1138: invokespecial #765                // Method org/apache/kafka/common/config/ConfigDef$NonEmptyString."<init>":()V
+    1141: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1144: ldc_w         #259                // String The TransactionalId to use for transactional delivery. This enables reliability semantics which span multiple producer sessions since it allows the client to guarantee that transactions using the same TransactionalId have been completed prior to starting any new transactions. If no TransactionalId is provided, then the producer is limited to idempotent delivery. If a TransactionalId is configured, <code>enable.idempotence</code> is implied. By default the TransactionId is not configured, which means transactions cannot be used. Note that, by default, transactions require a cluster of at least three brokers which is the recommended setting for production; for development you can change this, by adjusting broker setting <code>transaction.state.log.replication.factor</code>.
+    1147: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1150: ldc_w         #262                // String transaction.two.phase.commit.enable
+    1153: getstatic     #666                // Field org/apache/kafka/common/config/ConfigDef$Type.BOOLEAN:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1156: iconst_0
+    1157: invokestatic  #420                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    1160: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1163: ldc_w         #265                // String If set to true, then the broker is informed that the client is participating in two phase commit protocol and transactions that this client starts never expire.
+    1166: invokevirtual #669                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1169: ldc_w         #767                // String metadata.recovery.strategy
+    1172: getstatic     #582                // Field org/apache/kafka/common/config/ConfigDef$Type.STRING:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1175: getstatic     #770                // Field org/apache/kafka/clients/CommonClientConfigs.DEFAULT_METADATA_RECOVERY_STRATEGY:Ljava/lang/String;
+    1178: ldc_w         #772                // class org/apache/kafka/clients/MetadataRecoveryStrategy
+    1181: invokestatic  #647                // Method org/apache/kafka/common/utils/Utils.enumOptions:(Ljava/lang/Class;)[Ljava/lang/String;
+    1184: invokestatic  #756                // Method org/apache/kafka/common/config/ConfigDef$CaseInsensitiveValidString.in:([Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef$CaseInsensitiveValidString;
+    1187: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1190: ldc_w         #774                // String Controls how the client recovers when none of the brokers known to it is available. If set to <code>none</code>, the client fails. If set to <code>rebootstrap</code>, the client repeats the bootstrap process using <code>bootstrap.servers</code>. Rebootstrapping is useful when a client communicates with brokers so infrequently that the set of brokers may change entirely before the client refreshes metadata. Metadata recovery is triggered when all last-known brokers appear unavailable simultaneously. Brokers appear unavailable when disconnected and no current retry attempt is in-progress. Consider increasing <code>reconnect.backoff.ms</code> and <code>reconnect.backoff.max.ms</code> and decreasing <code>socket.connection.setup.timeout.ms</code> and <code>socket.connection.setup.timeout.max.ms</code> for the client. Rebootstrap is also triggered if connection cannot be established to any of the brokers for <code>metadata.recovery.rebootstrap.trigger.ms</code> milliseconds or if server requests rebootstrap.
+    1193: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1196: ldc_w         #776                // String metadata.recovery.rebootstrap.trigger.ms
+    1199: getstatic     #606                // Field org/apache/kafka/common/config/ConfigDef$Type.LONG:Lorg/apache/kafka/common/config/ConfigDef$Type;
+    1202: ldc2_w        #777                // long 300000l
+    1205: invokestatic  #613                // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1208: iconst_0
+    1209: invokestatic  #333                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1212: invokestatic  #617                // Method org/apache/kafka/common/config/ConfigDef$Range.atLeast:(Ljava/lang/Number;)Lorg/apache/kafka/common/config/ConfigDef$Range;
+    1215: getstatic     #632                // Field org/apache/kafka/common/config/ConfigDef$Importance.LOW:Lorg/apache/kafka/common/config/ConfigDef$Importance;
+    1218: ldc_w         #780                // String If a client configured to rebootstrap using <code>metadata.recovery.strategy=rebootstrap</code> is unable to obtain metadata from any of the brokers in the last known metadata for this interval, client repeats the bootstrap process using <code>bootstrap.servers</code> configuration.
+    1221: invokevirtual #579                // Method org/apache/kafka/common/config/ConfigDef.define:(Ljava/lang/String;Lorg/apache/kafka/common/config/ConfigDef$Type;Ljava/lang/Object;Lorg/apache/kafka/common/config/ConfigDef$Validator;Lorg/apache/kafka/common/config/ConfigDef$Importance;Ljava/lang/String;)Lorg/apache/kafka/common/config/ConfigDef;
+    1224: putstatic     #489                // Field CONFIG:Lorg/apache/kafka/common/config/ConfigDef;
+    1227: return
+}

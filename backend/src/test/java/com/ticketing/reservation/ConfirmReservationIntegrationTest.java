@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /** 홀드 → 결제 승인 → 확정의 전 구간과 확정이 막혀야 하는 경우들을 실물 DB·Redis로 검증한다. */
-@SpringBootTest(properties = "hold-expiry.enabled=false")
+@SpringBootTest(properties = {"hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @Testcontainers
 class ConfirmReservationIntegrationTest {
 

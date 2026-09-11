@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** REST API 전 구간 — 홀드/확정/취소/조회와 Idempotency-Key 동작을 HTTP 레벨에서 검증한다. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "hold-expiry.enabled=false")
+        properties = {"hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @AutoConfigureTestRestTemplate
 @Testcontainers
 class ReservationApiIntegrationTest {

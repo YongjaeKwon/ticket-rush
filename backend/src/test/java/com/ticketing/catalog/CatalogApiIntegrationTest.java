@@ -21,7 +21,8 @@ import java.util.Base64;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** 실물 MySQL(Testcontainers)에 Flyway V1~V3 적용 후 시드 기준으로 API를 검증한다. */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "outbox.relay.enabled=false")
 @AutoConfigureTestRestTemplate
 @Testcontainers
 class CatalogApiIntegrationTest {

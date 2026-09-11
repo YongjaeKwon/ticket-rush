@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * "수천 명이 같은 좌석을 동시에 잡아도 이중 예매 0건" — 그 축소판을 실물 MySQL·Redis로 재현한다.
  * CountDownLatch로 모든 스레드를 출발선에 세워뒀다가 동시에 발사한다.
  */
-@SpringBootTest(properties = "hold-expiry.enabled=false")
+@SpringBootTest(properties = {"hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @Testcontainers
 class ReservationConcurrencyTest {
 

@@ -1,0 +1,12 @@
+# 0007. Outbox relay — hand-rolled 1-second polling (stage 3)
+Date: 2026-09-11 · Stage: 3 · Status: decided · [한국어](0007-outbox-relay-hand-rolled-polling.md)
+## Context
+Events are written into the outbox table as full envelopes (JSON) in the same transaction as the reservation write. We now need a relay that empties this drawer into Kafka. The envelope wire format is already frozen by tests, and the partition-key convention (scheduleId inside the payload) is settled.
+## Options
+- **Hand-rolled polling** (chosen): every second, read up to 100 rows with `published_at IS NULL` oldest-first, send them in order, and stamp only the ones that succeeded. ~100 lines of code, every behavior visible.
+- `spring-modulith-events-kafka` externalization: the framework ships events from its own publication registry (event_publication). Less code, but it means adopting the framework's storage format and serialization instead of our outbox table and frozen envelope, discarding the existing publisher adapter and its contract tests.
+- Debezium CDC: read the DB change log and publish. No polling latency, but one more piece of infrastructure — stays in the backlog as before.
+## Decision
+Hand-rolled polling. It best fits this project's goal (choices a person can explain), and it lets us enforce the envelope and key conventions in one place. Three rules: send the stored envelope verbatim (re-wrapping would mint a new eventId); stop the tick on a failed send instead of skipping (preserves causal order per aggregate, and same-schedule events share a partition — polling only sees committed rows, so a schedule-wide total order is not promised); and accept duplicate publishes (dying between send and stamp, or a timed-out send arriving late from the producer buffer — at-least-once, which is why consumers must be idempotent).
+## Consequences
+Gained: every relay decision (ordering, retry, key) lives in our code and is verified end-to-end with Testcontainers. Lost: up to 1 second of publish latency; multiple instances would poll duplicately (single instance for now — multi-instance via `SELECT … FOR UPDATE SKIP LOCKED` in stage 4); hot partitions for popular schedules are accepted as the price of ordering. Unsendable rows (missing partition key etc.) are rejected at the drawer's entrance (the publisher adapter); if one appears anyway, the relay halts and calls for a human — publishing stops entirely until the row is fixed. Revisit: if stage-4 load numbers show polling latency as a problem, compare against CDC.

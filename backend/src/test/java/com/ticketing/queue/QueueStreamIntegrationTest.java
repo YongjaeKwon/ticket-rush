@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** SSE 스트림이 순번을 push하고 입장 시 입장권과 함께 닫히는지 실제 HTTP로 검증한다. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"queue.admission.enabled=false", "hold-expiry.enabled=false"})
+        properties = {"queue.admission.enabled=false", "hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @Testcontainers
 class QueueStreamIntegrationTest {
 

@@ -25,6 +25,12 @@ class OutboxEventPublisherAdapter implements EventPublisher {
 
     @Override
     public void publish(DomainEvent event) {
+        // Topics 규약: 모든 payload는 scheduleId(파티션 키)를 포함한다.
+        // 여기서 막아야 릴레이가 보낼 수 없는 봉투(poison row)가 서랍에 들어가지 않는다
+        if (!(event.payload().get("scheduleId") instanceof Number)) {
+            throw new IllegalArgumentException(
+                    "이벤트 payload에 scheduleId가 없다 — 파티션 키 규약 위반: " + event.eventType());
+        }
         EventEnvelope envelope = EventEnvelope.wrap(event.eventType(),
                 String.valueOf(event.aggregateId()), event.occurredAt(), event.payload());
 

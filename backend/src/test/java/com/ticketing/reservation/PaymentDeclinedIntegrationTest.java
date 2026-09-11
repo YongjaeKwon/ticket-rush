@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /** Mock PG 실패율을 100%로 놓고 — 거절이 전이가 아님(HELD·홀드 유지)을 검증한다. */
-@SpringBootTest(properties = {"payment.mock.failure-rate=1.0", "hold-expiry.enabled=false"})
+@SpringBootTest(properties = {"payment.mock.failure-rate=1.0", "hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @Testcontainers
 class PaymentDeclinedIntegrationTest {
 

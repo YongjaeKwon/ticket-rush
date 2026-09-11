@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /** 만료 배치(2차 방어)와 사용자 취소를 실물 DB·Redis로 검증한다. */
-@SpringBootTest(properties = "hold-expiry.enabled=false")
+@SpringBootTest(properties = {"hold-expiry.enabled=false", "outbox.relay.enabled=false"})
 @Testcontainers
 class ExpireAndCancelIntegrationTest {
 

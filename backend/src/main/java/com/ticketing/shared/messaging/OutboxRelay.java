@@ -15,7 +15,6 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,12 +36,6 @@ class OutboxRelay {
 
     private static final Logger log = LoggerFactory.getLogger(OutboxRelay.class);
     private static final long SEND_TIMEOUT_SECONDS = 5;
-
-    /** aggregate_type → 토픽. 발행하는 모듈이 늘면 여기에 한 줄 */
-    private static final Map<String, String> TOPIC_BY_AGGREGATE = Map.of(
-            "RESERVATION", Topics.RESERVATION_EVENTS,
-            "PAYMENT", Topics.PAYMENT_EVENTS,
-            "QUEUE", Topics.QUEUE_EVENTS);
 
     private final JdbcClient jdbc;
     // 자동 설정 빈의 제네릭이 <Object, Object>다 — 직렬화기는 yml에서 String으로 고정했다
@@ -83,7 +76,8 @@ class OutboxRelay {
     }
 
     private boolean sendAndMark(PendingRow row) {
-        String topic = TOPIC_BY_AGGREGATE.get(row.aggregateType());
+        // 서랍 입구(OutboxWriter)와 같은 맵 — 여기 걸리는 행은 릴레이 이전 데이터라는 뜻
+        String topic = Topics.TOPIC_BY_AGGREGATE.get(row.aggregateType());
         if (topic == null) {
             log.error("outbox 릴레이 중단 — 모르는 aggregate_type: {} (id={})", row.aggregateType(), row.id());
             return false;

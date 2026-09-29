@@ -1,5 +1,7 @@
 package com.ticketing.reservation.domain;
 
+import com.ticketing.shared.event.DomainEvent;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;

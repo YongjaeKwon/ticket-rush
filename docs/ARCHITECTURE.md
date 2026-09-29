@@ -89,10 +89,11 @@ flowchart LR
   U -->|"2. 좌석 홀드 + 입장 JWT"| R
   R -->|"SET NX EX"| R3
   R -->|"HELD + outbox, 한 트랜잭션"| D1
-  D1 -->|"3. Outbox 릴레이"| K1
-  K1 --> P
+  U -->|"3. 확정 요청(202) → PaymentRequested + outbox"| R
+  D1 -->|"4. Outbox 릴레이"| K1
+  K1 -->|"PaymentRequested"| P
   P -->|"승인 / 실패"| K2
-  K2 -->|"4. 멱등 컨슘"| R
+  K2 -->|"5. 멱등 컨슘"| R
   R -->|"CONFIRMED"| D2
   R -->|"실패·만료 시 홀드 해제"| R3
   R -->|"SSE 좌석 상태"| U
@@ -121,7 +122,7 @@ stateDiagram-v2
 
 | | 1단계 | 3단계 |
 |---|---|---|
-| 결제 호출 | `PaymentGateway.approve()` **동기 호출** (mock 어댑터) | `ReservationHeld` 이벤트 → 결제 서비스 → `PaymentApproved` 이벤트 |
+| 결제 호출 | `PaymentGateway.approve()` **동기 호출** (mock 어댑터) | 확정 요청이 발행하는 `PaymentRequested` 이벤트 → 결제 서비스 → `PaymentApproved` 이벤트 (`docs/adr/0008`) |
 | 실패 처리 | 예외 → 트랜잭션 롤백 | `PaymentFailed`/타임아웃 → 홀드 해제 + `EXPIRED` (되돌리기) |
 | 장점 | 단순, 디버깅 쉬움 | 결제 느려도 예매 서비스 안 막힘, 서비스별 독립 배포 |
 | 비용 | 결제가 느리면 예매 스레드가 잡힘 | Outbox·멱등·되돌리기 코드가 필요 |

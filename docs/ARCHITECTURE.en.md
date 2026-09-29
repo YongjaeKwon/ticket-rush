@@ -99,10 +99,11 @@ flowchart LR
   U -->|"2. hold seat + admission JWT"| R
   R -->|"SET NX EX"| R3
   R -->|"HELD + outbox, one tx"| D1
-  D1 -->|"3. outbox relay"| K1
-  K1 --> P
+  U -->|"3. confirm request (202) → PaymentRequested + outbox"| R
+  D1 -->|"4. outbox relay"| K1
+  K1 -->|"PaymentRequested"| P
   P -->|"approved / failed"| K2
-  K2 -->|"4. idempotent consume"| R
+  K2 -->|"5. idempotent consume"| R
   R -->|"CONFIRMED"| D2
   R -->|"release hold on failure/expiry"| R3
   R -->|"SSE seat status"| U
@@ -127,7 +128,7 @@ stateDiagram-v2
 
 | | Stage 1 | Stage 3 |
 |---|---|---|
-| Payment call | `PaymentGateway.approve()` **synchronous** (mock adapter) | `ReservationHeld` event → payment service → `PaymentApproved` event |
+| Payment call | `PaymentGateway.approve()` **synchronous** (mock adapter) | `PaymentRequested` event published by the confirm request → payment service → `PaymentApproved` event (`docs/adr/0008`) |
 | Failure handling | exception → transaction rollback | `PaymentFailed`/timeout → release hold + `EXPIRED` (compensation) |
 | Pros | simple, easy to debug | slow payments don't block the reservation service; independent deploys |
 | Cost | slow payment ties up a reservation thread | outbox, idempotency, and compensation code required |

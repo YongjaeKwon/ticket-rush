@@ -33,6 +33,11 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # 새 컨슈머 그룹은 토픽 처음부터 읽는다 — 배포 전에 쌓인 쪽지를 잃지 않는다
+      auto-offset-reset: earliest
     producer:
       # 봉투는 outbox에 JSON 문자열로 저장돼 있다 — 그대로 실어 보낸다
       key-serializer: org.apache.kafka.common.serialization.StringSerializer

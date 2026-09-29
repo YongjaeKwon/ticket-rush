@@ -1,6 +1,6 @@
 package com.ticketing.reservation.application.port.out;
 
-import com.ticketing.reservation.domain.DomainEvent;
+import com.ticketing.shared.event.DomainEvent;
 
 /**
  * 도메인 이벤트 발행. 1단계 구현은 Outbox 테이블 기록 —

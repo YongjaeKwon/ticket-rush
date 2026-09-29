@@ -1,27 +1,25 @@
-package com.ticketing.reservation.domain;
+package com.ticketing.payment.domain;
 
 import com.ticketing.shared.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
-/** 결제 승인으로 예매가 확정됐다. */
-public record ReservationConfirmed(
+/**
+ * PG(카드사)가 결제를 거절했다 — 상태 전이가 아니다. 예매는 HELD 그대로,
+ * 사용자는 남은 시간 안에 새 접수번호로 다시 시도할 수 있다 (ARCHITECTURE 2-2, ADR 0008).
+ */
+public record PaymentDeclined(
         long reservationId,
         long scheduleId,
-        long seatId,
         String userId,
+        int amount,
         LocalDateTime occurredAt
 ) implements DomainEvent {
 
-    public static ReservationConfirmed from(Reservation reservation, LocalDateTime occurredAt) {
-        return new ReservationConfirmed(reservation.id(), reservation.scheduleId(),
-                reservation.seatId(), reservation.userId(), occurredAt);
-    }
-
     @Override
     public String eventType() {
-        return "ReservationConfirmed";
+        return "PaymentDeclined";
     }
 
     @Override
@@ -32,6 +30,6 @@ public record ReservationConfirmed(
     @Override
     public Map<String, Object> payload() {
         return Map.of("reservationId", reservationId, "scheduleId", scheduleId,
-                "seatId", seatId, "userId", userId);
+                "userId", userId, "amount", amount);
     }
 }

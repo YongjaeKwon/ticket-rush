@@ -1,27 +1,26 @@
-package com.ticketing.reservation.domain;
+package com.ticketing.payment.domain;
 
 import com.ticketing.shared.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
-/** 결제 승인으로 예매가 확정됐다. */
-public record ReservationConfirmed(
+/**
+ * 결제가 시스템 오류·타임아웃으로 끝나지 못했다 — 되돌리기 대상.
+ * reservation이 이걸 받아 홀드를 해제한다(거절과 다른 점, ADR 0008).
+ */
+public record PaymentFailed(
         long reservationId,
         long scheduleId,
-        long seatId,
         String userId,
+        int amount,
+        String reason,
         LocalDateTime occurredAt
 ) implements DomainEvent {
 
-    public static ReservationConfirmed from(Reservation reservation, LocalDateTime occurredAt) {
-        return new ReservationConfirmed(reservation.id(), reservation.scheduleId(),
-                reservation.seatId(), reservation.userId(), occurredAt);
-    }
-
     @Override
     public String eventType() {
-        return "ReservationConfirmed";
+        return "PaymentFailed";
     }
 
     @Override
@@ -32,6 +31,6 @@ public record ReservationConfirmed(
     @Override
     public Map<String, Object> payload() {
         return Map.of("reservationId", reservationId, "scheduleId", scheduleId,
-                "seatId", seatId, "userId", userId);
+                "userId", userId, "amount", amount, "reason", reason);
     }
 }

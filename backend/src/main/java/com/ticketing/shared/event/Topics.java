@@ -14,6 +14,15 @@ public final class Topics {
     public static final String PAYMENT_EVENTS = "payment.events";
     public static final String QUEUE_EVENTS = "queue.events";
 
+    /**
+     * outbox의 aggregate_type → 토픽. 서랍 입구(OutboxWriter)와 집배원(OutboxRelay)이
+     * 같은 맵을 봐야 "적을 수는 있는데 보낼 수 없는" 행이 생기지 않는다. 발행 모듈이 늘면 여기 한 줄.
+     */
+    public static final java.util.Map<String, String> TOPIC_BY_AGGREGATE = java.util.Map.of(
+            "RESERVATION", RESERVATION_EVENTS,
+            "PAYMENT", PAYMENT_EVENTS,
+            "QUEUE", QUEUE_EVENTS);
+
     private Topics() {
     }
 

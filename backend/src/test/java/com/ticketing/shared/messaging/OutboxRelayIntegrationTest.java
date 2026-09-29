@@ -31,7 +31,8 @@ import static org.awaitility.Awaitility.await;
  * 릴레이를 실물로 검증한다: 실제 MySQL의 outbox 행 → 실제 Kafka의 메시지.
  * 봉투가 그대로 실리는지(eventId 보존), 파티션 키가 scheduleId인지, 발행 표시가 찍히는지.
  */
-@SpringBootTest(properties = "outbox.relay.poll-interval-ms=200") // 테스트는 빠르게 돈다
+@SpringBootTest(properties = {"outbox.relay.poll-interval-ms=200", // 테스트는 빠르게 돈다
+        "kafka.consumers.enabled=false"}) // 관심사는 릴레이뿐 — payment 리스너가 봉투를 주워 가지 않게
 @Testcontainers
 class OutboxRelayIntegrationTest {
 

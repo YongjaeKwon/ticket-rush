@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /** 실물 MySQL + Redis로 홀드 유스케이스의 성공·충돌·되돌리기를 검증한다. */
-@SpringBootTest(properties = "outbox.relay.enabled=false")
+@SpringBootTest(properties = {"outbox.relay.enabled=false", "kafka.consumers.enabled=false"})
 @Testcontainers
 class HoldSeatIntegrationTest {
 

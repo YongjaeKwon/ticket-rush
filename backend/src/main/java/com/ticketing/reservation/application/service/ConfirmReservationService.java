@@ -86,7 +86,7 @@ public class ConfirmReservationService implements ConfirmReservationUseCase {
             return saved;
         });
 
-        seatHoldStore.release(confirmed.scheduleId(), confirmed.seatId());
+        seatHoldStore.release(confirmed.scheduleId(), confirmed.seatId(), confirmed.userId());
         return new ConfirmResult(confirmed.id(), confirmed.status(), payment.transactionId());
     }
 

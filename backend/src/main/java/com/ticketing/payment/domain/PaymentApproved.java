@@ -1,6 +1,7 @@
 package com.ticketing.payment.domain;
 
 import com.ticketing.shared.event.DomainEvent;
+import com.ticketing.shared.event.PaymentEventTypes;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -17,7 +18,7 @@ public record PaymentApproved(
 
     @Override
     public String eventType() {
-        return "PaymentApproved";
+        return PaymentEventTypes.PAYMENT_APPROVED;
     }
 
     @Override

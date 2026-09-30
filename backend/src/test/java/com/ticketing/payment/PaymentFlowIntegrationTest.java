@@ -62,6 +62,11 @@ class PaymentFlowIntegrationTest {
 
     @Test
     void 결제_요청_쪽지가_기록과_결과_쪽지로_돌아온다_두_번_넣어도_한_번만() {
+        // 결과 쪽지를 받는 reservation 컨슈머도 이 컨텍스트에서 살아 있다 — 대응되는 HELD 예매를
+        // 심어 두면 "실물 발행 봉투 → reservation 컨슈머 → CONFIRMED"의 모듈 간 계약까지 검증된다
+        // (안 심으면 그 컨슈머가 '예매가 없다' ERROR를 남기며 장부에만 기록한다)
+        insertHeldReservation(501, 917, "u-pay");
+        insertHeldReservation(502, 918, "u-pay");
         String eventId = "aaaaaaaa-bbbb-cccc-dddd-eeeeffff0001";
         String envelope = """
                 {"eventId":"%s","eventType":"PaymentRequested","version":1,\
@@ -109,6 +114,20 @@ class PaymentFlowIntegrationTest {
                 .isEqualTo(1L);
         assertThat(count("SELECT COUNT(*) FROM processed_event WHERE consumer = 'payment.payment-requested'"
                 + " AND event_id = '" + eventId + "'")).isEqualTo(1L);
+
+        // ④ 발행된 결과 쪽지가 reservation 컨슈머까지 닿아 확정된다 — 모듈 간 계약의 끝
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() ->
+                assertThat(jdbc.sql("SELECT status FROM reservation WHERE id = 501")
+                        .query(String.class).single()).isEqualTo("CONFIRMED"));
+    }
+
+    private void insertHeldReservation(long id, long seatId, String userId) {
+        jdbc.sql("""
+                        INSERT INTO reservation (id, schedule_id, seat_id, user_id, status, expires_at, version, created_at)
+                        VALUES (:id, 1, :seatId, :userId, 'HELD', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 MINUTE), 0, UTC_TIMESTAMP())
+                        """)
+                .param("id", id).param("seatId", seatId).param("userId", userId)
+                .update();
     }
 
     private Long count(String sql) {

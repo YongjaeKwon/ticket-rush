@@ -10,8 +10,8 @@
 
 ## 핵심 구현
 
-- **같은 좌석의 중복 확정 방지.** Redis로 좌석을 5분간 선점하고, MySQL의 `(회차, 좌석)` 기본키로 최종 확정을 제한합니다. 예매 상태·확정 좌석·이벤트 기록은 하나의 트랜잭션으로 묶었습니다. [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
-- **결제 응답을 받지 못했을 때의 재시도.** 예매 상태를 먼저 조회하고 같은 시도의 키를 유지합니다. 결제 거절 뒤 새로 시도할 때는 다른 키를 사용합니다. [재시도 규칙](apps/web/src/lib/confirm-policy.ts) · [테스트](apps/web/src/lib/confirm-policy.test.ts) · [선택 이유](docs/adr/0006-idempotency-key-per-attempt.md)
+- **같은 좌석의 중복 확정 방지.** Redis로 좌석을 5분간 선점하고, MySQL의 `(회차, 좌석)` 기본키로 최종 확정을 제한합니다. 결제 승인이 오면 예매 상태·확정 좌석·이벤트 기록을 하나의 트랜잭션으로 반영합니다. [결제 결과 반영](backend/src/main/java/com/ticketing/reservation/application/service/ApplyPaymentResultService.java) · [동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **결제는 접수(202) 뒤 조회로 판정.** 확정 요청은 결제 요청 이벤트만 남기고 바로 응답하며, 화면은 판정이 날 때까지 같은 키를 지키며 조회합니다. 결제 중 두 번째 요청은 거절되고(`PAYMENT_IN_PROGRESS`), 거절 뒤 새로 시도할 때는 다른 키를 사용합니다. [재시도·판정 규칙](apps/web/src/lib/confirm-policy.ts) · [테스트](apps/web/src/lib/confirm-policy.test.ts) · [선택 이유](docs/adr/0009-async-confirm-payment-status.md)
 - **대기열부터 좌석 선택까지 웹에서 연결.** SSE로 대기 순번과 좌석 상태를 전달하고, Canvas로 좌석을 선택합니다. 선점 후에는 남은 결제 시간을 보여 줍니다. [웹 화면](apps/web/src/app/) · [좌석 계산](packages/seat-map-core/src/) · [대기열 SSE 테스트](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
 ## 현재 구성
@@ -41,11 +41,11 @@ DB 변경은 Flyway로 관리하고, 테스트에는 JUnit·Testcontainers·Vite
 <summary>코드와 테스트에서 확인한 동작</summary>
 
 **좌석을 선점한 요청이 여러 건이어도 최종 확정은 하나여야 합니다.**
-[선점 처리](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java)와 [확정 처리](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java)를 나누어 읽을 수 있습니다.
-[동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)는 같은 좌석에 100개 스레드가 선점을 시도했을 때 성공이 1건인지 확인합니다. 선점 키를 삭제해 중복 홀드 10건을 만든 뒤, 동시에 확정해도 확정 좌석과 `CONFIRMED` 예매가 각각 1건인지도 확인합니다.
+[선점 처리](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java), [확정 요청](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java), [결제 결과 반영](backend/src/main/java/com/ticketing/reservation/application/service/ApplyPaymentResultService.java)을 나누어 읽을 수 있습니다.
+[동시성 테스트](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)는 같은 좌석에 100개 스레드가 선점을 시도했을 때 성공이 1건인지 확인합니다. 선점 키를 삭제해 중복 홀드 10건을 만들고 각각 결제를 요청한 뒤, 승인 결과 10건을 동시에 반영해도 확정 좌석과 `CONFIRMED` 예매가 각각 1건인지 확인합니다. 한 예매에 확정 요청 10건이 동시에 와도 결제 요청 이벤트는 1건만 기록되고 나머지 9건은 `PAYMENT_IN_PROGRESS`로 거절됩니다.
 
 **실패의 종류에 따라 예매 상태와 재시도 방식이 달라져야 합니다.**
-[만료된 홀드의 결제 거절](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [결제 거절 시 홀드 유지](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), [같은 키로 재요청했을 때의 응답 재생](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java)을 통합 테스트로 확인합니다.
+[만료된 홀드의 결제 거절](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [결제 거절 시 홀드 유지(비동기 왕복)](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), [같은 키로 재요청했을 때의 응답 재생](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java)을 통합 테스트로 확인합니다.
 [웹의 재시도 정책 테스트](apps/web/src/lib/confirm-policy.test.ts)는 응답 유형에 따라 시도 키를 유지할지 판단하는 규칙을 다룹니다.
 브라우저 단에서는 [Playwright E2E](apps/web/e2e/idempotency.spec.ts)가 응답 유실 두 갈래(서버 미도달·서버 처리 후 유실)와 결제 거절, 뒤로가기 후 홀드 복원을 실행 중인 백엔드를 상대로 확인합니다.
 
@@ -64,8 +64,9 @@ Java 21과 Docker가 필요합니다. 웹은 Node.js와 저장소의 `packageMan
 명령은 저장소 루트에서 시작하며, Windows에서는 `./gradlew` 대신 `.\gradlew.bat`를 사용합니다.
 
 ```bash
-# 개발용 MySQL·Redis와 백엔드
+# 개발용 MySQL·Redis·Kafka와 백엔드 — 결제는 Kafka 왕복으로 판정된다(확정은 202 접수)
 docker compose --profile infra up -d
+docker compose up -d kafka
 cd backend
 ./gradlew bootRun
 ```
@@ -77,7 +78,7 @@ pnpm --filter @ticket-rush/web dev
 ```
 
 웹은 [localhost:3000](http://localhost:3000), 공연 API는 [localhost:8080/api/events](http://localhost:8080/api/events)에서 확인할 수 있습니다.
-결제는 mock 어댑터로 처리하며 사용자 식별에는 데모용 `X-User-Id`를 사용합니다.
+결제는 payment 모듈의 mock PG가 처리하며(확정 요청 → Kafka → 결제 → 결과 반영) 사용자 식별에는 데모용 `X-User-Id`를 사용합니다.
 
 <details>
 <summary>테스트 실행 명령</summary>
@@ -97,7 +98,7 @@ pnpm --filter @ticket-rush/web e2e        # Playwright E2E — 백엔드가 떠 
 ```
 
 ```bash
-# API 계약이 바뀌었을 때 — 반드시 8080의 백엔드에서 받습니다 (servers URL이 요청 주소를 따라감)
+# API 계약이 바뀌었을 때 — 백엔드가 떠 있는 포트에서 받습니다 (servers URL은 "/"로 고정)
 curl -s localhost:8080/v3/api-docs -o openapi.json
 pnpm gen:api
 ```

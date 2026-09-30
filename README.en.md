@@ -10,8 +10,8 @@ A concert booking service covering queue admission, seat selection, mock payment
 
 ## Key features
 
-- **Prevent duplicate seat confirmations.** Redis holds a seat for five minutes; a MySQL primary key on `(schedule, seat)` limits final confirmation. The reservation update, confirmed-seat row, and event record share one transaction. [Confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) · [Concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
-- **Handle retries when a payment response is missing.** The client queries the reservation first and retains the key for an attempt whose outcome is unknown. A new attempt after a decline gets a new key. [Retry rules](apps/web/src/lib/confirm-policy.ts) · [Tests](apps/web/src/lib/confirm-policy.test.ts) · [Decision record](docs/adr/0006-idempotency-key-per-attempt.en.md)
+- **Prevent duplicate seat confirmations.** Redis holds a seat for five minutes; a MySQL primary key on `(schedule, seat)` limits final confirmation. When a payment approval arrives, the reservation update, confirmed-seat row, and event record are applied in one transaction. [Payment-result handling](backend/src/main/java/com/ticketing/reservation/application/service/ApplyPaymentResultService.java) · [Concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java)
+- **Payment is accepted (202), then decided through the GET.** A confirm request only records a payment-request event and returns at once; the screen keeps the same key and polls until a verdict arrives. A second request during payment is rejected (`PAYMENT_IN_PROGRESS`), and a new attempt after a decline gets a new key. [Retry and verdict rules](apps/web/src/lib/confirm-policy.ts) · [Tests](apps/web/src/lib/confirm-policy.test.ts) · [Decision record](docs/adr/0009-async-confirm-payment-status.en.md)
 - **Connect the queue and seat selection in the web app.** SSE delivers queue positions and seat-status changes; Canvas handles seat selection. The app shows the remaining payment time after a hold. [Web screens](apps/web/src/app/) · [Seat calculations](packages/seat-map-core/src/) · [Queue SSE test](backend/src/test/java/com/ticketing/queue/QueueStreamIntegrationTest.java)
 
 ## Current structure
@@ -41,11 +41,11 @@ Flyway manages database changes; tests use JUnit, Testcontainers, Vitest, and Pl
 <summary>Behavior covered by the code and tests</summary>
 
 **Several holds for one seat must still lead to a single confirmation.**
-The [hold service](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java) and [confirmation service](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java) handle these steps separately.
-The [concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java) check that 100 threads competing for one seat produce one successful hold. They also delete hold keys to create 10 overlapping holds, then check that concurrent confirmation leaves one confirmed-seat row and one `CONFIRMED` reservation.
+The [hold service](backend/src/main/java/com/ticketing/reservation/application/service/HoldSeatService.java), [confirm request](backend/src/main/java/com/ticketing/reservation/application/service/ConfirmReservationService.java), and [payment-result handling](backend/src/main/java/com/ticketing/reservation/application/service/ApplyPaymentResultService.java) handle these steps separately.
+The [concurrency tests](backend/src/test/java/com/ticketing/reservation/ReservationConcurrencyTest.java) check that 100 threads competing for one seat produce one successful hold. They also delete hold keys to create 10 overlapping holds, each with a payment request, then apply 10 approvals concurrently and check that one confirmed-seat row and one `CONFIRMED` reservation remain. When 10 confirm requests hit one reservation at once, only one payment-request event is recorded and the other 9 get `PAYMENT_IN_PROGRESS`.
 
 **Different failures require different state and retry decisions.**
-Integration tests cover [rejecting an expired hold before payment](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [retaining a hold after a payment decline](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), and [replaying a stored response for a repeated key](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java).
+Integration tests cover [rejecting an expired hold before payment](backend/src/test/java/com/ticketing/reservation/ConfirmReservationIntegrationTest.java), [retaining a hold after a payment decline (async round trip)](backend/src/test/java/com/ticketing/reservation/PaymentDeclinedIntegrationTest.java), and [replaying a stored response for a repeated key](backend/src/test/java/com/ticketing/reservation/ReservationApiIntegrationTest.java).
 The [web retry-policy tests](apps/web/src/lib/confirm-policy.test.ts) cover whether to retain an attempt's key for each response type.
 In the browser, the [Playwright E2E suite](apps/web/e2e/idempotency.spec.ts) checks both kinds of lost response (never reached the server / processed but the response was lost), a payment decline, and hold restoration after back-navigation, against a running backend.
 
@@ -64,8 +64,9 @@ Requires Java 21 and Docker. The web app also needs Node.js and the pnpm version
 Commands start from the repository root. On Windows, use `.\gradlew.bat` in place of `./gradlew`.
 
 ```bash
-# Development MySQL, Redis, and backend
+# Development MySQL, Redis, Kafka, and backend — payment is decided over a Kafka round trip (confirm returns 202)
 docker compose --profile infra up -d
+docker compose up -d kafka
 cd backend
 ./gradlew bootRun
 ```
@@ -77,7 +78,7 @@ pnpm --filter @ticket-rush/web dev
 ```
 
 Open the web app at [localhost:3000](http://localhost:3000) or the event API at [localhost:8080/api/events](http://localhost:8080/api/events).
-Payment uses a mock adapter, and user identity uses a demo `X-User-Id` header.
+Payment is handled by the payment module's mock PG (confirm request → Kafka → payment → result applied), and user identity uses a demo `X-User-Id` header.
 
 <details>
 <summary>Test commands</summary>
@@ -97,7 +98,7 @@ pnpm --filter @ticket-rush/web e2e        # Playwright E2E — the backend must 
 ```
 
 ```bash
-# When the API contract changes — always fetch from a backend on 8080 (the servers URL follows the request address)
+# When the API contract changes — fetch from whichever port the backend runs on (the servers URL is pinned to "/")
 curl -s localhost:8080/v3/api-docs -o openapi.json
 pnpm gen:api
 ```

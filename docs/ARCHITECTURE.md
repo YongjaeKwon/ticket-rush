@@ -186,8 +186,8 @@ backend/src/main/java/com/ticketing
 ├── reservation/                # 모듈 (1단계) — 예매. 가장 두꺼운 모듈
 │   ├── domain/                 # Reservation, 상태 전이, 도메인 이벤트. 순수 자바 (스프링·JPA import 금지)
 │   ├── application/
-│   │   ├── port/in/            # 제공하는 기능 = 유스케이스 인터페이스 (HoldSeatUseCase, ConfirmReservationUseCase, ExpireHoldUseCase, CancelReservationUseCase)
-│   │   ├── port/out/           # 바깥에 요구하는 것 = 인터페이스 (ReservationRepository, SeatHoldStore, PaymentGateway, EventPublisher, AdmissionTokenVerifier)
+│   │   ├── port/in/            # 제공하는 기능 = 유스케이스 인터페이스 (HoldSeatUseCase, ConfirmReservationUseCase, ExpireHoldUseCase, CancelReservationUseCase, ApplyPaymentResultUseCase)
+│   │   ├── port/out/           # 바깥에 요구하는 것 = 인터페이스 (ReservationRepository, SeatHoldStore, EventPublisher, ProcessedEventStore, AdmissionTokenVerifier)
 │   │   └── service/            # 유스케이스 구현. @Transactional은 여기
 │   └── adapter/
 │       ├── in/web/             # REST 컨트롤러 + DTO
@@ -195,7 +195,6 @@ backend/src/main/java/com/ticketing
 │       ├── in/messaging/       # (3단계) Kafka 컨슈머
 │       ├── out/persistence/    # JPA 엔티티, 리포지토리 구현, Outbox
 │       ├── out/redis/          # SeatHoldStore 구현
-│       ├── out/payment/        # MockPaymentGatewayAdapter (지연·실패율 설정 가능)
 │       └── out/messaging/      # (3단계) Kafka 발행
 ├── payment/                    # 모듈 (3단계) — 결제
 ├── notification/               # 모듈 (3단계) — 푸시 컨슈머
@@ -227,7 +226,8 @@ backend/src/main/java/com/ticketing
 
 - Redis `hold:{scheduleId}:{seatId}` = userId, `SET NX EX 300`. 해제는 값이 내 userId일 때만 지우는 비교-삭제(Lua) — 만료 직후 남이 새로 잡은 키를 뒤늦은 해제가 지우면 안 된다.
 - 순서: Redis 홀드 성공 → DB에 `HELD` 저장 + Outbox 행 (한 트랜잭션) → DB 실패면 Redis 홀드 즉시 삭제.
-- 확정 시: 도메인 `confirm()` → `confirmed_seat` insert(UNIQUE) → Redis 홀드 삭제. UNIQUE 위반이면 확정 실패로 응답.
+- 확정 요청(3단계, ADR 0009): 도메인 `requestPayment()`(결제 중이면 `PAYMENT_IN_PROGRESS`) → `PaymentRequested`를 Outbox에 (한 트랜잭션) → 202. PG는 부르지 않는다.
+- 승인 쪽지 반영: 도메인 `confirm()` → `confirmed_seat` insert(UNIQUE) → 저장 → Redis 홀드 삭제(커밋 뒤). UNIQUE 위반이면 확정하지 않고 장부에만 남긴다(환불 보상은 backlog). 거절은 `DECLINED` 표지만(HELD 유지), 실패는 되돌리기(`EXPIRED` + `FAILED`).
 
 **만료**
 
@@ -252,7 +252,7 @@ backend/src/main/java/com/ticketing
 | 단계 | 테이블 | 비고 |
 |---|---|---|
 | 1 | `event(id, title, venue, open_at)` `schedule(id, event_id, starts_at)` `section(id, schedule_id, name, seat_count)` `seat(id, section_id, row_no, col_no)` | catalog. 시드: 공연 1, 회차 1, 구역 4 × 500석 = 2,000석 |
-| 1 | `reservation(id, schedule_id, seat_id, user_id, status, expires_at, version, created_at)` | 인덱스 `(status, expires_at)` |
+| 1 | `reservation(id, schedule_id, seat_id, user_id, status, expires_at, version, created_at)` | 인덱스 `(status, expires_at)`. 3단계(V5)에 `payment_status`, `payment_tx_id` 추가 — 결제 진행 표지·승인번호 (ADR 0009) |
 | 1 | `confirmed_seat(schedule_id, seat_id, reservation_id)` | **UNIQUE(schedule_id, seat_id)** |
 | 1 | `outbox(id, aggregate_type, aggregate_id, event_type, payload JSON, created_at, published_at NULL)` | 인덱스 `(published_at, created_at)` |
 | 3 | `payment(id, reservation_id, amount, status, pg_tx_id, created_at)` | |
@@ -285,7 +285,7 @@ backend/src/main/java/com/ticketing
 | 1 | POST | `/schedules/{id}/queue` | 대기열 진입 → `{position}` |
 | 1 | GET | `/schedules/{id}/queue/me` | `{position, admitted, token?}` |
 | 1 | POST | `/reservations` | `{scheduleId, seatId}` + Bearer + `Idempotency-Key` → 201 `{reservationId, expiresAt}` |
-| 1 | POST | `/reservations/{id}/confirm` | 결제 → 확정. 1단계 동기, 3단계 이벤트(202 응답 후 SSE/조회로 확인) |
+| 1 | POST | `/reservations/{id}/confirm` | 결제 → 확정. 1단계 동기. 3단계부터 202 접수 `{reservationId, status, paymentStatus}` — 판정은 조회의 `paymentStatus`·`paymentTransactionId`로 (ADR 0009) |
 | 1 | DELETE | `/reservations/{id}` | 취소 |
 | 1 | GET | `/reservations/{id}` | 조회 |
 | 2 | GET | `/schedules/{id}/queue/stream` | SSE 순번/입장 |
@@ -293,7 +293,7 @@ backend/src/main/java/com/ticketing
 | 2 | POST | `/rum` | Web Vitals 수집 |
 | 5 | POST | `/devices` | 푸시 토큰 등록 |
 
-에러 응답은 RFC 9457 Problem Details(`application/problem+json`). 코드 예: `SEAT_ALREADY_HELD`, `HOLD_EXPIRED`, `ADMISSION_REQUIRED`, `IDEMPOTENCY_CONFLICT`.
+에러 응답은 RFC 9457 Problem Details(`application/problem+json`). 코드 예: `SEAT_ALREADY_HELD`, `HOLD_EXPIRED`, `ADMISSION_REQUIRED`, `IDEMPOTENCY_CONFLICT`, `PAYMENT_IN_PROGRESS`.
 
 ---
 

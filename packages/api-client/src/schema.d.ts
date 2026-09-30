@@ -220,7 +220,7 @@ export interface components {
             /** Format: int64 */
             reservationId?: number;
             status?: string;
-            paymentTransactionId?: string;
+            paymentStatus?: string;
         };
         EventRef: {
             /** Format: int64 */
@@ -287,6 +287,8 @@ export interface components {
             /** Format: int64 */
             seatId?: number;
             status?: string;
+            paymentStatus?: string;
+            paymentTransactionId?: string;
             /** Format: date-time */
             expiresAt?: string;
         };
@@ -386,8 +388,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Accepted */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

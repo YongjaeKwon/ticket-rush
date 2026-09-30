@@ -10,7 +10,7 @@ import { PAYMENT_METHODS, PaymentMethods, type PaymentMethodId } from "@/compone
 import { ReservationLoadError } from "@/components/ReservationLoadError";
 import { StatusCard } from "@/components/StatusCard";
 import { Toast, type ToastMessage } from "@/components/Toast";
-import { classifyConfirmFailure } from "@/lib/confirm-policy";
+import { classifyConfirmFailure, classifyPaymentOutcome, resumeAction, type Verdict } from "@/lib/confirm-policy";
 import { formatDateTime } from "@/lib/format";
 import { BOOKING_FEE, TICKET_PRICE, TOTAL_PRICE, formatKrw } from "@/lib/pricing";
 import {
@@ -20,14 +20,22 @@ import {
   discardConfirmKey,
   getReservation,
   hasConfirmKey,
-  saveConfirmResult,
+  isConfirmAccepted,
+  markConfirmAccepted,
 } from "@/lib/reservation";
 import { useCountdown } from "@/lib/use-countdown";
 import { useReservationView } from "@/lib/use-reservation-view";
 
-type Phase = "idle" | "paying" | "checking" | "leaving";
+type Phase = "idle" | "paying" | "waiting" | "checking" | "leaving";
 
-/** 결과를 모를 때 서버 상태를 다시 묻는 횟수·간격 — 먼저 보낸 요청이 서버에서 끝날 시간을 준다 */
+/**
+ * 접수(202) 뒤 판정을 기다리는 간격·상한. 판정은 보통 2~4초
+ * (서랍 릴레이 1초 × 두 번 + Kafka + PG) — 넘기면 같은 키로 이어서 확인할 버튼을 남긴다.
+ */
+const WAIT_INTERVAL_MS = 1_000;
+const WAIT_LIMIT_MS = 20_000;
+
+/** 결과를 모를 때 서버 상태를 다시 묻는 횟수·간격 — 먼저 보낸 요청이 서버에 닿을 시간을 준다 */
 const VERIFY_POLLS = 3;
 const VERIFY_INTERVAL_MS = 1_000;
 
@@ -37,6 +45,25 @@ const EXPIRED_TOAST: ToastMessage = {
   code: "HOLD_EXPIRED",
   sticky: true,
   text: "선점 시간이 지났어요. 좌석 선택으로 돌아가요.",
+};
+const FAILED_TOAST: ToastMessage = {
+  code: "PAYMENT_FAILED",
+  sticky: true,
+  text: "결제 처리 중 오류가 생겨 선점이 풀렸어요. 좌석을 다시 선택해 주세요.",
+};
+const LOST_TOAST: ToastMessage = {
+  code: "SEAT_NOT_CONFIRMED",
+  sticky: true,
+  text: "결제는 승인됐지만 좌석을 확정하지 못했어요(선점 만료 또는 이미 확정된 좌석). 좌석을 다시 선택해 주세요.",
+};
+const DECLINED_TOAST: ToastMessage = {
+  code: "PAYMENT_DECLINED",
+  text: "카드사에서 결제를 거절했어요. 선점은 유지 중이에요. 다시 시도해 주세요.",
+};
+const SLOW_TOAST: ToastMessage = {
+  code: "PAYMENT_PENDING",
+  sticky: true,
+  text: "결제 승인이 늦어지고 있어요. 잠시 후 '결제 결과 확인'을 눌러 주세요. 두 번 결제되지 않아요.",
 };
 const UNKNOWN_TOAST: ToastMessage = {
   code: "RESULT_UNKNOWN",
@@ -55,7 +82,7 @@ export function PayClient({ reservationId }: { reservationId: number }) {
   const [agreed, setAgreed] = useState(true);
   const [phase, setPhase] = useState<Phase>("idle");
   const [toast, setToast] = useState<ToastMessage | null>(null);
-  // 결과를 못 받은 시도가 남아 있으면(키가 남아 있다) 버튼이 "결제 결과 확인"이 되고 같은 키로 이어간다
+  // 판정을 못 본 시도가 남아 있으면 버튼이 "결제 결과 확인"이 되고 새 결제 대신 그 시도를 이어서 확인한다
   const [resuming, setResuming] = useState(false);
   const remain = useCountdown(reservation?.status === "HELD" ? reservation.expiresAt : undefined);
 
@@ -67,8 +94,10 @@ export function PayClient({ reservationId }: { reservationId: number }) {
       alive.current = false;
     };
   }, []);
-  // 만료 처리는 한 번만 — 확인에 실패해도 조회를 되풀이하지 않는다
+  // 만료 처리·새로고침 재개·남의 결제 합류는 한 번만
   const expiryHandled = useRef(false);
+  const resumed = useRef(false);
+  const joinedPending = useRef(false);
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -94,54 +123,117 @@ export function PayClient({ reservationId }: { reservationId: number }) {
     if (reservation?.status === "CONFIRMED") router.replace(`/reservations/${reservationId}/done`);
   }, [reservation?.status, router, reservationId]);
 
-  /** 서버 상태를 다시 읽어 확정돼 있으면 완료로 보낸다 (부작용 없는 조회). */
-  const settledAsConfirmed = useCallback(async () => {
-    const latest = await getReservation(reservationId).catch(() => null);
-    if (latest?.status !== "CONFIRMED") return false;
-    discardConfirmKey(reservationId); // 시도는 끝났다 — 응답만 잃어버린 것
-    goDone();
-    return true;
-  }, [reservationId, goDone]);
+  /** 판정이 난 결과를 화면 이동으로 바꾼다 — 판정이 났으니 이 시도의 키는 끝났다. */
+  const settle = useCallback(
+    (outcome: Verdict) => {
+      if (!alive.current) return;
+      discardConfirmKey(reservationId);
+      setResuming(false);
+      if (outcome === "confirmed") {
+        goDone();
+        return;
+      }
+      if (outcome === "declined") {
+        setPhase("idle");
+        setToast(DECLINED_TOAST);
+        return;
+      }
+      if (scheduleId) clearActiveHold(scheduleId);
+      setToast(outcome === "failed" ? FAILED_TOAST : outcome === "lost" ? LOST_TOAST : EXPIRED_TOAST);
+      goSeats(1_500);
+    },
+    [reservationId, scheduleId, goDone, goSeats],
+  );
 
   /**
-   * 결과를 모를 때(네트워크·타임아웃·5xx·새로고침): 돈이 나갔을 수 있으니 새 키를 만들지 않는다.
-   * 먼저 부작용 없는 조회로 몇 초 확인하고, 그래도 모르면 같은 접수번호로 이어갈 버튼을 남긴다.
-   * 몇 초를 기다리는 이유 — 먼저 보낸 요청이 서버에서 아직 처리 중일 수 있어서(서버는 같은 키의 동시 요청을 막지 않는다).
+   * 접수(202) 뒤 판정을 기다린다 — 부작용 없는 조회를 1초마다. 이 사이에 키를 버리면 안 된다:
+   * 새 키로 다시 누르면 결제 요청 쪽지가 한 장 더 나간다(서버가 PAYMENT_IN_PROGRESS로 막지만 여기서도 지킨다).
+   */
+  const waitForOutcome = useCallback(async () => {
+    // 이 탭이 서버 판정을 직접 보고 있다 — 낡은 예매 스냅샷(REQUESTED)으로 다시 합류하지 않는다
+    joinedPending.current = true;
+    setPhase("waiting");
+    const deadline = Date.now() + WAIT_LIMIT_MS;
+    while (alive.current) {
+      const latest = await getReservation(reservationId).catch(() => null);
+      if (!alive.current) return;
+      const outcome = latest ? classifyPaymentOutcome(latest) : "pending";
+      if (outcome !== "pending" && outcome !== "open") {
+        settle(outcome);
+        return;
+      }
+      if (Date.now() >= deadline) {
+        setResuming(true);
+        setPhase("idle");
+        setToast(SLOW_TOAST);
+        return;
+      }
+      await wait(WAIT_INTERVAL_MS);
+    }
+  }, [reservationId, settle]);
+
+  /**
+   * 결과를 모를 때(네트워크·타임아웃·5xx·새로고침): 요청이 서버에 닿았는지부터 조회로 확인한다.
+   * 결제 중이면 판정을 기다리고, 판정이 났으면 따른다. 끝내 모르면 같은 접수번호로 이어갈 버튼을 남긴다 —
+   * 서버에 닿았으면 저장된 202가 재생되고, 안 닿았으면 그때 처음 처리돼 어느 쪽이든 쪽지는 한 장이다.
    */
   const verifyThenPrompt = useCallback(async () => {
     setPhase("checking");
     for (let i = 0; i < VERIFY_POLLS; i++) {
       await wait(VERIFY_INTERVAL_MS);
       if (!alive.current) return;
-      if (await settledAsConfirmed()) return;
+      const latest = await getReservation(reservationId).catch(() => null);
+      if (!alive.current) return;
+      if (!latest) continue;
+      const outcome = classifyPaymentOutcome(latest);
+      if (outcome === "pending") {
+        await waitForOutcome();
+        return;
+      }
+      if (outcome === "confirmed" || outcome === "failed" || outcome === "ended" || outcome === "lost") {
+        settle(outcome);
+        return;
+      }
+      if (outcome === "declined" && isConfirmAccepted(reservationId)) {
+        settle("declined"); // 202를 받은 시도다 — 이 거절은 이 시도의 것이다
+        return;
+      }
+      // declined·open — 이 시도가 닿았는지 모른다(거절이 이전 시도의 것일 수도). 같은 키 재전송이 가려 준다
     }
     if (!alive.current) return;
     setResuming(true);
     setPhase("idle");
     setToast(UNKNOWN_TOAST);
-  }, [settledAsConfirmed]);
+  }, [reservationId, settle, waitForOutcome]);
 
-  // 결과를 못 받은 시도가 남아 있으면(키가 남아 있다) 새로고침 직후에도 같은 절차로 이어간다
+  // 판정을 못 본 시도가 남아 있으면(키가 남아 있다) 새로고침 직후에도 같은 절차로 이어간다.
+  // 예매를 읽은 뒤에 한 번만 시작한다 — 먼저 시작하면 scheduleId 없는 settle을 쥔 루프가 하나 더 돈다
   useEffect(() => {
-    if (hasConfirmKey(reservationId)) void verifyThenPrompt();
-  }, [reservationId, verifyThenPrompt]);
+    if (resumed.current || scheduleId === undefined || !hasConfirmKey(reservationId)) return;
+    resumed.current = true;
+    void verifyThenPrompt();
+  }, [scheduleId, reservationId, verifyThenPrompt]);
+
+  // 다른 탭(또는 떠났다 돌아온 이 탭)이 보낸 결제가 진행 중이면 — 새 결제 대신 그 판정을 함께 기다린다
+  useEffect(() => {
+    if (joinedPending.current || phase !== "idle" || hasConfirmKey(reservationId)) return;
+    if (reservation?.status !== "HELD" || reservation.paymentStatus !== "REQUESTED") return;
+    joinedPending.current = true;
+    void waitForOutcome();
+  }, [reservation?.status, reservation?.paymentStatus, phase, reservationId, waitForOutcome]);
 
   // 카운트다운이 끝나면 좌석 선택으로 — 단, 결제 요청 중이면 서버 판정을 기다린다.
-  // 결과를 못 받은 시도가 남아 있으면 서버에 먼저 묻는다(그 시도가 만료 직전에 확정됐을 수 있다).
+  // 판정을 못 본 시도가 남아 있으면 서버에 먼저 묻는다(그 시도가 만료 직전에 확정됐을 수 있다).
+  // 재진입은 expiryHandled가 막는다 — 정리 함수로 취소하면 자기 setPhase("checking")에 스스로 취소돼 멈춘다.
   useEffect(() => {
     if (remain !== 0 || phase !== "idle" || expiryHandled.current) return;
     expiryHandled.current = true;
-    let cancelled = false;
     (async () => {
-      if (hasConfirmKey(reservationId)) {
+      // 이 탭의 시도가 있거나(키) 남의 결제를 기다리다 상한에 걸렸으면(resuming) 서버에 먼저 묻는다
+      if (hasConfirmKey(reservationId) || resuming) {
         setPhase("checking");
         const latest = await getReservation(reservationId).catch(() => null);
-        if (cancelled || !alive.current) return;
-        if (latest?.status === "CONFIRMED") {
-          discardConfirmKey(reservationId);
-          goDone();
-          return;
-        }
+        if (!alive.current) return;
         if (latest === null) {
           // 서버에 못 물었다 — 키를 지키고, 사용자가 이어서 확인할 수 있게 둔다
           setResuming(true);
@@ -149,60 +241,45 @@ export function PayClient({ reservationId }: { reservationId: number }) {
           setToast(UNKNOWN_TOAST);
           return;
         }
+        const outcome = classifyPaymentOutcome(latest);
+        if (outcome === "confirmed" || outcome === "failed" || outcome === "lost") {
+          settle(outcome);
+          return;
+        }
       }
-      discardConfirmKey(reservationId);
-      if (scheduleId) clearActiveHold(scheduleId);
-      setToast(EXPIRED_TOAST);
-      goSeats(1_200);
+      settle("ended");
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [remain, phase, reservationId, scheduleId, goDone, goSeats]);
+  }, [remain, phase, reservationId, resuming, settle]);
 
-  /** 한 번의 결제 시도. 실패는 분류표(confirm-policy)대로 처리한다. */
+  /** 한 번의 결제 시도. 접수(202)되면 판정을 기다리고, 실패는 분류표(confirm-policy)대로 처리한다. */
   const attempt = useCallback(
     async (key: string): Promise<void> => {
       let failure;
       try {
-        const result = await confirmReservation(reservationId, key);
-        if (!alive.current) return;
-        saveConfirmResult(reservationId, result);
-        discardConfirmKey(reservationId);
-        goDone();
-        return;
+        await confirmReservation(reservationId, key); // 202 접수 — 판정이 아니다. 키는 판정이 날 때까지 지킨다
       } catch (e) {
         failure = classifyConfirmFailure(e);
       }
       if (!alive.current) return;
+      if (!failure) {
+        markConfirmAccepted(reservationId);
+        await waitForOutcome();
+        return;
+      }
       switch (failure.kind) {
-        case "declined":
-          // 같은 키면 거절 응답이 재생된다 — 다음 시도는 새 키
+        case "inProgress":
+          // 다른 시도(다른 탭·잃어버린 응답)가 결제 중 — 이 시도는 거부됐으니 키를 버리고 그 판정을 기다린다
           discardConfirmKey(reservationId);
-          setResuming(false);
-          setPhase("idle");
-          setToast({
-            code: "PAYMENT_DECLINED",
-            text: "카드사에서 결제를 거절했어요. 선점은 유지 중이에요. 다시 시도해 주세요.",
-          });
+          await waitForOutcome();
           return;
-        case "verify":
+        case "verify": {
           // 만료·상태 충돌은 "잃어버린 성공"일 수도 있다(중복 탭, 커밋 뒤 끊김) — 상태를 한 번 더 본다
-          if (await settledAsConfirmed()) return;
+          const latest = await getReservation(reservationId).catch(() => null);
           if (!alive.current) return;
-          discardConfirmKey(reservationId);
-          if (scheduleId) clearActiveHold(scheduleId);
-          setToast(
-            failure.code === "SEAT_ALREADY_CONFIRMED"
-              ? {
-                  code: failure.code,
-                  sticky: true,
-                  text: "이 좌석은 이미 다른 예매로 확정됐어요. 다른 좌석을 골라 주세요.",
-                }
-              : { ...EXPIRED_TOAST, code: failure.code },
-          );
-          goSeats(1_500);
+          const outcome = latest ? classifyPaymentOutcome(latest) : "ended";
+          settle(outcome === "confirmed" || outcome === "failed" || outcome === "lost" ? outcome : "ended");
           return;
+        }
         case "gone":
           discardConfirmKey(reservationId);
           setPhase("idle");
@@ -223,12 +300,12 @@ export function PayClient({ reservationId }: { reservationId: number }) {
           return;
         case "server":
         case "unknown":
-          // 5xx도 "결과 모름"으로 다룬다 — PG 승인 뒤에 서버가 넘어졌을 수 있어, 같은 키라도 바로 다시 보내지 않는다
+          // 5xx도 "결과 모름"으로 다룬다 — 커밋 뒤에 넘어졌을 수 있어, 같은 키라도 바로 다시 보내지 않는다
           await verifyThenPrompt();
           return;
       }
     },
-    [reservationId, scheduleId, goDone, goSeats, settledAsConfirmed, verifyThenPrompt],
+    [reservationId, settle, waitForOutcome, verifyThenPrompt],
   );
 
   const pay = useCallback(async () => {
@@ -239,11 +316,35 @@ export function PayClient({ reservationId }: { reservationId: number }) {
     }
     setToast(null);
     setPhase("paying");
-    // 이어서 확인하는 경우: 먼저 보낸 요청이 그사이 끝났을 수 있으니 보내기 전에 한 번 더 조회한다
-    if (resuming && (await settledAsConfirmed())) return;
-    if (!alive.current) return;
+    if (resuming) {
+      // 이어서 확인: 먼저 보낸 시도가 그사이 판정됐을 수 있으니 보내기 전에 한 번 더 조회한다
+      const latest = await getReservation(reservationId).catch(() => null);
+      if (!alive.current) return;
+      const action = resumeAction(
+        latest ? classifyPaymentOutcome(latest) : null,
+        hasConfirmKey(reservationId),
+        isConfirmAccepted(reservationId),
+      );
+      switch (action.kind) {
+        case "wait":
+          await waitForOutcome();
+          return;
+        case "settle":
+          settle(action.verdict);
+          return;
+        case "stay":
+          setPhase("idle");
+          setToast(SLOW_TOAST);
+          return;
+        case "reset":
+          setResuming(false);
+          break;
+        case "resend":
+          break;
+      }
+    }
     await attempt(currentConfirmKey(reservationId));
-  }, [phase, agreed, resuming, attempt, settledAsConfirmed, reservationId]);
+  }, [phase, agreed, resuming, reservationId, attempt, settle, waitForOutcome]);
 
   if (view.loading) {
     return (
@@ -263,7 +364,12 @@ export function PayClient({ reservationId }: { reservationId: number }) {
     return (
       <Shell>
         <StatusCard
-          title={reservation.status === "CANCELLED" ? "취소된 예매예요" : "선점 시간이 지났어요"}
+          title={
+            reservation.status === "CANCELLED" ? "취소된 예매예요"
+            : reservation.paymentStatus === "FAILED" ? "결제 처리 중 오류로 선점이 풀렸어요"
+            : reservation.paymentStatus === "APPROVED" ? "좌석을 확정하지 못했어요"
+            : "선점 시간이 지났어요"
+          }
           sub="좌석을 다시 선택해 주세요."
           href={seatsHref}
           cta="좌석 다시 선택"
@@ -275,6 +381,7 @@ export function PayClient({ reservationId }: { reservationId: number }) {
   const busy = phase !== "idle";
   const ctaLabel =
     phase === "paying" ? "승인 요청 중…"
+    : phase === "waiting" ? "결제 승인 대기 중…"
     : phase === "checking" ? "결제 결과 확인 중…"
     : phase === "leaving" ? "이동 중…"
     : resuming ? "결제 결과 확인"

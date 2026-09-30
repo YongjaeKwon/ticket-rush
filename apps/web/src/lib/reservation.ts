@@ -9,11 +9,14 @@ export type ScheduleDetail = components["schemas"]["ScheduleDetailResponse"];
 export type SeatLayout = components["schemas"]["SeatLayoutResponse"];
 
 /**
- * 홀드·결제 응답을 기다려 줄 시간. 넘기면 "결과를 모르는" 상태로 본다 —
+ * 홀드·확정 요청의 응답을 기다려 줄 시간. 넘기면 "결과를 모르는" 상태로 본다 —
  * 먼저 조회(GET)로 확인하고, 그래도 모르면 같은 접수번호로 다시 보낸다.
+ * (확정은 202 접수라 결제를 기다리지 않는다 — 판정 대기는 결제 화면의 폴링 몫)
  */
 export const HOLD_TIMEOUT_MS = 10_000;
 export const CONFIRM_TIMEOUT_MS = 10_000;
+/** 조회는 판정 대기 폴링이 1초마다 부른다 — 응답이 멈추면 20초 상한이 지켜지지 않으니 끊는다 */
+export const READ_TIMEOUT_MS = 5_000;
 
 /** 생성 타입은 필드를 전부 선택으로 잡는다 — 서버 계약상 항상 오는 값은 여기서 확정한다. */
 function required<T>(value: T | undefined, field: string): T {
@@ -27,6 +30,7 @@ export function getReservation(reservationId: number): Promise<Reservation> {
   return api<Reservation>(`/api/reservations/${reservationId}`, {
     headers: { "X-User-Id": getUserId() },
     cache: "no-store",
+    signal: AbortSignal.timeout(READ_TIMEOUT_MS),
   });
 }
 
@@ -55,8 +59,8 @@ export async function holdSeat(
 }
 
 /**
- * 결제 승인 → 확정. 접수번호(Idempotency-Key)는 호출자가 관리한다 —
- * 같은 시도의 재전송이면 같은 키, 사용자가 새로 시도하는 것이면 새 키.
+ * 확정 요청 — 202로 "결제 요청 접수"만 돌려준다. 판정(승인·거절·실패)은 getReservation으로 받는다 (ADR 0009).
+ * 접수번호(Idempotency-Key)는 호출자가 관리한다 — 같은 시도의 재전송이면 같은 키, 새 시도면 새 키.
  */
 export function confirmReservation(
   reservationId: number,
@@ -88,10 +92,11 @@ export function describeSeat(layout: SeatLayout, seatId: number): string | null 
 }
 
 /* ── 확정 접수번호(Idempotency-Key) 보관 ───────────────────────────
-   서버는 같은 키의 응답을 24시간 저장해 두고 그대로 재생한다(4xx 포함, 5xx 제외).
-   그래서 키의 수명은 "한 번의 결제 시도"와 같다:
-   - 네트워크 오류·타임아웃·5xx로 결과를 모를 때 → 먼저 조회로 확인하고, 그래도 모르면 같은 키로 다시 보낸다 (두 번 결제되지 않는다)
-   - PG가 거절해서 사용자가 다시 시도할 때 → 키를 버리고 새로 만든다 (같은 키면 거절 응답이 재생된다)
+   서버는 같은 키의 응답을 24시간 저장해 두고 그대로 재생한다(202·4xx 포함, 5xx 제외).
+   그래서 키의 수명은 "한 번의 결제 시도" = 결제 요청 쪽지 한 장과 같다:
+   - 접수(202)된 뒤 판정을 기다릴 때 → 같은 키 (다시 보내도 202가 재생될 뿐 쪽지가 또 나가지 않는다)
+   - 네트워크 오류·타임아웃·5xx로 결과를 모를 때 → 먼저 조회로 확인하고, 그래도 모르면 같은 키로 다시 보낸다
+   - 판정이 났을 때(승인·거절·실패) → 키를 버린다. 거절 뒤 재시도는 새 키여야 쪽지가 새로 나간다
    새로고침에도 살아야 하므로 sessionStorage에 둔다. */
 const confirmKeyName = (reservationId: number) => `tr-confirm-key-${reservationId}`;
 
@@ -106,9 +111,22 @@ export function currentConfirmKey(reservationId: number): string {
 
 export function discardConfirmKey(reservationId: number) {
   sessionStorage.removeItem(confirmKeyName(reservationId));
+  sessionStorage.removeItem(acceptedName(reservationId));
 }
 
-/** 키가 남아 있다 = 결과를 못 받은 시도가 있다 (성공·거절이면 그 자리에서 버리므로). */
+/* 그 시도가 202로 접수된 것을 보았다는 표지 — 새로고침 뒤 조회에 거절이 보이면 "이 시도의 거절"로 확정할 수 있다
+   (못 보았으면 요청이 서버에 닿았는지 모르니 같은 키 재전송으로 가린다). 키와 함께 버린다. */
+const acceptedName = (reservationId: number) => `tr-confirm-accepted-${reservationId}`;
+
+export function markConfirmAccepted(reservationId: number) {
+  sessionStorage.setItem(acceptedName(reservationId), "1");
+}
+
+export function isConfirmAccepted(reservationId: number): boolean {
+  return sessionStorage.getItem(acceptedName(reservationId)) !== null;
+}
+
+/** 키가 남아 있다 = 판정을 못 본 시도가 있다 (판정이 나면 그 자리에서 버리므로). */
 export function hasConfirmKey(reservationId: number): boolean {
   return sessionStorage.getItem(confirmKeyName(reservationId)) !== null;
 }
@@ -130,16 +148,4 @@ export function loadActiveHold(scheduleId: number): ActiveHold | null {
 
 export function clearActiveHold(scheduleId: number) {
   sessionStorage.removeItem(activeHoldName(scheduleId));
-}
-
-/* 확정 응답(PG 승인번호)은 조회 API에 없다 — 완료 화면에 보여주려고 잠시 들고 간다 */
-const confirmResultName = (reservationId: number) => `tr-confirm-result-${reservationId}`;
-
-export function saveConfirmResult(reservationId: number, result: ConfirmResult) {
-  sessionStorage.setItem(confirmResultName(reservationId), JSON.stringify(result));
-}
-
-export function readConfirmResult(reservationId: number): ConfirmResult | null {
-  const raw = sessionStorage.getItem(confirmResultName(reservationId));
-  return raw ? (JSON.parse(raw) as ConfirmResult) : null;
 }

@@ -37,16 +37,18 @@ class ReservationTest {
         void 만료_전이면_확정된다() {
             Reservation reservation = heldReservation();
 
-            reservation.confirm(NOW.plusMinutes(4));
+            reservation.confirm(NOW.plusMinutes(4), "mock-tx");
 
             assertThat(reservation.status()).isEqualTo(ReservationStatus.CONFIRMED);
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+            assertThat(reservation.paymentTransactionId()).isEqualTo("mock-tx");
         }
 
         @Test
         void 만료시각_정각까지는_확정할_수_있다() {
             Reservation reservation = heldReservation();
 
-            reservation.confirm(NOW.plusMinutes(5));
+            reservation.confirm(NOW.plusMinutes(5), "mock-tx");
 
             assertThat(reservation.status()).isEqualTo(ReservationStatus.CONFIRMED);
         }
@@ -56,7 +58,7 @@ class ReservationTest {
             Reservation reservation = heldReservation();
 
             ReservationException e = catchThrowableOfType(ReservationException.class,
-                    () -> reservation.confirm(NOW.plusMinutes(5).plusSeconds(1)));
+                    () -> reservation.confirm(NOW.plusMinutes(5).plusSeconds(1), "mock-tx"));
 
             assertThat(e.code()).isEqualTo("HOLD_EXPIRED");
             assertThat(reservation.status()).isEqualTo(ReservationStatus.HELD);   // 상태는 안 바뀐다
@@ -65,9 +67,9 @@ class ReservationTest {
         @Test
         void 확정은_최종_상태라_다시_확정할_수_없다() {
             Reservation reservation = heldReservation();
-            reservation.confirm(NOW);
+            reservation.confirm(NOW, "mock-tx");
 
-            assertThatThrownBy(() -> reservation.confirm(NOW))
+            assertThatThrownBy(() -> reservation.confirm(NOW, "mock-tx"))
                     .isInstanceOf(ReservationException.class)
                     .hasFieldOrPropertyWithValue("code", "INVALID_RESERVATION_STATE");
         }
@@ -88,7 +90,7 @@ class ReservationTest {
         @Test
         void 확정된_예매는_만료시킬_수_없다() {
             Reservation reservation = heldReservation();
-            reservation.confirm(NOW);
+            reservation.confirm(NOW, "mock-tx");
 
             assertThatThrownBy(reservation::expire)
                     .isInstanceOf(ReservationException.class)
@@ -113,7 +115,7 @@ class ReservationTest {
             Reservation reservation = heldReservation();
             reservation.cancel();
 
-            assertThatThrownBy(() -> reservation.confirm(NOW))
+            assertThatThrownBy(() -> reservation.confirm(NOW, "mock-tx"))
                     .isInstanceOf(ReservationException.class);
             assertThatThrownBy(reservation::expire)
                     .isInstanceOf(ReservationException.class);
@@ -124,7 +126,7 @@ class ReservationTest {
         @Test
         void 확정된_예매는_취소할_수_없다_환불은_범위_밖() {
             Reservation reservation = heldReservation();
-            reservation.confirm(NOW);
+            reservation.confirm(NOW, "mock-tx");
 
             assertThatThrownBy(reservation::cancel)
                     .isInstanceOf(ReservationException.class)
@@ -132,14 +134,160 @@ class ReservationTest {
         }
     }
 
+    /** 3단계 비동기 확정 — 결제 진행 상태 (ADR 0009) */
+    @Nested
+    class PaymentAttempt {
+
+        @Test
+        void 홀드_직후에는_결제_상태가_없다() {
+            assertThat(heldReservation().paymentStatus()).isNull();
+        }
+
+        @Test
+        void 결제를_요청하면_HELD_그대로_REQUESTED가_된다() {
+            Reservation reservation = heldReservation();
+
+            reservation.requestPayment(NOW.plusMinutes(1));
+
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.HELD);
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.REQUESTED);
+        }
+
+        @Test
+        void 결제_중에_다시_요청하면_PAYMENT_IN_PROGRESS로_거부된다_이중_결제_방지() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+
+            assertThatThrownBy(() -> reservation.requestPayment(NOW))
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "PAYMENT_IN_PROGRESS");
+        }
+
+        @Test
+        void 만료된_홀드는_결제를_요청할_수_없다() {
+            Reservation reservation = heldReservation();
+
+            assertThatThrownBy(() -> reservation.requestPayment(NOW.plusMinutes(5).plusSeconds(1)))
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "HOLD_EXPIRED");
+            assertThat(reservation.paymentStatus()).isNull();
+        }
+
+        @Test
+        void 거절되면_HELD_그대로_DECLINED가_되고_새로_요청할_수_있다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+
+            reservation.declinePayment();
+
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.HELD);
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.DECLINED);
+            reservation.requestPayment(NOW);   // 재시도 허용
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.REQUESTED);
+        }
+
+        @Test
+        void 실패하면_되돌리기로_EXPIRED와_FAILED가_된다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+
+            reservation.failPayment();
+
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.EXPIRED);
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.FAILED);
+        }
+
+        @Test
+        void 결제_중에는_취소할_수_없다_취소_뒤_승인이_오면_돈만_나간다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+
+            assertThatThrownBy(reservation::cancel)
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "PAYMENT_IN_PROGRESS");
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.HELD);
+        }
+
+        @Test
+        void 승인됐지만_좌석을_놓치면_EXPIRED와_APPROVED로_닫히고_승인번호는_남는다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+
+            reservation.loseSeat("mock-tx");
+
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.EXPIRED);
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+            assertThat(reservation.paymentTransactionId()).isEqualTo("mock-tx");
+        }
+
+        @Test
+        void 확정된_예매는_다시_결제를_요청할_수_없다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+            reservation.confirm(NOW, "mock-tx");
+
+            assertThatThrownBy(() -> reservation.requestPayment(NOW.plusMinutes(1)))
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "INVALID_RESERVATION_STATE");
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        }
+
+        @Test
+        void 결제_실패로_풀린_예매는_다시_결제를_요청할_수_없다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+            reservation.failPayment();
+
+            assertThatThrownBy(() -> reservation.requestPayment(NOW.plusMinutes(1)))
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "INVALID_RESERVATION_STATE");
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.FAILED);
+        }
+
+        @Test
+        void 취소된_예매는_결제를_요청할_수_없다() {
+            Reservation reservation = heldReservation();
+            reservation.cancel();
+
+            assertThatThrownBy(() -> reservation.requestPayment(NOW))
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "INVALID_RESERVATION_STATE");
+        }
+
+        @Test
+        void 확정된_예매에_늦은_거절이_와도_승인_표지는_그대로다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+            reservation.confirm(NOW, "mock-tx");
+
+            assertThatThrownBy(reservation::declinePayment)
+                    .isInstanceOf(ReservationException.class)
+                    .hasFieldOrPropertyWithValue("code", "INVALID_RESERVATION_STATE");
+            assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        }
+
+        @Test
+        void 거절된_뒤에는_취소할_수_있다() {
+            Reservation reservation = heldReservation();
+            reservation.requestPayment(NOW);
+            reservation.declinePayment();
+
+            reservation.cancel();
+
+            assertThat(reservation.status()).isEqualTo(ReservationStatus.CANCELLED);
+        }
+    }
+
     @Test
     void reconstitute는_DB_행을_그대로_복원한다() {
         Reservation reservation = Reservation.reconstitute(42L, 1L, 17L, "user-1",
-                ReservationStatus.CONFIRMED, NOW.plusMinutes(5), 3L, NOW);
+                ReservationStatus.CONFIRMED, NOW.plusMinutes(5), 3L, NOW, PaymentStatus.APPROVED, "mock-tx");
 
         assertThat(reservation.id()).isEqualTo(42L);
         assertThat(reservation.status()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(reservation.version()).isEqualTo(3L);
+        assertThat(reservation.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(reservation.paymentTransactionId()).isEqualTo("mock-tx");
         assertThat(reservation.isHeld()).isFalse();
     }
 }

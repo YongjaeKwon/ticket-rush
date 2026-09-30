@@ -1,15 +1,15 @@
 "use client";
 
-// 완료 화면 — 월렛 패스. 예매·회차·좌석은 서버에서 다시 읽는다.
-// PG 승인번호는 확정 응답에만 있어(조회 API에 없음) 같은 탭에서 넘어왔을 때만 보여준다.
-import { useCallback, useEffect, useMemo, useState } from "react";
+// 완료 화면 — 월렛 패스. 예매·회차·좌석·PG 승인번호 모두 서버에서 다시 읽는다 —
+// 새 탭·다른 기기에서 열어도 같은 티켓이 된다.
+import { useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArtPanel, SeatSig } from "@/components/ArtPanel";
 import { ReservationLoadError } from "@/components/ReservationLoadError";
 import { StatusCard } from "@/components/StatusCard";
 import { formatDateTime, parseUtc } from "@/lib/format";
 import { TOTAL_PRICE, formatKrw } from "@/lib/pricing";
-import { clearActiveHold, discardConfirmKey, readConfirmResult } from "@/lib/reservation";
+import { clearActiveHold, discardConfirmKey } from "@/lib/reservation";
 import { useReservationView } from "@/lib/use-reservation-view";
 
 /**
@@ -44,13 +44,9 @@ export function DoneClient({ reservationId }: { reservationId: number }) {
   const view = useReservationView(reservationId);
   const reservation = view.reservation;
   const scheduleId = reservation?.scheduleId;
-  const [paymentTx, setPaymentTx] = useState<string | null>(null);
+  const paymentTx = reservation?.paymentTransactionId ?? null;
 
-  useEffect(() => {
-    setPaymentTx(readConfirmResult(reservationId)?.paymentTransactionId ?? null);
-  }, [reservationId]);
-
-  // 아직 결제 전이면(URL 직접 진입) 결제 화면으로
+  // 아직 결제 전이거나 결제 중이면(URL 직접 진입·다른 탭) 결제 화면으로 — 그쪽이 판정을 기다린다
   useEffect(() => {
     if (reservation?.status === "HELD") router.replace(`/reservations/${reservationId}/pay`);
   }, [reservation?.status, router, reservationId]);
@@ -85,7 +81,12 @@ export function DoneClient({ reservationId }: { reservationId: number }) {
     return (
       <Shell>
         <StatusCard
-          title={reservation.status === "CANCELLED" ? "취소된 예매예요" : "선점 시간이 지나 확정되지 않았어요"}
+          title={
+            reservation.status === "CANCELLED" ? "취소된 예매예요"
+            : reservation.paymentStatus === "FAILED" ? "결제 처리 중 오류로 확정되지 않았어요"
+            : reservation.paymentStatus === "APPROVED" ? "결제는 승인됐지만 좌석을 확정하지 못했어요"
+            : "선점 시간이 지나 확정되지 않았어요"
+          }
           sub="좌석을 다시 선택해 주세요."
           href={scheduleId ? `/schedules/${scheduleId}/seats` : "/"}
           cta="좌석 다시 선택"

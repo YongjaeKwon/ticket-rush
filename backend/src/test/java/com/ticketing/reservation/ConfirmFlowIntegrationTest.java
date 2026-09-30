@@ -28,16 +28,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 /**
- * Mock PG 거절율을 100%로 놓고 비동기 거절 왕복을 검증한다 — 거절은 전이가 아니다.
- * 202 접수 → 거절 쪽지 → 조회에서 HELD + DECLINED(좌석·홀드 유지) → 새 접수번호로 재시도하면 다시 요청된다.
+ * 비동기 확정의 전 구간을 HTTP부터 실물로 검증한다 — 웹이 겪는 그대로:
+ * 홀드 → 확정 202 → 서랍 → 릴레이 → reservation.events → payment(mock PG 승인) → payment.events
+ * → 결과 컨슈머 → 조회에서 CONFIRMED와 승인번호가 보인다.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "payment.mock.failure-rate=1.0",
         "hold-expiry.enabled=false",
-        "outbox.relay.poll-interval-ms=200"})
+        "outbox.relay.poll-interval-ms=200",
+        "payment.mock.failure-rate=0.0"})   // 승인 왕복을 검증한다 — mock PG 기본값에 기대지 않는다
 @AutoConfigureTestRestTemplate
 @Testcontainers
-class PaymentDeclinedIntegrationTest {
+class ConfirmFlowIntegrationTest {
 
     @Container
     @ServiceConnection
@@ -74,39 +75,31 @@ class PaymentDeclinedIntegrationTest {
         return headers;
     }
 
-    private ResponseEntity<JsonNode> confirm(long id) {
-        return rest.postForEntity("/api/reservations/" + id + "/confirm",
-                new HttpEntity<>("", headersFor("user-1", UUID.randomUUID().toString())), JsonNode.class);
-    }
-
-    private void awaitDeclined(long id, long attempts) {
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            JsonNode view = rest.exchange("/api/reservations/" + id, HttpMethod.GET,
-                    new HttpEntity<>(headersFor("user-1", null)), JsonNode.class).getBody();
-            assertThat(view.get("status").asText()).isEqualTo("HELD");           // 전이 없음
-            assertThat(view.get("paymentStatus").asText()).isEqualTo("DECLINED"); // "결제 중"과 구분되는 표지
-            assertThat(jdbc.sql("SELECT COUNT(*) FROM payment WHERE status = 'DECLINED' AND reservation_id = " + id)
-                    .query(Long.class).single()).isEqualTo(attempts);
-        });
-    }
-
     @Test
-    void 결제가_거절되면_HELD와_홀드가_그대로_남고_새_접수번호로_재시도할_수_있다() {
+    void 확정_202_뒤_결과_쪽지가_돌아오면_조회에서_CONFIRMED와_승인번호가_보인다() {
         long id = rest.postForEntity("/api/reservations",
-                        new HttpEntity<>("{\"scheduleId\":1,\"seatId\":40}", headersFor("user-1", UUID.randomUUID().toString())),
+                        new HttpEntity<>("{\"scheduleId\":1,\"seatId\":80}", headersFor("user-flow", UUID.randomUUID().toString())),
                         JsonNode.class)
                 .getBody().get("reservationId").asLong();
 
-        assertThat(confirm(id).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        awaitDeclined(id, 1);
-        assertThat(redisTemplate.hasKey("hold:1:40")).isTrue();     // 홀드 유지 — 좌석을 뺏기지 않는다
-        assertThat(jdbc.sql("SELECT COUNT(*) FROM confirmed_seat WHERE seat_id = 40").query(Long.class).single())
-                .isZero();
+        ResponseEntity<JsonNode> accepted = rest.postForEntity("/api/reservations/" + id + "/confirm",
+                new HttpEntity<>("", headersFor("user-flow", UUID.randomUUID().toString())), JsonNode.class);
+        assertThat(accepted.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
 
-        // 거절 뒤에는 새 시도가 열린다 — 같은 키면 저장된 202만 재생되므로 새 키여야 한다 (ADR 0006·0009)
-        ResponseEntity<JsonNode> retry = confirm(id);
-        assertThat(retry.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        assertThat(retry.getBody().get("paymentStatus").asText()).isEqualTo("REQUESTED");
-        awaitDeclined(id, 2);
+        // 웹 결제 화면이 하는 그대로 — 조회를 폴링해 판정을 기다린다
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            JsonNode view = rest.exchange("/api/reservations/" + id, HttpMethod.GET,
+                    new HttpEntity<>(headersFor("user-flow", null)), JsonNode.class).getBody();
+            assertThat(view.get("status").asText()).isEqualTo("CONFIRMED");
+            assertThat(view.get("paymentStatus").asText()).isEqualTo("APPROVED");
+            assertThat(view.get("paymentTransactionId").asText()).startsWith("mock-");
+        });
+        assertThat(jdbc.sql("SELECT COUNT(*) FROM confirmed_seat WHERE seat_id = 80").query(Long.class).single())
+                .isEqualTo(1L);
+        // 금액은 서버 설정값 그대로 결제됐다
+        assertThat(jdbc.sql("SELECT amount FROM payment WHERE reservation_id = " + id).query(Integer.class).single())
+                .isEqualTo(134_000);
+        // 홀드 해제는 확정 커밋 뒤 — 같은 await 밖이라 잠시 기다린다
+        await().atMost(Duration.ofSeconds(5)).until(() -> !Boolean.TRUE.equals(redisTemplate.hasKey("hold:1:80")));
     }
 }

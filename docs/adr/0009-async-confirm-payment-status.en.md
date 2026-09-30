@@ -1,0 +1,13 @@
+# 0009. Async confirm API — 202 accepted, verdict read from the payment status stored on the reservation (stage 3)
+Date: 2026-09-30 · Stage: 3 · Status: decided · [한국어](0009-async-confirm-payment-status.md)
+## Context
+With ADR 0008 the confirm request publishes `PaymentRequested`, so the confirm API no longer calls the PG and only "accepts" with 202. The verdict arrives later, with the payment result event. But a decline is not a state transition (the reservation stays HELD), so a GET showed "payment in progress" and "declined" identically as HELD; and a second confirm with a new idempotency key before the result came back put two events on the wire and approved the payment twice. The server did not even know the amount (only a web constant did).
+## Options
+- **A payment-status column on the reservation** (chosen): `payment_status` (REQUESTED · APPROVED · DECLINED · FAILED) plus `payment_tx_id` on reservation, updated by the confirm request and by the result consumer.
+- Add `PAYMENT_PENDING` to the reservation status: the expiry query, cancel and the web's HELD branches all change in cascade, and a decline marker is still needed separately.
+- Join the payment table in the query: crosses the module boundary; once payment is split out (checklist 11) it becomes a synchronous service call.
+- Result delivery: **poll the GET** (chosen) rather than a per-reservation SSE. The seat SSE is a public stream that cannot identify a reservation, and a decline does not change the seat state.
+## Decision
+Record the payment status on the reservation. While a payment is in progress (REQUESTED) the domain rejects another confirm or a cancel with `PAYMENT_IN_PROGRESS` (409), and concurrent requests are serialised by the reservation's optimistic lock so only one commits — the double-charge defence. On 202 the web keeps the same idempotency key until a verdict and polls the GET every second (after a 20-second cap it offers "check payment result"). A failure (FAILED) is compensated to EXPIRED but the marker distinguishes it from a 5-minute expiry. The amount comes from server configuration (`ticket.price-krw`, until there is a pricing model) — a client-sent amount is never trusted.
+## Consequences
+Gained: confirm returns in milliseconds even when payment is slow, and decline, failure and the approval number show up in the GET, so a new tab or another device sees the same verdict. Lost: two columns on reservation (V5), a 2–4 s wait for the verdict (two 1-second relay hops), and E2E and CI now need Kafka. If the hold expires mid-payment an approval can no longer confirm, leaving a "charged but no seat" window — handled by the payment-timeout compensation (checklist 7) and refund compensation (backlog).

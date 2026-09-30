@@ -10,7 +10,11 @@ public interface ApplyPaymentResultUseCase {
 
     enum PaymentResult { APPROVED, DECLINED, FAILED }
 
-    /** eventId는 멱등 장부의 키 — 같은 쪽지가 두 번 와도 한 번만 반영된다. */
-    record PaymentResultCommand(String eventId, long reservationId, PaymentResult result) {
+    /**
+     * eventId는 멱등 장부의 키 — 같은 쪽지가 두 번 와도 한 번만 반영된다.
+     * paymentTransactionId는 승인 때만(PG 승인번호) — 조회 응답·완료 화면이 이걸 보여준다.
+     */
+    record PaymentResultCommand(String eventId, long reservationId, PaymentResult result,
+                                String paymentTransactionId) {
     }
 }

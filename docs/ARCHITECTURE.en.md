@@ -194,8 +194,8 @@ backend/src/main/java/com/ticketing
 ├── reservation/                # module (stage 1) — booking. the thickest module
 │   ├── domain/                 # Reservation, state transitions, domain events. pure Java (no Spring/JPA imports)
 │   ├── application/
-│   │   ├── port/in/            # capabilities offered = use-case interfaces (HoldSeatUseCase, ConfirmReservationUseCase, ExpireHoldUseCase, CancelReservationUseCase)
-│   │   ├── port/out/           # needs from the outside = interfaces (ReservationRepository, SeatHoldStore, PaymentGateway, EventPublisher, AdmissionTokenVerifier)
+│   │   ├── port/in/            # capabilities offered = use-case interfaces (HoldSeatUseCase, ConfirmReservationUseCase, ExpireHoldUseCase, CancelReservationUseCase, ApplyPaymentResultUseCase)
+│   │   ├── port/out/           # needs from the outside = interfaces (ReservationRepository, SeatHoldStore, EventPublisher, ProcessedEventStore, AdmissionTokenVerifier)
 │   │   └── service/            # use-case implementations. @Transactional lives here
 │   └── adapter/
 │       ├── in/web/             # REST controllers + DTOs
@@ -203,7 +203,6 @@ backend/src/main/java/com/ticketing
 │       ├── in/messaging/       # (stage 3) Kafka consumers
 │       ├── out/persistence/    # JPA entities, repository impls, outbox
 │       ├── out/redis/          # SeatHoldStore implementation
-│       ├── out/payment/        # MockPaymentGatewayAdapter (configurable delay/failure rate)
 │       └── out/messaging/      # (stage 3) Kafka publishing
 ├── payment/                    # module (stage 3)
 ├── notification/               # module (stage 3) — push consumer
@@ -248,8 +247,12 @@ Events are past tense (`ReservationHeld`). Tests are `~Test` (unit),
 - Redis `hold:{scheduleId}:{seatId}` = userId, `SET NX EX 300`. Release is a compare-and-delete (Lua) that only deletes when the value is my userId — a late release must not wipe a key someone else re-acquired right after expiry.
 - Order: Redis hold succeeds → save `HELD` + outbox row in one DB transaction → if the DB
   fails, delete the Redis hold immediately.
-- On confirm: domain `confirm()` → insert into `confirmed_seat` (UNIQUE) → delete the Redis
-  hold. A UNIQUE violation is answered as a confirmation failure.
+- Confirm request (stage 3, ADR 0009): domain `requestPayment()` (`PAYMENT_IN_PROGRESS` while a payment
+  is in flight) → `PaymentRequested` into the outbox (one transaction) → 202. The PG is not called here.
+- Applying an approval: domain `confirm()` → insert into `confirmed_seat` (UNIQUE) → save → delete the
+  Redis hold (after commit). On a UNIQUE violation it does not confirm and only records the ledger
+  (refund compensation is in the backlog). A decline only sets the `DECLINED` marker (still HELD); a
+  failure is compensated (`EXPIRED` + `FAILED`).
 
 **Expiry**
 
@@ -276,7 +279,7 @@ Events are past tense (`ReservationHeld`). Tests are `~Test` (unit),
 | Stage | Tables | Notes |
 |---|---|---|
 | 1 | `event(id, title, venue, open_at)` `schedule(id, event_id, starts_at)` `section(id, schedule_id, name, seat_count)` `seat(id, section_id, row_no, col_no)` | catalog. Seed: 1 event, 1 schedule, 4 sections × 500 seats = 2,000 |
-| 1 | `reservation(id, schedule_id, seat_id, user_id, status, expires_at, version, created_at)` | index `(status, expires_at)` |
+| 1 | `reservation(id, schedule_id, seat_id, user_id, status, expires_at, version, created_at)` | index `(status, expires_at)`. Stage 3 (V5) adds `payment_status`, `payment_tx_id` — payment-progress marker and approval number (ADR 0009) |
 | 1 | `confirmed_seat(schedule_id, seat_id, reservation_id)` | **UNIQUE(schedule_id, seat_id)** |
 | 1 | `outbox(id, aggregate_type, aggregate_id, event_type, payload JSON, created_at, published_at NULL)` | index `(published_at, created_at)` |
 | 3 | `payment(id, reservation_id, amount, status, pg_tx_id, created_at)` | |
@@ -317,7 +320,7 @@ from seat-hold onward also `Authorization: Bearer <admission JWT>`.
 | 1 | POST | `/schedules/{id}/queue` | join queue → `{position}` |
 | 1 | GET | `/schedules/{id}/queue/me` | `{position, admitted, token?}` |
 | 1 | POST | `/reservations` | `{scheduleId, seatId}` + Bearer + `Idempotency-Key` → 201 `{reservationId, expiresAt}` |
-| 1 | POST | `/reservations/{id}/confirm` | pay → confirm. sync in stage 1; event-driven in stage 3 (202 then SSE/poll) |
+| 1 | POST | `/reservations/{id}/confirm` | pay → confirm. Sync in stage 1. From stage 3: 202 accepted `{reservationId, status, paymentStatus}` — the verdict comes from the GET's `paymentStatus` · `paymentTransactionId` (ADR 0009) |
 | 1 | DELETE | `/reservations/{id}` | cancel |
 | 1 | GET | `/reservations/{id}` | fetch |
 | 2 | GET | `/schedules/{id}/queue/stream` | SSE position/admission |
@@ -326,7 +329,7 @@ from seat-hold onward also `Authorization: Bearer <admission JWT>`.
 | 5 | POST | `/devices` | push-token registration |
 
 Errors are RFC 9457 Problem Details (`application/problem+json`). Example codes:
-`SEAT_ALREADY_HELD`, `HOLD_EXPIRED`, `ADMISSION_REQUIRED`, `IDEMPOTENCY_CONFLICT`.
+`SEAT_ALREADY_HELD`, `HOLD_EXPIRED`, `ADMISSION_REQUIRED`, `IDEMPOTENCY_CONFLICT`, `PAYMENT_IN_PROGRESS`.
 
 ---
 

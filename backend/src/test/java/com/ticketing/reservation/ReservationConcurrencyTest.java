@@ -1,5 +1,9 @@
 package com.ticketing.reservation;
 
+import com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase;
+import com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase.PaymentResult;
+import com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase.PaymentResultCommand;
+import com.ticketing.reservation.application.port.in.CancelReservationUseCase.CancelCommand;
 import com.ticketing.reservation.application.port.in.ConfirmReservationUseCase;
 import com.ticketing.reservation.application.port.in.ConfirmReservationUseCase.ConfirmCommand;
 import com.ticketing.reservation.application.port.in.HoldSeatUseCase;
@@ -59,6 +63,12 @@ class ReservationConcurrencyTest {
     ConfirmReservationUseCase confirmReservation;
 
     @Autowired
+    ApplyPaymentResultUseCase applyPaymentResult;
+
+    @Autowired
+    com.ticketing.reservation.application.port.in.CancelReservationUseCase cancelReservation;
+
+    @Autowired
     StringRedisTemplate redisTemplate;
 
     @Autowired
@@ -68,6 +78,7 @@ class ReservationConcurrencyTest {
     void cleanUp() {
         jdbc.sql("DELETE FROM outbox").update();
         jdbc.sql("DELETE FROM confirmed_seat").update();
+        jdbc.sql("DELETE FROM processed_event").update();
         jdbc.sql("DELETE FROM reservation").update();
         redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
     }
@@ -134,22 +145,24 @@ class ReservationConcurrencyTest {
     }
 
     @Test
-    void 홀드가_중복된_비상_상황에서도_동시_확정의_승자는_1명이다() throws InterruptedException {
-        // Redis가 죽어 홀드 키가 사라진 상황을 재현 — 같은 좌석에 HELD 예매 10건을 만든다
+    void 홀드가_중복된_비상_상황에서도_동시_승인_반영의_승자는_1명이다() throws InterruptedException {
+        // Redis가 죽어 홀드 키가 사라진 상황을 재현 — 같은 좌석에 결제 요청까지 마친 HELD 예매 10건
         long seatId = 101L;
         List<Long> reservationIds = new java.util.ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            reservationIds.add(holdSeat.hold(
-                    new HoldSeatCommand(1L, seatId, "user-" + i, admissionFor("user-" + i))).reservationId());
+            long id = holdSeat.hold(
+                    new HoldSeatCommand(1L, seatId, "user-" + i, admissionFor("user-" + i))).reservationId();
             redisTemplate.delete("hold:1:" + seatId);        // 홀드 유실 재현
+            confirmReservation.confirm(new ConfirmCommand(id, "user-" + i));
+            reservationIds.add(id);
         }
 
-        RaceResult result = race(10, runner ->
-                confirmReservation.confirm(new ConfirmCommand(reservationIds.get(runner), "user-" + runner)));
+        // 결제가 10건 모두 승인됐다 — 결과 쪽지 10장이 동시에 반영된다(비동기 확정의 경합 지점)
+        RaceResult result = race(10, runner -> applyPaymentResult.apply(new PaymentResultCommand(
+                "approve-" + runner, reservationIds.get(runner), PaymentResult.APPROVED, "mock-tx-" + runner)));
 
-        assertThat(result.success().get()).isEqualTo(1);
-        assertThat(result.failureCodes()).hasSize(9);
-        assertThat(result.failureCodes()).containsOnly("SEAT_ALREADY_CONFIRMED");
+        // 진 쪽은 예외가 아니라 "기록하고 넘어간다" — 좌석을 놓친 승인은 로그와 장부로 남는다(환불은 backlog)
+        assertThat(result.failureCodes()).isEmpty();
 
         // 최종 방어선: 확정 좌석은 정확히 1행 — 이중 예매 0건
         Long confirmed = jdbc.sql("SELECT COUNT(*) FROM confirmed_seat WHERE seat_id = :seat")
@@ -159,8 +172,60 @@ class ReservationConcurrencyTest {
                         "SELECT COUNT(*) FROM reservation WHERE seat_id = :seat AND status = 'CONFIRMED'")
                 .param("seat", seatId).query(Long.class).single();
         assertThat(confirmedReservations).isEqualTo(1L);
+        // 좌석을 놓친 9건은 결론(EXPIRED + APPROVED)으로 닫혀 조회에 드러난다 — 결제 중으로 묶이지 않는다
+        Long lost = jdbc.sql("SELECT COUNT(*) FROM reservation WHERE seat_id = :seat"
+                        + " AND status = 'EXPIRED' AND payment_status = 'APPROVED'")
+                .param("seat", seatId).query(Long.class).single();
+        assertThat(lost).isEqualTo(9L);
 
-        System.out.printf("[동시성] 중복 홀드 10건 동시 확정: 성공 1, SEAT_ALREADY_CONFIRMED 9%n");
+        System.out.printf("[동시성] 중복 홀드 10건 동시 승인 반영: 확정 1, 좌석을 놓친 9건 EXPIRED+APPROVED%n");
+    }
+
+    @Test
+    void 취소와_확정이_동시에_와도_결제_중인_좌석의_홀드는_풀리지_않는다() throws InterruptedException {
+        // 취소가 커밋 전에 홀드를 풀면, 확정이 이겨 결제가 진행 중인 좌석이 남에게 열린다
+        for (int round = 0; round < 10; round++) {
+            long seatId = 200L + round;
+            String userId = "racer-" + round;
+            long id = holdSeat.hold(new HoldSeatCommand(1L, seatId, userId, admissionFor(userId))).reservationId();
+
+            RaceResult result = race(2, runner -> {
+                if (runner == 0) {
+                    confirmReservation.confirm(new ConfirmCommand(id, userId));
+                } else {
+                    cancelReservation.cancel(new CancelCommand(id, userId));
+                }
+            });
+
+            // 진 쪽은 409(PAYMENT_IN_PROGRESS·INVALID_RESERVATION_STATE)로 끝난다 — 500이 없다
+            assertThat(result.failureCodes()).allSatisfy(code -> assertThat(code)
+                    .isIn("PAYMENT_IN_PROGRESS", "INVALID_RESERVATION_STATE"));
+            String state = jdbc.sql("SELECT CONCAT(status, '|', COALESCE(payment_status, '-')) FROM reservation WHERE id = " + id)
+                    .query(String.class).single();
+            if (state.equals("HELD|REQUESTED")) {
+                assertThat(redisTemplate.hasKey("hold:1:" + seatId))
+                        .as("결제 중인 좌석의 홀드는 살아 있어야 한다 (round %d)", round).isTrue();
+            } else {
+                assertThat(state).isEqualTo("CANCELLED|-");
+            }
+        }
+    }
+
+    @Test
+    void 같은_예매에_확정_요청이_동시에_몰려도_결제_요청_쪽지는_한_장이다() throws InterruptedException {
+        long id = holdSeat.hold(new HoldSeatCommand(1L, 102L, "user-1", admissionFor("user-1"))).reservationId();
+
+        // 여러 탭·새 접수번호로 동시에 "결제하기" — 쪽지가 두 장 나가면 돈이 두 번 승인된다
+        RaceResult result = race(10, runner -> confirmReservation.confirm(new ConfirmCommand(id, "user-1")));
+
+        assertThat(result.success().get()).isEqualTo(1);
+        // 순차로 늦은 쪽은 도메인이, 동시에 겹친 쪽은 낙관적 락이 막는다 — 둘 다 같은 코드로 보인다
+        assertThat(result.failureCodes()).hasSize(9).containsOnly("PAYMENT_IN_PROGRESS");
+        Long requests = jdbc.sql("SELECT COUNT(*) FROM outbox WHERE event_type = 'PaymentRequested'")
+                .query(Long.class).single();
+        assertThat(requests).isEqualTo(1L);
+
+        System.out.printf("[동시성] 한 예매에 확정 요청 10건 동시: 접수 1, PAYMENT_IN_PROGRESS 9%n");
     }
 
     @Test

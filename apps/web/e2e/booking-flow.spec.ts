@@ -27,12 +27,15 @@ test("공연 목록에서 시작해 티켓을 받는다", async ({ page, request
   await expect(page.getByText(seat.label)).toBeVisible();
   await expect(page.getByText("134,000원 결제하기")).toBeVisible();
 
-  // 결제 → 완료 (월렛 패스에 같은 좌석과 예매번호)
+  // 결제 → 판정 대기(202 접수 뒤 조회 폴링) → 완료 (월렛 패스에 같은 좌석과 예매번호)
   await page.getByRole("button", { name: /결제하기/ }).click();
-  await expect(page).toHaveURL(/\/reservations\/\d+\/done/);
+  await expect(page).toHaveURL(/\/reservations\/\d+\/done/, { timeout: 20_000 });
   await expect(page.getByText("예매가 완료되었습니다")).toBeVisible();
   const pass = page.getByTestId("wallet-pass");
   await expect(pass).toContainText(seat.label);
   await expect(pass).toContainText(/TR-\d{4}-\d{6}/);
   await expect(pass).toContainText("134,000원");
+  // 승인번호는 조회 응답에서 온다 — 202 전환 뒤 확정 응답에는 더 이상 없어 조용히 사라지기 쉬운 칸이다
+  await expect(pass).toContainText("승인 번호");
+  await expect(pass).toContainText(/mock-[0-9a-f-]{36}/);
 });

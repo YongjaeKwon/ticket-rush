@@ -31,7 +31,7 @@ test("데모 녹화: 목록 → 상세 → 대기열 → 좌석 → 결제 → �
   await pause(1_600);
 
   await page.getByRole("button", { name: /결제하기/ }).click();
-  await expect(page).toHaveURL(/\/done/);
+  await expect(page).toHaveURL(/\/done/, { timeout: 20_000 }); // 202 접수 뒤 결제 왕복을 기다린다
   await expect(page.getByText("예매가 완료되었습니다")).toBeVisible();
   await pause(2_600);
 });

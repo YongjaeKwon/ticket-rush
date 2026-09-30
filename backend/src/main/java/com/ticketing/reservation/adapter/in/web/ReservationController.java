@@ -10,6 +10,7 @@ import com.ticketing.reservation.application.port.in.HoldSeatUseCase.HoldSeatCom
 import com.ticketing.reservation.domain.Reservation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -51,11 +53,14 @@ class ReservationController {
     record HoldResponse(long reservationId, LocalDateTime expiresAt) {
     }
 
-    record ConfirmResponse(long reservationId, String status, String paymentTransactionId) {
+    /** 확정 요청 접수 결과 — 판정이 아니다. 결과는 GET으로 확인한다 (ADR 0009) */
+    record ConfirmResponse(long reservationId, String status, String paymentStatus) {
     }
 
+    /** paymentStatus: 요청 전 null · REQUESTED(결제 중) · APPROVED · DECLINED · FAILED */
     record ReservationResponse(long reservationId, long scheduleId, long seatId,
-                               String status, LocalDateTime expiresAt) {
+                               String status, String paymentStatus, String paymentTransactionId,
+                               LocalDateTime expiresAt) {
     }
 
     @PostMapping
@@ -70,12 +75,14 @@ class ReservationController {
                 .body(new HoldResponse(result.reservationId(), result.expiresAt()));
     }
 
+    /** 202 선언은 @ResponseStatus로 — ResponseEntity.accepted()로는 openapi 계약에 200이 찍힌다 */
     @PostMapping("/{reservationId}/confirm")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     ConfirmResponse confirm(@RequestHeader("X-User-Id") String userId,
                             @PathVariable long reservationId) {
         var result = confirmReservation.confirm(new ConfirmCommand(reservationId, userId));
         return new ConfirmResponse(result.reservationId(), result.status().name(),
-                result.paymentTransactionId());
+                result.paymentStatus().name());
     }
 
     @DeleteMapping("/{reservationId}")
@@ -90,6 +97,8 @@ class ReservationController {
                             @PathVariable long reservationId) {
         Reservation reservation = getReservation.get(reservationId, userId);
         return new ReservationResponse(reservation.id(), reservation.scheduleId(), reservation.seatId(),
-                reservation.status().name(), reservation.expiresAt());
+                reservation.status().name(),
+                reservation.paymentStatus() == null ? null : reservation.paymentStatus().name(),
+                reservation.paymentTransactionId(), reservation.expiresAt());
     }
 }

@@ -2,6 +2,7 @@ package com.ticketing.payment.adapter.in.messaging;
 
 import com.ticketing.payment.application.port.in.ProcessPaymentUseCase;
 import com.ticketing.payment.application.port.in.ProcessPaymentUseCase.ProcessPaymentCommand;
+import com.ticketing.shared.event.PaymentEventTypes;
 import com.ticketing.shared.event.Topics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ class PaymentRequestedListener {
             log.error("봉투 JSON을 읽을 수 없다 — 건너뜀: {}", message, e);
             return;
         }
-        if (!"PaymentRequested".equals(envelope.path("eventType").asString(null))) {
+        if (!PaymentEventTypes.PAYMENT_REQUESTED.equals(envelope.path("eventType").asString(null))) {
             return;
         }
         JsonNode p = envelope.path("payload");

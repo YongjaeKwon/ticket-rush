@@ -51,11 +51,14 @@ class PaymentResultListener {
             return;
         }
         JsonNode p = envelope.path("payload");
-        if (!p.path("reservationId").isNumber() || !envelope.path("eventId").isString()) {
+        // 승인 쪽지는 승인번호까지 필수 — 확정된 예매가 승인번호 없이 남으면 완료 화면이 빈칸이 된다
+        if (!p.path("reservationId").isNumber() || !envelope.path("eventId").isString()
+                || (result == PaymentResult.APPROVED && !p.path("pgTxId").isString())) {
             log.error("결제 결과 쪽지에 필수 필드가 없다 — 건너뜀: {}", message);
             return;
         }
         applyPaymentResult.apply(new PaymentResultCommand(
-                envelope.get("eventId").asString(), p.get("reservationId").asLong(), result));
+                envelope.get("eventId").asString(), p.get("reservationId").asLong(), result,
+                p.path("pgTxId").asString(null)));
     }
 }

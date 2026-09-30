@@ -57,6 +57,11 @@ queue:
     batch-size: 100   # 1초마다 입장시키는 인원 — 4단계에서 값별 DB 에러율 비교
     enabled: true
 
+ticket:
+  # 결제 요청 금액(KRW, 수수료 포함). 가격 모델(catalog)이 아직 없어 한 값으로 둔다 —
+  # 웹 apps/web/src/lib/pricing.ts(티켓 132,000 + 수수료 2,000)와 같아야 한다
+  price-krw: 134000
+
 outbox:
   relay:
     enabled: true     # 서랍(outbox)을 1초마다 비워 Kafka로 발행. Kafka가 없으면 다음 틱에 재시도만 한다

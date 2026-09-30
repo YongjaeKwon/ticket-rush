@@ -1,5 +1,6 @@
 package com.ticketing.reservation.adapter.out.persistence;
 
+import com.ticketing.reservation.domain.PaymentStatus;
 import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationStatus;
 import jakarta.persistence.Entity;
@@ -29,6 +30,9 @@ public class ReservationJpaEntity {
     private String userId;
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+    private String paymentTxId;
     private LocalDateTime expiresAt;
     @Version
     private Long version;
@@ -44,6 +48,8 @@ public class ReservationJpaEntity {
         entity.seatId = reservation.seatId();
         entity.userId = reservation.userId();
         entity.status = reservation.status();
+        entity.paymentStatus = reservation.paymentStatus();
+        entity.paymentTxId = reservation.paymentTransactionId();
         entity.expiresAt = reservation.expiresAt();
         entity.version = reservation.version();
         entity.createdAt = reservation.createdAt();
@@ -51,6 +57,7 @@ public class ReservationJpaEntity {
     }
 
     Reservation toDomain() {
-        return Reservation.reconstitute(id, scheduleId, seatId, userId, status, expiresAt, version, createdAt);
+        return Reservation.reconstitute(id, scheduleId, seatId, userId, status, expiresAt, version, createdAt,
+                paymentStatus, paymentTxId);
     }
 }

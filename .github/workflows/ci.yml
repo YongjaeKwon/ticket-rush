@@ -44,7 +44,7 @@ jobs:
           pnpm -F @ticket-rush/seat-map-core test
           pnpm -F @ticket-rush/web test
 
-      # E2E는 진짜 백엔드를 상대로 돈다 — MySQL·Redis(compose) + Spring Boot
+      # E2E는 진짜 백엔드를 상대로 돈다 — MySQL·Redis·Kafka(compose) + Spring Boot
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -52,8 +52,12 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: 인프라 기동 (MySQL, Redis)
-        run: docker compose --profile infra up -d --wait
+      # 확정은 202 접수 뒤 Kafka 왕복으로 판정된다(ADR 0009) — Kafka가 없으면 결제가 끝나지 않는다.
+      # 서비스 이름을 지정하면 그 프로필만 켜진다 — 관측 스택(Prometheus·Grafana·Tempo)은 올리지 않는다
+      - name: 인프라 기동 (MySQL, Redis, Kafka)
+        run: |
+          docker compose --profile infra up -d --wait
+          docker compose up -d --wait kafka
 
       - name: 백엔드 기동
         working-directory: backend

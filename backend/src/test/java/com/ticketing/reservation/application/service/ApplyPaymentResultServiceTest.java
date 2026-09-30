@@ -6,6 +6,7 @@ import com.ticketing.reservation.application.port.out.EventPublisher;
 import com.ticketing.reservation.application.port.out.ProcessedEventStore;
 import com.ticketing.reservation.application.port.out.ReservationRepository;
 import com.ticketing.reservation.application.port.out.SeatHoldStore;
+import com.ticketing.reservation.domain.PaymentStatus;
 import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationStatus;
 import com.ticketing.shared.event.DomainEvent;
@@ -85,11 +86,14 @@ class ApplyPaymentResultServiceTest {
     }
 
     private static Reservation held(long id, LocalDateTime expiresAt) {
-        return Reservation.reconstitute(id, 1L, 17L, "u-1", ReservationStatus.HELD, expiresAt, 0L, NOW);
+        // 결제 결과는 확정 요청(REQUESTED) 뒤에만 온다
+        return Reservation.reconstitute(id, 1L, 17L, "u-1", ReservationStatus.HELD, expiresAt, 0L, NOW,
+                PaymentStatus.REQUESTED, null);
     }
 
     private static PaymentResultCommand command(PaymentResult result) {
-        return new PaymentResultCommand("evt-1", 501L, result);
+        return new PaymentResultCommand("evt-1", 501L, result,
+                result == PaymentResult.APPROVED ? "mock-tx-501" : null);
     }
 
     @Test
@@ -98,6 +102,8 @@ class ApplyPaymentResultServiceTest {
         service().apply(command(PaymentResult.APPROVED));
 
         assertThat(savedResult.status()).isEqualTo(ReservationStatus.CONFIRMED);
+        assertThat(savedResult.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(savedResult.paymentTransactionId()).isEqualTo("mock-tx-501"); // 완료 화면의 승인번호
         assertThat(confirmedSeats).containsExactly(17L);
         assertThat(published).singleElement()
                 .satisfies(e -> assertThat(e.eventType()).isEqualTo("ReservationConfirmed"));
@@ -105,35 +111,43 @@ class ApplyPaymentResultServiceTest {
     }
 
     @Test
-    void 홀드가_만료된_승인은_상태를_건드리지_않고_장부만_남긴다() {
+    void 홀드가_만료된_승인은_예매를_닫고_승인_사실을_남긴다() {
         stored = held(501L, NOW.minusSeconds(1));
         service().apply(command(PaymentResult.APPROVED));
 
-        assertThat(savedResult).isNull();
-        assertThat(confirmedSeats).isEmpty();
-        assertThat(published).isEmpty();
-        assertThat(releasedHolds).isEmpty();
+        // REQUESTED로 두면 결론이 조회에 안 보이고 재결제·취소가 막힌다 — EXPIRED + APPROVED로 닫는다
+        assertThat(savedResult.status()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(savedResult.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(savedResult.paymentTransactionId()).isEqualTo("mock-tx-501"); // 환불 보상의 근거
+        assertThat(confirmedSeats).isEmpty();   // 만료 검사가 좌석 기록보다 먼저다
+        assertThat(published).singleElement()
+                .satisfies(e -> assertThat(e.eventType()).isEqualTo("ReservationExpired"));
         assertThat(ledger).hasSize(1); // 재전달돼도 같은 결과 — 다시 처리하지 않는다
     }
 
     @Test
-    void 좌석을_이미_남이_확정했으면_확정하지_않는다_UNIQUE_방어() {
+    void 좌석을_이미_남이_확정했으면_확정하지_않고_예매를_닫는다_UNIQUE_방어() {
         stored = held(501L, NOW.plusMinutes(3));
         seatTaken = true;
         service().apply(command(PaymentResult.APPROVED));
 
-        assertThat(savedResult).isNull();   // 좌석 기록이 먼저라 상태 저장까지 가지 않는다
-        assertThat(published).isEmpty();
+        // 이중 예매는 UNIQUE가 막았다 — 이 예매는 결론(EXPIRED + APPROVED)으로 닫혀 조회에 드러난다
+        assertThat(savedResult.status()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(savedResult.paymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(published).singleElement()
+                .satisfies(e -> assertThat(e.eventType()).isEqualTo("ReservationExpired"));
+        assertThat(releasedHolds).containsExactly("1:17:u-1");   // 제 홀드만 비교-삭제
         assertThat(ledger).hasSize(1);
     }
 
     @Test
-    void 거절이면_HELD_유지_장부만_남긴다() {
+    void 거절이면_HELD_유지에_DECLINED_표지를_남기고_홀드는_지킨다() {
         stored = held(501L, NOW.plusMinutes(3));
         service().apply(command(PaymentResult.DECLINED));
 
-        assertThat(stored.status()).isEqualTo(ReservationStatus.HELD);
-        assertThat(savedResult).isNull();
+        // 표지가 있어야 조회가 "결제 중"과 "거절됨"을 구분한다 — 웹은 이걸 보고 재시도를 연다
+        assertThat(savedResult.status()).isEqualTo(ReservationStatus.HELD);
+        assertThat(savedResult.paymentStatus()).isEqualTo(PaymentStatus.DECLINED);
         assertThat(published).isEmpty();
         assertThat(releasedHolds).isEmpty();
         assertThat(ledger).hasSize(1);
@@ -145,6 +159,7 @@ class ApplyPaymentResultServiceTest {
         service().apply(command(PaymentResult.FAILED));
 
         assertThat(savedResult.status()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(savedResult.paymentStatus()).isEqualTo(PaymentStatus.FAILED); // 5분 만료와 구분
         assertThat(published).singleElement()
                 .satisfies(e -> assertThat(e.eventType()).isEqualTo("ReservationExpired"));
         assertThat(releasedHolds).containsExactly("1:17:u-1");
@@ -153,7 +168,7 @@ class ApplyPaymentResultServiceTest {
     @Test
     void 이미_확정된_예매의_실패_쪽지는_상태를_건드리지_않는다() {
         stored = Reservation.reconstitute(501L, 1L, 17L, "u-1",
-                ReservationStatus.CONFIRMED, NOW.plusMinutes(3), 1L, NOW);
+                ReservationStatus.CONFIRMED, NOW.plusMinutes(3), 1L, NOW, PaymentStatus.APPROVED, "mock-tx");
         service().apply(command(PaymentResult.FAILED));
 
         assertThat(stored.status()).isEqualTo(ReservationStatus.CONFIRMED);

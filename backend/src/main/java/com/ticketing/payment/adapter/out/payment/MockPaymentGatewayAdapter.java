@@ -11,10 +11,8 @@ import java.util.UUID;
  * Mock PG — 실제 PG의 못된 행동을 설정으로 흉내 낸다.
  * failure-rate = 거절 확률(카드 한도 등, DECLINED — 홀드 유지), error-rate = 시스템 오류 확률
  * (예외 → FAILED — 되돌리기 대상). 이 구분이 결제 결과 이벤트 3종의 입구다.
- * failure-rate 키는 reservation의 동기 어댑터와 공유한다 — 202 전환 때 그쪽 삭제와 함께 정리.
- * 빈 이름 명시: reservation에 같은 이름의 클래스가 있어 기본 빈 이름이 충돌한다(그쪽도 202 전환 때 삭제).
  */
-@Component("paymentMockPaymentGateway")
+@Component
 class MockPaymentGatewayAdapter implements PaymentGateway {
 
     private final long delayMs;

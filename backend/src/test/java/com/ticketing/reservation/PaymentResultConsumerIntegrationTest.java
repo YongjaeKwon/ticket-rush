@@ -76,6 +76,9 @@ class PaymentResultConsumerIntegrationTest {
                 .isEqualTo(1L);
         assertThat(count("SELECT COUNT(*) FROM outbox WHERE event_type = 'ReservationConfirmed'"
                 + " AND aggregate_id = '" + r1 + "'")).isEqualTo(1L);
+        // 승인번호가 예매에 남는다 — 조회 응답·완료 화면이 이걸 보여준다
+        assertThat(jdbc.sql("SELECT CONCAT(payment_status, '|', payment_tx_id) FROM reservation WHERE id = " + r1)
+                .query(String.class).single()).isEqualTo("APPROVED|mock-tx-" + r1);
 
         // ② 같은 쪽지 재주입 + 파수꾼(다른 예매의 거절 쪽지, 같은 키) — 파수꾼 처리 = 중복도 지나갔다.
         //    전제: 같은 키("1")라 같은 파티션 + 기본 blocking 에러 처리(재시도 토픽 없음)라 파티션 순서 = 처리 순서.
@@ -97,9 +100,9 @@ class PaymentResultConsumerIntegrationTest {
         assertThat(count("SELECT COUNT(*) FROM processed_event WHERE event_id = '" + eventId + "'"))
                 .isEqualTo(1L);
 
-        // 파수꾼(거절)은 HELD 유지 — 상태를 건드리지 않는다
-        assertThat(jdbc.sql("SELECT status FROM reservation WHERE id = " + r2)
-                .query(String.class).single()).isEqualTo("HELD");
+        // 파수꾼(거절)은 HELD 유지 + DECLINED 표지 — 조회가 "결제 중"과 "거절됨"을 구분한다
+        assertThat(jdbc.sql("SELECT CONCAT(status, '|', payment_status) FROM reservation WHERE id = " + r2)
+                .query(String.class).single()).isEqualTo("HELD|DECLINED");
     }
 
     @Test
@@ -111,8 +114,9 @@ class PaymentResultConsumerIntegrationTest {
         send(paymentEnvelope("bbbbbbbb-cccc-dddd-eeee-ffff00000003", "PaymentFailed", r3));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            assertThat(jdbc.sql("SELECT status FROM reservation WHERE id = " + r3)
-                    .query(String.class).single()).isEqualTo("EXPIRED");
+            // FAILED 표지로 5분 만료와 구분된다 — 화면이 "결제 오류로 좌석이 풀렸다"를 따로 보여줄 수 있다
+            assertThat(jdbc.sql("SELECT CONCAT(status, '|', payment_status) FROM reservation WHERE id = " + r3)
+                    .query(String.class).single()).isEqualTo("EXPIRED|FAILED");
             // release는 커밋 뒤라 같은 await 안에서 본다 — 키가 사라져야 재홀드(SET NX)가 가능해진다
             assertThat(redisTemplate.hasKey("hold:1:19")).isFalse();
         });
@@ -163,7 +167,8 @@ class PaymentResultConsumerIntegrationTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.apply(
                         new com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase.PaymentResultCommand(
-                                "atomic-consume-1", r4, com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase.PaymentResult.APPROVED)))
+                                "atomic-consume-1", r4, com.ticketing.reservation.application.port.in.ApplyPaymentResultUseCase.PaymentResult.APPROVED,
+                                "mock-tx-atomic")))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(count("SELECT COUNT(*) FROM confirmed_seat WHERE seat_id = 20")).isEqualTo(0L);
@@ -172,11 +177,11 @@ class PaymentResultConsumerIntegrationTest {
                 .query(String.class).single()).isEqualTo("HELD");
     }
 
-    /** HELD 예매를 DB에 직접 심는다 — 홀드 API를 거치지 않아 테스트가 소비 경로만 본다. */
+    /** 결제 요청까지 마친 HELD 예매를 DB에 직접 심는다 — 홀드·확정 API를 거치지 않아 테스트가 소비 경로만 본다. */
     private long insertHeldReservation(long seatId, String userId) {
         jdbc.sql("""
-                        INSERT INTO reservation (schedule_id, seat_id, user_id, status, expires_at, version, created_at)
-                        VALUES (1, :seatId, :userId, 'HELD', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 MINUTE), 0, UTC_TIMESTAMP())
+                        INSERT INTO reservation (schedule_id, seat_id, user_id, status, payment_status, expires_at, version, created_at)
+                        VALUES (1, :seatId, :userId, 'HELD', 'REQUESTED', DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 MINUTE), 0, UTC_TIMESTAMP())
                         """)
                 .param("seatId", seatId).param("userId", userId)
                 .update();
@@ -186,11 +191,13 @@ class PaymentResultConsumerIntegrationTest {
     }
 
     private String paymentEnvelope(String eventId, String eventType, long reservationId) {
+        // 승인 쪽지만 승인번호를 싣는다 — 실제 PaymentApproved·Declined·Failed의 payload 모양과 같게
+        String pgTxId = "PaymentApproved".equals(eventType) ? ",\"pgTxId\":\"mock-tx-" + reservationId + "\"" : "";
         return """
                 {"eventId":"%s","eventType":"%s","version":1,\
                 "occurredAt":"2026-09-29T05:00:00","aggregateId":"%d",\
-                "payload":{"reservationId":%d,"scheduleId":1,"userId":"u","amount":134000}}"""
-                .formatted(eventId, eventType, reservationId, reservationId);
+                "payload":{"reservationId":%d,"scheduleId":1,"userId":"u","amount":134000%s}}"""
+                .formatted(eventId, eventType, reservationId, reservationId, pgTxId);
     }
 
     private void send(String value) {

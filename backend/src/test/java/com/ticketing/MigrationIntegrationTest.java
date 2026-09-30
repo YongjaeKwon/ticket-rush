@@ -62,6 +62,23 @@ class MigrationIntegrationTest {
                 .containsExactly("consumer", "event_id");
     }
 
+    @Test
+    void V5가_reservation에_결제_진행_칸을_계약대로_더한다() throws Exception {
+        // 둘 다 NULL 허용 — 결제 요청 전 예매와 승인 전 예매에는 값이 없다.
+        // 새 칸이 status 바로 뒤에 붙어 기존 칸(만료 인덱스 등)의 뜻은 그대로다
+        assertThat(columnsOf("reservation")).containsExactly(
+                "id|bigint|no",
+                "schedule_id|bigint|no",
+                "seat_id|bigint|no",
+                "user_id|varchar(64)|no",
+                "status|varchar(20)|no",
+                "payment_status|varchar(20)|yes",
+                "payment_tx_id|varchar(200)|yes",
+                "expires_at|datetime(6)|no",
+                "version|bigint|no",
+                "created_at|datetime(6)|no");
+    }
+
     /** "이름|타입(길이·정밀도 포함)|null 허용" 형태로 컬럼 목록을 뽑는다 — 전부 소문자로 정규화 */
     private List<String> columnsOf(String table) throws Exception {
         return query("""

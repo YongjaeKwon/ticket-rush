@@ -24,14 +24,15 @@ class PaymentResultListenerTest {
 
     @Test
     void 결제_결과_3종이_각자의_커맨드로_추출된다() {
-        listener.onMessage(envelope("PaymentApproved", "{\"reservationId\":501,\"scheduleId\":1}"));
+        listener.onMessage(envelope("PaymentApproved",
+                "{\"reservationId\":501,\"scheduleId\":1,\"pgTxId\":\"mock-tx-501\"}"));
         listener.onMessage(envelope("PaymentDeclined", "{\"reservationId\":502,\"scheduleId\":1}"));
         listener.onMessage(envelope("PaymentFailed", "{\"reservationId\":503,\"scheduleId\":1}"));
 
         assertThat(captured).containsExactly(
-                new PaymentResultCommand("evt-1", 501L, PaymentResult.APPROVED),
-                new PaymentResultCommand("evt-1", 502L, PaymentResult.DECLINED),
-                new PaymentResultCommand("evt-1", 503L, PaymentResult.FAILED));
+                new PaymentResultCommand("evt-1", 501L, PaymentResult.APPROVED, "mock-tx-501"),
+                new PaymentResultCommand("evt-1", 502L, PaymentResult.DECLINED, null),
+                new PaymentResultCommand("evt-1", 503L, PaymentResult.FAILED, null));
     }
 
     @Test
@@ -57,13 +58,16 @@ class PaymentResultListenerTest {
         });
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> throwing.onMessage(
-                        envelope("PaymentApproved", "{\"reservationId\":501,\"scheduleId\":1}")))
+                        envelope("PaymentApproved",
+                                "{\"reservationId\":501,\"scheduleId\":1,\"pgTxId\":\"t\"}")))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void 필수_필드가_빠지면_건너뛴다() {
         listener.onMessage(envelope("PaymentApproved", "{\"scheduleId\":1}")); // reservationId 없음
+        // 승인인데 승인번호가 없으면 확정된 예매가 빈 승인번호로 남는다 — 깨진 쪽지로 본다
+        listener.onMessage(envelope("PaymentApproved", "{\"reservationId\":501,\"scheduleId\":1}"));
         listener.onMessage("""
                 {"eventType":"PaymentApproved","payload":{"reservationId":501}}"""); // eventId 없음
 

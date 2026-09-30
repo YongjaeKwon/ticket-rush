@@ -2,13 +2,13 @@ package com.ticketing.reservation.application.service;
 
 import com.ticketing.reservation.application.port.in.ConfirmReservationUseCase;
 import com.ticketing.reservation.application.port.out.EventPublisher;
-import com.ticketing.reservation.application.port.out.PaymentGateway;
 import com.ticketing.reservation.application.port.out.ReservationRepository;
-import com.ticketing.reservation.application.port.out.SeatHoldStore;
+import com.ticketing.reservation.domain.PaymentRequested;
 import com.ticketing.reservation.domain.Reservation;
-import com.ticketing.reservation.domain.ReservationConfirmed;
 import com.ticketing.reservation.domain.ReservationException;
 import com.ticketing.shared.ApiException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -17,77 +17,54 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
- * 결제 승인 → 확정 (ARCHITECTURE 4-3 "확정 시" 순서).
+ * 확정 요청 → 결제 요청 접수 (3단계 비동기 확정, ADR 0008·0009).
  *
- * 트랜잭션 경계에 주의: PG 호출은 외부 시스템이라 트랜잭션 "밖"에서 하고,
- * DB 작업(확정 전이 + confirmed_seat 기록 + Outbox)만 TransactionTemplate로 묶는다.
- * PG를 트랜잭션 안에서 부르면 결제가 느릴 때 DB 커넥션을 그만큼 붙잡는다.
+ * 한 트랜잭션에서 예매를 "결제 중"으로 바꾸고 PaymentRequested를 서랍(outbox)에 넣는다.
+ * PG는 여기서 부르지 않는다 — payment 모듈이 쪽지를 받아 부르고, 결과는 컨슈머
+ * (ApplyPaymentResultService)가 예매에 반영한다. 그래서 결제가 느려도 이 요청은 밀리초에 끝난다.
  *
- * Redis 홀드 해제는 커밋이 끝난 다음에 한다 — 확정이 롤백됐는데
- * 홀드만 풀리면 다른 사용자가 좌석을 채 갈 수 있기 때문이다.
+ * 이중 결제 방어는 두 겹이다. 순차로 온 두 번째 요청은 도메인이 PAYMENT_IN_PROGRESS로 막고,
+ * 동시에 온 두 요청은 예매의 낙관적 락(version)이 한쪽만 커밋시킨다 — 진 쪽의 쪽지는 함께 롤백된다.
  */
 @Service
 public class ConfirmReservationService implements ConfirmReservationUseCase {
 
     private final ReservationRepository reservationRepository;
-    private final PaymentGateway paymentGateway;
-    private final SeatHoldStore seatHoldStore;
     private final EventPublisher eventPublisher;
     private final TransactionTemplate transaction;
     private final Clock clock;
+    private final int ticketPriceKrw;
 
     public ConfirmReservationService(ReservationRepository reservationRepository,
-                                     PaymentGateway paymentGateway, SeatHoldStore seatHoldStore,
                                      EventPublisher eventPublisher, TransactionTemplate transaction,
-                                     Clock clock) {
+                                     Clock clock, @Value("${ticket.price-krw}") int ticketPriceKrw) {
         this.reservationRepository = reservationRepository;
-        this.paymentGateway = paymentGateway;
-        this.seatHoldStore = seatHoldStore;
         this.eventPublisher = eventPublisher;
         this.transaction = transaction;
         this.clock = clock;
+        this.ticketPriceKrw = ticketPriceKrw;
     }
 
     @Override
     public ConfirmResult confirm(ConfirmCommand command) {
-        Reservation reservation = loadOwned(command.reservationId(), command.userId());
-
-        // 결제(돈)가 나가기 전의 선검사 — 최종 판정은 트랜잭션 안의 도메인 confirm()이 다시 한다
-        if (!reservation.isHeld()) {
-            throw ApiException.conflict("INVALID_RESERVATION_STATE",
-                    reservation.status() + " 상태의 예매는 결제할 수 없습니다");
+        try {
+            return transaction.execute(status -> {
+                Reservation reservation = loadOwned(command.reservationId(), command.userId());
+                LocalDateTime now = LocalDateTime.now(clock);
+                try {
+                    reservation.requestPayment(now);
+                } catch (ReservationException e) {
+                    throw new ApiException(HttpStatus.CONFLICT, e.code(), e.getMessage());
+                }
+                Reservation saved = reservationRepository.save(reservation);
+                eventPublisher.publish(PaymentRequested.from(saved, ticketPriceKrw, now));
+                return new ConfirmResult(saved.id(), saved.status(), saved.paymentStatus());
+            });
+        } catch (OptimisticLockingFailureException e) {
+            // 같은 예매를 다른 요청(동시 확정·취소)이나 결과 반영·만료가 먼저 바꿨다 — 조회로 확인하게 한다
+            throw ApiException.conflict("PAYMENT_IN_PROGRESS",
+                    "다른 처리가 진행 중입니다. 잠시 후 예매 상태를 확인해 주세요");
         }
-        if (LocalDateTime.now(clock).isAfter(reservation.expiresAt())) {
-            throw ApiException.conflict("HOLD_EXPIRED", "홀드가 만료됐습니다. 좌석을 다시 선택하세요");
-        }
-
-        PaymentGateway.PaymentResult payment =
-                paymentGateway.approve(reservation.id(), reservation.userId());
-        if (!payment.approved()) {
-            // 거절은 전이가 아니다 — HELD 유지, 남은 시간 안에 재시도 가능
-            throw new ApiException(HttpStatus.PAYMENT_REQUIRED, "PAYMENT_DECLINED",
-                    "결제가 거절됐습니다. 홀드는 유지 중입니다");
-        }
-
-        Reservation confirmed = transaction.execute(status -> {
-            Reservation fresh = loadOwned(command.reservationId(), command.userId());
-            try {
-                fresh.confirm(LocalDateTime.now(clock));
-            } catch (ReservationException e) {
-                throw new ApiException(HttpStatus.CONFLICT, e.code(), e.getMessage());
-            }
-            Reservation saved = reservationRepository.save(fresh);
-            if (!reservationRepository.registerConfirmedSeat(
-                    saved.scheduleId(), saved.seatId(), saved.id())) {
-                throw ApiException.conflict("SEAT_ALREADY_CONFIRMED",
-                        "이미 확정된 좌석입니다");   // 예외 → 롤백 → HELD로 남는다
-            }
-            eventPublisher.publish(ReservationConfirmed.from(saved, LocalDateTime.now(clock)));
-            return saved;
-        });
-
-        seatHoldStore.release(confirmed.scheduleId(), confirmed.seatId(), confirmed.userId());
-        return new ConfirmResult(confirmed.id(), confirmed.status(), payment.transactionId());
     }
 
     private Reservation loadOwned(long reservationId, String userId) {

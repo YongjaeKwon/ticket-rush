@@ -149,37 +149,58 @@ class ReservationApiIntegrationTest {
     }
 
     @Test
-    void 확정_API는_결제까지_끝내고_CONFIRMED를_돌려준다() {
+    void 확정_API는_202로_접수하고_조회에서_결제_중으로_보인다() {
         long id = hold("user-1", 66L, UUID.randomUUID().toString())
                 .getBody().get("reservationId").asLong();
 
         ResponseEntity<JsonNode> response = rest.postForEntity("/api/reservations/" + id + "/confirm",
                 new HttpEntity<>("", headersFor("user-1", UUID.randomUUID().toString())), JsonNode.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().get("status").asText()).isEqualTo("CONFIRMED");
-        assertThat(response.getBody().get("paymentTransactionId").asText()).startsWith("mock-");
+        // 접수(202)이지 판정이 아니다 — 판정은 결제 결과 쪽지가 도착한 뒤 조회로 확인한다 (ADR 0009)
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(response.getBody().get("status").asText()).isEqualTo("HELD");
+        assertThat(response.getBody().get("paymentStatus").asText()).isEqualTo("REQUESTED");
+
+        JsonNode view = rest.exchange("/api/reservations/" + id, HttpMethod.GET,
+                new HttpEntity<>(headersFor("user-1", null)), JsonNode.class).getBody();
+        assertThat(view.get("status").asText()).isEqualTo("HELD");
+        assertThat(view.get("paymentStatus").asText()).isEqualTo("REQUESTED");
+        assertThat(view.get("paymentTransactionId").isNull()).isTrue();
     }
 
     @Test
-    void 확정도_같은_키_재시도는_저장된_응답을_재생하고_결제는_한_번만_된다() {
+    void 확정도_같은_키_재시도는_저장된_202를_재생하고_결제_요청은_한_번만_나간다() {
         long id = hold("user-1", 67L, UUID.randomUUID().toString())
                 .getBody().get("reservationId").asLong();
         String key = UUID.randomUUID().toString();
         var entity = new HttpEntity<>("", headersFor("user-1", key));
 
-        ResponseEntity<JsonNode> first = rest.postForEntity(
-                "/api/reservations/" + id + "/confirm", entity, JsonNode.class);
+        rest.postForEntity("/api/reservations/" + id + "/confirm", entity, JsonNode.class);
         ResponseEntity<JsonNode> second = rest.postForEntity(
                 "/api/reservations/" + id + "/confirm", entity, JsonNode.class);
 
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(second.getHeaders().getFirst("Idempotency-Replayed")).isEqualTo("true");
-        assertThat(second.getBody().get("paymentTransactionId").asText())
-                .isEqualTo(first.getBody().get("paymentTransactionId").asText());
-        Long confirmed = jdbc.sql("SELECT COUNT(*) FROM confirmed_seat WHERE seat_id = 67")
+        // "결제 한 번"의 의미가 "결제 요청 쪽지 한 장"으로 바뀌었다
+        Long requests = jdbc.sql("SELECT COUNT(*) FROM outbox WHERE event_type = 'PaymentRequested'"
+                        + " AND aggregate_id = '" + id + "'")
                 .query(Long.class).single();
-        assertThat(confirmed).isEqualTo(1L);
+        assertThat(requests).isEqualTo(1L);
+    }
+
+    @Test
+    void 결제_중에_새_키로_확정하면_409_PAYMENT_IN_PROGRESS다() {
+        long id = hold("user-1", 69L, UUID.randomUUID().toString())
+                .getBody().get("reservationId").asLong();
+        rest.postForEntity("/api/reservations/" + id + "/confirm",
+                new HttpEntity<>("", headersFor("user-1", UUID.randomUUID().toString())), JsonNode.class);
+
+        // 다른 탭의 두 번째 시도 — 멱등 키가 달라 필터는 못 막는다. 도메인이 막는다
+        ResponseEntity<JsonNode> second = rest.postForEntity("/api/reservations/" + id + "/confirm",
+                new HttpEntity<>("", headersFor("user-1", UUID.randomUUID().toString())), JsonNode.class);
+
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(second.getBody().get("code").asText()).isEqualTo("PAYMENT_IN_PROGRESS");
     }
 
     @Test

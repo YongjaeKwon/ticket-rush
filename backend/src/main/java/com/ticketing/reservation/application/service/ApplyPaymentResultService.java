@@ -75,13 +75,9 @@ public class ApplyPaymentResultService implements ApplyPaymentResultUseCase {
                     return null;
                 }
                 return switch (command.result()) {
-                    case APPROVED -> applyApproved(command.reservationId());
+                    case APPROVED -> applyApproved(command.reservationId(), command.paymentTransactionId());
                     case FAILED -> applyFailed(command.reservationId());
-                    case DECLINED -> {
-                        // 거절은 전이가 아니다 — HELD 유지, 남은 시간 안에 재시도 가능 (2-2)
-                        log.info("결제 거절 — HELD 유지 (reservationId={})", command.reservationId());
-                        yield null;
-                    }
+                    case DECLINED -> applyDeclined(command.reservationId());
                 };
             });
         } catch (org.springframework.dao.OptimisticLockingFailureException e) {
@@ -95,29 +91,36 @@ public class ApplyPaymentResultService implements ApplyPaymentResultUseCase {
         }
     }
 
-    /** 확정. 순서 주의: 좌석 기록(UNIQUE)을 먼저 — 실패해도 상태 저장 전이라 되돌릴 게 없다. */
-    private Reservation applyApproved(long reservationId) {
+    /**
+     * 확정. 순서 주의: 좌석 기록(UNIQUE)은 만료 검사 뒤, 상태 저장 전 — 실패해도 되돌릴 게 없다.
+     * 돈은 승인됐는데 확정할 수 없으면(만료·남이 먼저 확정) 예매를 결론으로 닫는다(loseSeat) —
+     * REQUESTED로 두면 결론이 조회에 안 보이고 재결제·취소가 모두 막힌다.
+     */
+    private Reservation applyApproved(long reservationId, String paymentTransactionId) {
         Reservation reservation = reservations.findById(reservationId).orElse(null);
         if (reservation == null) {
             log.error("승인 쪽지의 예매가 없다 — 장부만 남김 (reservationId={})", reservationId);
             return null;
         }
-        try {
-            reservation.confirm(LocalDateTime.now(clock)); // 아직 저장 전 — 실패하면 그대로 버려진다
-        } catch (ReservationException e) {
-            log.warn("승인 쪽지를 반영할 수 없다({}) — 상태 유지, 장부만 남김 (reservationId={})",
-                    e.code(), reservationId);
+        if (!reservation.isHeld()) {
+            log.warn("승인 쪽지를 반영할 수 없다 — 이미 끝난 예매({}), 장부만 남김 (reservationId={})",
+                    reservation.status(), reservationId);
             return null;
         }
-        if (!reservations.registerConfirmedSeat(
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (reservation.isExpiredAt(now) || !reservations.registerConfirmedSeat(
                 reservation.scheduleId(), reservation.seatId(), reservation.id())) {
-            // 이중 예매를 UNIQUE가 막았다 — 돈은 승인됐는데 좌석을 놓친 경우. 환불 보상은 backlog
-            log.error("승인됐지만 좌석이 이미 확정돼 있다 — 확정하지 않음, 환불 보상 필요 (reservationId={})",
+            // 이중 예매를 UNIQUE가 막았거나 홀드가 먼저 끝났다 — 돈은 승인됐는데 좌석이 없다. 환불 보상은 backlog
+            log.error("승인됐지만 좌석을 확정할 수 없다 — 예매를 닫고 승인 사실만 남김, 환불 보상 필요 (reservationId={})",
                     reservationId);
-            return null;
+            reservation.loseSeat(paymentTransactionId);
+            Reservation saved = reservations.save(reservation);
+            events.publish(ReservationExpired.from(saved, now));
+            return saved;
         }
+        reservation.confirm(now, paymentTransactionId);
         Reservation saved = reservations.save(reservation);
-        events.publish(ReservationConfirmed.from(saved, LocalDateTime.now(clock)));
+        events.publish(ReservationConfirmed.from(saved, now));
         return saved;
     }
 
@@ -129,7 +132,7 @@ public class ApplyPaymentResultService implements ApplyPaymentResultUseCase {
             return null;
         }
         try {
-            reservation.expire();
+            reservation.failPayment();   // EXPIRED + FAILED 표지 — 5분 만료와 화면에서 구분된다
         } catch (ReservationException e) {
             log.warn("실패 쪽지를 반영할 수 없다({}) — 상태 유지, 장부만 남김 (reservationId={})",
                     e.code(), reservationId);
@@ -138,5 +141,27 @@ public class ApplyPaymentResultService implements ApplyPaymentResultUseCase {
         Reservation saved = reservations.save(reservation);
         events.publish(ReservationExpired.from(saved, LocalDateTime.now(clock)));
         return saved;
+    }
+
+    /**
+     * 거절 — 전이가 아니다(2-2). HELD 그대로 두고 DECLINED 표지만 남겨, 조회가 "결제 중"과
+     * "거절됨"을 구분하게 한다(ADR 0009). 홀드는 풀지 않는다 — null을 돌려 해제를 건너뛴다.
+     */
+    private Reservation applyDeclined(long reservationId) {
+        Reservation reservation = reservations.findById(reservationId).orElse(null);
+        if (reservation == null) {
+            log.error("거절 쪽지의 예매가 없다 — 장부만 남김 (reservationId={})", reservationId);
+            return null;
+        }
+        try {
+            reservation.declinePayment();
+        } catch (ReservationException e) {
+            log.warn("거절 쪽지를 반영할 수 없다({}) — 상태 유지, 장부만 남김 (reservationId={})",
+                    e.code(), reservationId);
+            return null;
+        }
+        reservations.save(reservation);
+        log.info("결제 거절 — HELD 유지, 새 시도 가능 (reservationId={})", reservationId);
+        return null;
     }
 }

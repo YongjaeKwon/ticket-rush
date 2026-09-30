@@ -30,3 +30,6 @@ load/results/
 apps/web/test-results/
 apps/web/playwright-report/
 apps/web/blob-report/
+
+# graphify 지식 그래프 산출물 — 이 PC의 파이썬 경로·캐시를 담은 로컬 산출물, 언제든 재생성
+graphify-out/

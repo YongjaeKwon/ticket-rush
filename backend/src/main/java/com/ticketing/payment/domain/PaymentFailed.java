@@ -1,6 +1,7 @@
 package com.ticketing.payment.domain;
 
 import com.ticketing.shared.event.DomainEvent;
+import com.ticketing.shared.event.PaymentEventTypes;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -20,7 +21,7 @@ public record PaymentFailed(
 
     @Override
     public String eventType() {
-        return "PaymentFailed";
+        return PaymentEventTypes.PAYMENT_FAILED;
     }
 
     @Override

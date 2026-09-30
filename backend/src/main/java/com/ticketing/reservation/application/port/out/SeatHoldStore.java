@@ -12,6 +12,9 @@ public interface SeatHoldStore {
     /** 선점 시도. 이미 다른 홀드가 있으면 false. */
     boolean tryHold(long scheduleId, long seatId, String userId, Duration ttl);
 
-    /** 선점 해제. 키가 없어도 조용히 지나간다. */
-    void release(long scheduleId, long seatId);
+    /**
+     * 선점 해제 — 키의 값이 이 userId일 때만 지운다(비교-삭제). 키가 없거나 남의 것이면 조용히 지나간다.
+     * 왜: TTL 만료 직후 다른 사용자가 새로 선점한 키를, 뒤늦게 도착한 내 해제가 지우면 안 된다.
+     */
+    void release(long scheduleId, long seatId, String userId);
 }

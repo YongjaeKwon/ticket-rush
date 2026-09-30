@@ -245,7 +245,7 @@ Events are past tense (`ReservationHeld`). Tests are `~Test` (unit),
 
 **Seat hold**
 
-- Redis `hold:{scheduleId}:{seatId}` = holder, `SET NX EX 300`.
+- Redis `hold:{scheduleId}:{seatId}` = userId, `SET NX EX 300`. Release is a compare-and-delete (Lua) that only deletes when the value is my userId — a late release must not wipe a key someone else re-acquired right after expiry.
 - Order: Redis hold succeeds → save `HELD` + outbox row in one DB transaction → if the DB
   fails, delete the Redis hold immediately.
 - On confirm: domain `confirm()` → insert into `confirmed_seat` (UNIQUE) → delete the Redis

@@ -52,6 +52,6 @@ public class CancelReservationService implements CancelReservationUseCase {
         eventPublisher.publish(ReservationCancelled.from(reservation, LocalDateTime.now(clock)));
         // 취소 확정과 함께 좌석을 바로 푼다. 롤백 시 키가 먼저 사라지는 극단 케이스는
         // HELD 중복 홀드로 이어질 수 있으나, 최종 방어(confirmed_seat PK)가 이중 확정을 막는다.
-        seatHoldStore.release(reservation.scheduleId(), reservation.seatId());
+        seatHoldStore.release(reservation.scheduleId(), reservation.seatId(), reservation.userId());
     }
 }

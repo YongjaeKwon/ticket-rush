@@ -61,7 +61,7 @@ public class HoldSeatService implements HoldSeatUseCase {
             return new HoldResult(saved.id(), saved.expiresAt());
         } catch (RuntimeException e) {
             // 예외는 그대로 전파돼 트랜잭션이 롤백된다. Redis 선점만 여기서 되돌린다.
-            seatHoldStore.release(command.scheduleId(), command.seatId());
+            seatHoldStore.release(command.scheduleId(), command.seatId(), command.userId());
             throw e;
         }
     }

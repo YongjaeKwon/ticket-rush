@@ -225,7 +225,7 @@ backend/src/main/java/com/ticketing
 
 **좌석 홀드**
 
-- Redis `hold:{scheduleId}:{seatId}` = reservationId, `SET NX EX 300`.
+- Redis `hold:{scheduleId}:{seatId}` = userId, `SET NX EX 300`. 해제는 값이 내 userId일 때만 지우는 비교-삭제(Lua) — 만료 직후 남이 새로 잡은 키를 뒤늦은 해제가 지우면 안 된다.
 - 순서: Redis 홀드 성공 → DB에 `HELD` 저장 + Outbox 행 (한 트랜잭션) → DB 실패면 Redis 홀드 즉시 삭제.
 - 확정 시: 도메인 `confirm()` → `confirmed_seat` insert(UNIQUE) → Redis 홀드 삭제. UNIQUE 위반이면 확정 실패로 응답.
 
